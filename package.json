@@ -10,6 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/core": "^7.12.2",
+    "@mantine/form": "^7.12.2",
+    "@mantine/hooks": "^7.12.2",
+    "@mantine/modals": "^7.12.2",
+    "@mantine/notifications": "^7.12.2",
+    "@mantine/spotlight": "^7.12.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -23,9 +29,13 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "postcss": "^8.4.45",
+    "postcss-preset-mantine": "^1.17.0",
+    "postcss-simple-vars": "^7.0.1",
     "typescript": "^5.2.2",
     "vite": "^5.2.10",
     "vite-plugin-pwa": "^0.20.0",
+    "workbox-build": "^7.1.0",
     "workbox-core": "^7.1.0",
     "workbox-precaching": "^7.1.0",
     "workbox-routing": "^7.1.0",
