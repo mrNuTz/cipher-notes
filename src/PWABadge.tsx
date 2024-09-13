@@ -1,9 +1,7 @@
 import './PWABadge.css'
-
 import {useRegisterSW} from 'virtual:pwa-register/react'
 
-function PWABadge() {
-  // check for updates every hour
+export const PWABadge = () => {
   const period = 60 * 60 * 1000
 
   const {
@@ -23,10 +21,6 @@ function PWABadge() {
     },
   })
 
-  function close() {
-    setNeedRefresh(false)
-  }
-
   return (
     <div className='PWABadge' role='alert' aria-labelledby='toast-message'>
       {needRefresh && (
@@ -38,7 +32,7 @@ function PWABadge() {
             <button className='PWABadge-toast-button' onClick={() => updateServiceWorker(true)}>
               Reload
             </button>
-            <button className='PWABadge-toast-button' onClick={() => close()}>
+            <button className='PWABadge-toast-button' onClick={() => setNeedRefresh(false)}>
               Close
             </button>
           </div>
@@ -48,11 +42,6 @@ function PWABadge() {
   )
 }
 
-export default PWABadge
-
-/**
- * This function will register a periodic sync check every hour, you can modify the interval as needed.
- */
 function registerPeriodicSync(period: number, swUrl: string, r: ServiceWorkerRegistration) {
   if (period <= 0) return
 
@@ -67,6 +56,8 @@ function registerPeriodicSync(period: number, swUrl: string, r: ServiceWorkerReg
       },
     })
 
-    if (resp?.status === 200) await r.update()
+    if (resp?.status === 200) {
+      await r.update()
+    }
   }, period)
 }

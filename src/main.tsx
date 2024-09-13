@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import '@mantine/core/styles.css'
 import {MantineProvider} from '@mantine/core'
 
-import App from './App.tsx'
+import {App} from './App.tsx'
 import {theme} from './theme.ts'
 import './index.css'
 
