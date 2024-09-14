@@ -1,8 +1,9 @@
+import {Counter} from './Counter.tsx'
 import {PWABadge} from './PWABadge.tsx'
 
 export const App = () => (
   <>
-    App
+    <Counter />
     <PWABadge />
   </>
 )
