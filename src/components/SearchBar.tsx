@@ -2,7 +2,7 @@ import {Menu, TextInput} from '@mantine/core'
 import {queryChanged, useSelector} from '../store'
 import wordsUrl from '../assets/words.txt'
 import {useState} from 'react'
-import {bySelector, debouncePromise, last, splitWords} from '../util/misc'
+import {bySelector, debouncePromise, delay, getUniqueBy, last, splitWords} from '../util/misc'
 import {levenshtein} from '../util/levenshtein'
 
 let words: string[] = []
@@ -10,16 +10,33 @@ fetch(wordsUrl)
   .then((res) => res.text())
   .then((txt) => (words = txt.split('\n')))
 
-const getTopTwenty = debouncePromise(
-  (q: string) =>
+const getCompletions = (q: string, limit: number): Promise<string[]> =>
+  delay(0).then(() =>
     words
       .map((w) => [levenshtein(q, w.slice(0, q.length)), w] as const)
       .sort(bySelector((i) => i[0]))
-      .slice(0, 20)
-      .map(([, w]) => w),
-  500,
-  'aborted'
-)
+      .slice(0, limit)
+      .map(([, w]) => w)
+  )
+
+const getClosest = (q: string, limit: number): Promise<string[]> =>
+  delay(0).then(() =>
+    words
+      .map((w) => [levenshtein(q, w), w] as const)
+      .sort(bySelector((i) => i[0]))
+      .slice(0, limit)
+      .map(([, w]) => w)
+  )
+
+const getClosestAndCompletions = (q: string, limit: number): Promise<string[]> =>
+  Promise.all([getCompletions(q, limit), getClosest(q, limit)]).then(([completions, closest]) =>
+    getUniqueBy(
+      completions.flatMap((c, i) => (closest.length > i ? [c, closest[i]] : [c])),
+      (w) => w
+    ).slice(0, limit)
+  )
+
+const debounced = debouncePromise(getClosestAndCompletions, 500, 'aborted')
 
 export const SearchBar = () => {
   const query = useSelector((s) => s.query)
@@ -28,7 +45,7 @@ export const SearchBar = () => {
   const [top, setTop] = useState<string[]>([])
   const [selected, setSelected] = useState(0)
 
-  getTopTwenty(lastWord)
+  debounced(lastWord, 20)
     .then(setTop)
     .catch(() => {})
 

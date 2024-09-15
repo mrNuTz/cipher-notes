@@ -7,7 +7,7 @@ export const UrlBar = () => {
   const url = useSelector(selectCurrentUrl)
   return (
     <FlexRow>
-      <TextInput readOnly value={url} flex={1} />
+      <TextInput disabled value={url} flex={1} />
       <Button
         onClick={() => {
           window.open(url, '_blank')

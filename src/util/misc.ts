@@ -36,14 +36,17 @@ export const debounce = <Args extends unknown[]>(fn: (...args: Args) => unknown,
   }
 }
 
+export const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
 export type PromiseCancelable<T> = Promise<T> & {cancel: () => void}
 
-export const setTimeoutPromise = <Args extends any[], Ret, AbortValue>(
-  fn: (...args: Args) => Ret,
+export const setTimeoutPromise = <Fn extends (...args: any[]) => any, AbortValue>(
+  fn: Fn,
   timeout: number,
   abortValue: AbortValue,
-  ...args: Args
-): PromiseCancelable<Ret> => {
+  ...args: Parameters<Fn>
+): PromiseCancelable<Awaited<ReturnType<Fn>>> => {
+  type Ret = Awaited<ReturnType<Fn>>
   let timeoutId: number | undefined = undefined
   let cancel = () => {}
   const promise = new Promise<Ret>((resolve, reject) => {
@@ -62,14 +65,32 @@ export const setTimeoutPromise = <Args extends any[], Ret, AbortValue>(
   return promise
 }
 
-export const debouncePromise = <Args extends any[], Ret, AbortValue>(
-  fn: (...args: Args) => Ret,
+export const debouncePromise = <Fn extends (...args: any[]) => any, AbortValue>(
+  fn: Fn,
   timeout: number,
   abortValue: AbortValue
 ) => {
+  type Ret = Awaited<ReturnType<Fn>>
   let promise = {cancel: () => {}}
-  return (...args: Args): PromiseCancelable<Ret> => {
+  return (...args: Parameters<Fn>): PromiseCancelable<Ret> => {
     promise.cancel()
     return (promise = setTimeoutPromise(fn, timeout, abortValue, ...args))
+  }
+}
+
+export const getUniqueBy = <T>(array: T[], getKey: (el: T) => string) => {
+  return array.reduce(uniqueByReducer<T>(getKey), [] as T[])
+}
+
+const uniqueByReducer = <T>(getKey: (el: T) => string) => {
+  const set = new Set<string>()
+  return (prev: T[], curr: T) => {
+    const key = getKey(curr)
+    if (set.has(key)) {
+      return prev
+    }
+    set.add(key)
+    prev.push(curr)
+    return prev
   }
 }
