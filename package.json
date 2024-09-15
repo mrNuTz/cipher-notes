@@ -16,9 +16,11 @@
     "@mantine/modals": "^7.12.2",
     "@mantine/notifications": "^7.12.2",
     "@mantine/spotlight": "^7.12.2",
+    "@tabler/icons-react": "^3.16.0",
     "immer": "^10.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "reselect": "^5.1.1",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

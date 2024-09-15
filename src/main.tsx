@@ -1,10 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import '@mantine/core/styles.css'
+import '@mantine/spotlight/styles.css'
 import {MantineProvider} from '@mantine/core'
 
 import {useSelector} from './store.ts'
-import {App} from './App.tsx'
+import {App} from './components/App.tsx'
 import {theme} from './theme.ts'
 import './index.css'
 
