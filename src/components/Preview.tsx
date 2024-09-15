@@ -1,9 +1,10 @@
 import {useComputedColorScheme} from '@mantine/core'
-import {selectSelectedEngine, useSelector} from '../store'
+import {selectCurrentUrl, selectSelectedEngine, useSelector} from '../store'
 
 export const Preview = () => {
   const engine = useSelector(selectSelectedEngine)
-  const {url = '', iframe = false} = engine ?? {}
+  const url = useSelector(selectCurrentUrl)
+  const {iframe = false} = engine ?? {}
   const cs = useComputedColorScheme()
   return (
     <>
