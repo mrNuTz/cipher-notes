@@ -11,7 +11,6 @@ export const EngineSelect = () => {
       autoFocus
       searchable
       filter={({limit, options, search}) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (options as ComboboxItem[])
           .sort(bySelector((o) => levenshtein(o.label.slice(0, search.length), search)))
           .slice(0, limit)

@@ -9,6 +9,9 @@ export const compare = (a: any, b: any) => {
       else if (_a > _b) return 1
     }
   }
+  if (typeof a === 'string' && typeof b === 'string') {
+    return a.localeCompare(b)
+  }
   return a < b ? -1 : a > b ? 1 : 0
 }
 

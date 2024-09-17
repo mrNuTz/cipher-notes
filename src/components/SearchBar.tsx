@@ -6,7 +6,7 @@ import {bySelector, debouncePromise, delay, getUniqueBy, last, splitWords} from 
 import {levenshtein} from '../util/levenshtein'
 
 let words: string[] = []
-fetch(wordsUrl)
+fetch(wordsUrl, {cache: 'force-cache'})
   .then((res) => res.text())
   .then((txt) => (words = txt.split('\n')))
 

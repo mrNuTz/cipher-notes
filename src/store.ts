@@ -2,6 +2,7 @@ import {create} from 'zustand'
 import {immer} from 'zustand/middleware/immer'
 import {defaultEngines, Engine} from './defaultEngines'
 import {createSelector} from 'reselect'
+import {compare} from './util/misc'
 
 type State = {
   query: string
@@ -29,7 +30,7 @@ export const engineSelected = (engine: string | null) =>
 
 export const selectEngineOptions = createSelector(
   (s: State) => s.engines,
-  (engines) => engines.map((e) => e.name).sort()
+  (engines) => engines.map((e) => e.name).sort(compare)
 )
 export const selectSelectedEngine = createSelector(
   [(s: State) => s.engines, (s: State) => s.selectedEngine],
