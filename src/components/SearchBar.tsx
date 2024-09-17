@@ -1,31 +1,42 @@
 import {Menu, TextInput} from '@mantine/core'
 import {queryChanged, useSelector} from '../store'
-import wordsUrl from '../assets/words.txt'
-import {useState} from 'react'
-import {bySelector, debouncePromise, delay, getUniqueBy, last, splitWords} from '../util/misc'
+import wordsFreqUrl from '../assets/word_frequencies.txt'
+import {useEffect, useState} from 'react'
+import {compare, delay, getUniqueBy, last, splitWords} from '../util/misc'
 import {levenshtein} from '../util/levenshtein'
 
-let words: string[] = []
-fetch(wordsUrl, {cache: 'force-cache'})
+const noneWord = /\W/
+
+let wordFreq: (readonly [number, string])[] = []
+fetch(wordsFreqUrl, {cache: 'force-cache'})
   .then((res) => res.text())
-  .then((txt) => (words = txt.split('\n')))
+  .then((txt) =>
+    txt
+      .split('\n')
+      .map((l) => {
+        const s = l.split('\t')
+        return [Number(s[2]), s[1]] as const
+      })
+      .filter(([, w]) => !noneWord.test(w))
+  )
+  .then((w) => (wordFreq = w))
 
 const getCompletions = (q: string, limit: number): Promise<string[]> =>
   delay(0).then(() =>
-    words
-      .map((w) => [levenshtein(q, w.slice(0, q.length)), w] as const)
-      .sort(bySelector((i) => i[0]))
+    wordFreq
+      .map(([f, w]) => [levenshtein(q, w.slice(0, q.length)), -f, w] as const)
+      .sort(compare)
       .slice(0, limit)
-      .map(([, w]) => w)
+      .map(([, , w]) => w)
   )
 
 const getClosest = (q: string, limit: number): Promise<string[]> =>
   delay(0).then(() =>
-    words
-      .map((w) => [levenshtein(q, w), w] as const)
-      .sort(bySelector((i) => i[0]))
+    wordFreq
+      .map(([f, w]) => [levenshtein(q, w), -f, w] as const)
+      .sort(compare)
       .slice(0, limit)
-      .map(([, w]) => w)
+      .map(([, , w]) => w)
   )
 
 const getClosestAndCompletions = (q: string, limit: number): Promise<string[]> =>
@@ -36,8 +47,6 @@ const getClosestAndCompletions = (q: string, limit: number): Promise<string[]> =
     ).slice(0, limit)
   )
 
-const debounced = debouncePromise(getClosestAndCompletions, 500, 'aborted')
-
 export const SearchBar = () => {
   const query = useSelector((s) => s.query)
   const lastWord = last(splitWords(query)) ?? ''
@@ -45,9 +54,11 @@ export const SearchBar = () => {
   const [top, setTop] = useState<string[]>([])
   const [selected, setSelected] = useState(0)
 
-  debounced(lastWord, 20)
-    .then(setTop)
-    .catch(() => {})
+  useEffect(() => {
+    getClosestAndCompletions(lastWord, 20)
+      .then(setTop)
+      .catch(() => {})
+  }, [lastWord])
 
   return (
     <Menu opened={focus && !!lastWord} trapFocus={false} position='bottom-start'>
@@ -55,14 +66,17 @@ export const SearchBar = () => {
         <TextInput
           flex={1}
           value={query}
-          onChange={(e) => queryChanged(e.target.value)}
+          onChange={(e) => {
+            setSelected(0)
+            queryChanged(e.target.value)
+          }}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') setSelected((s) => Math.min(s + 1, top.length - 1))
             if (e.key === 'ArrowUp') setSelected((s) => Math.max(s - 1, 0))
-            if (e.key === 'Enter') {
-              queryChanged(query.replace(/[^\t\n ]+$/, top[selected]))
+            if (e.key === 'Tab' && lastWord) {
+              queryChanged(query.replace(/[^\t\n ]+$/, top[selected]) + ' ')
               e.preventDefault()
             }
           }}
@@ -73,7 +87,7 @@ export const SearchBar = () => {
           <Menu.Item
             bg={selected === i ? 'cyan' : undefined}
             key={w}
-            onClick={() => queryChanged(query.replace(/[^\t\n ]+$/, w))}
+            onClick={() => queryChanged(query.replace(/[^\t\n ]+$/, w) + ' ')}
           >
             {w}
           </Menu.Item>
