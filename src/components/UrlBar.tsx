@@ -6,7 +6,7 @@ import {IconExternalLink} from '@tabler/icons-react'
 export const UrlBar = () => {
   const url = useSelector(selectCurrentUrl)
   return (
-    <FlexRow>
+    <FlexRow style={{gap: '.5rem'}}>
       <TextInput disabled value={url} flex={1} />
       <Button
         onClick={() => {

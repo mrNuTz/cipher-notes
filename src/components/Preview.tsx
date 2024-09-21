@@ -18,7 +18,7 @@ export const Preview = () => {
     <>
       {iframe && !queryEmpty ? (
         <iframe
-          style={{flex: 1, display: hidden ? 'none' : 'block'}}
+          style={{flex: 1, display: hidden ? 'none' : 'block', border: 'none', borderRadius: '3px'}}
           key={debouncedUrl}
           src={debouncedUrl}
           onLoad={() => {
