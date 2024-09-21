@@ -16,6 +16,7 @@ export const EngineSelect = () => {
           .slice(0, limit)
       }
       withScrollArea={false}
+      flex={1}
       styles={{dropdown: {maxHeight: 500, overflow: 'auto'}}}
       clearable
       data={options}

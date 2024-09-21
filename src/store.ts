@@ -14,7 +14,7 @@ const init: State = {
   query: '',
   engines: [...defaultEngines],
   selectedEngine: null,
-  defaultEngine: 'Dict',
+  defaultEngine: '',
 }
 export const useSelector = create<State>()(immer(() => init))
 export const getState = useSelector.getState
@@ -44,6 +44,7 @@ export const selectSelectedEngine = createSelector(
   (engines, sel): Engine | null => engines.find((e) => e.name === sel) ?? null
 )
 export const selectSelectedUrl = (s: State): string => selectSelectedEngine(s)?.url ?? ''
-export const selectCurrentUrl = createSelector([(s: State) => s.query, selectSelectedUrl], (q, url): string =>
-  url.replace('%s', encodeURIComponent(q.trim()))
+export const selectCurrentUrl = createSelector(
+  [(s: State) => s.query, selectSelectedUrl],
+  (q, url): string => url.replace('%s', encodeURIComponent(q.trim()))
 )

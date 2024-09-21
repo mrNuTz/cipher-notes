@@ -15,7 +15,8 @@ export const compare = (a: any, b: any) => {
   return a < b ? -1 : a > b ? 1 : 0
 }
 
-export const sort = <T>(arr: Array<T>, cmp: (a: T, b: T) => number = compare) => arr.slice().sort(cmp)
+export const sort = <T>(arr: Array<T>, cmp: (a: T, b: T) => number = compare) =>
+  arr.slice().sort(cmp)
 
 export const bySelector =
   <Item>(selector: (item: Item) => any) =>
@@ -39,7 +40,8 @@ export const debounce = <Args extends unknown[]>(fn: (...args: Args) => unknown,
   }
 }
 
-export const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+export const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms))
 
 export type PromiseCancelable<T> = Promise<T> & {cancel: () => void}
 
@@ -132,3 +134,18 @@ export const throttle = <Args extends any[]>(fn: (...args: Args) => unknown, tim
     wait()
   }
 }
+
+export const getWordBounds = (text: string, pos: number): {start: number; end: number} => {
+  if (!text) return {start: 0, end: 0}
+  if (pos < 0) pos = 0
+  if (pos > text.length) pos = text.length
+
+  let end = pos
+  while (end < text.length && ![' ', '\t', '\n'].includes(text[end]!)) end++
+
+  let start = pos
+  while (start > 0 && ![' ', '\t', '\n'].includes(text[start - 1]!)) start--
+  return {start, end}
+}
+export const spliceString = (str: string, start: number, end: number, insert: string) =>
+  str.slice(0, start) + insert + str.slice(end)

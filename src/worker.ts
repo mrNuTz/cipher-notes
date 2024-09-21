@@ -32,8 +32,8 @@ export const getClosestAndCompletions = (q: string, limit: number): string[] => 
   const max = Math.max(completions.length, closest.length)
   const res: string[] = []
   for (let i = 0; i < max; ++i) {
-    if (i < completions.length) res.push(completions[i])
-    if (i < closest.length) res.push(closest[i])
+    if (i < completions.length) res.push(completions[i]!)
+    if (i < closest.length) res.push(closest[i]!)
   }
   return getUniqueBy(res, (w) => w).slice(0, limit)
 }

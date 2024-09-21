@@ -17,9 +17,9 @@ const fetchWordFrequenciesByLang = (lang: keyof typeof urls): Promise<WordFreque
         .split('\n')
         .map((l) => {
           const s = l.split('\t')
-          return [Number(s[2]), s[1]] as const
+          return [Number(s[2]), s[1] ?? ''] as const
         })
-        .filter(([f, w]) => isFinite(f) && w && !w.includes(' '))
+        .filter(([f, w]) => isFinite(f) && w.length > 1 && !w.includes(' '))
     )
 
 export type LanguageSelection = {[K in LangKey]?: boolean}

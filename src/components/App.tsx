@@ -11,9 +11,9 @@ export const App = () => (
   <>
     <FlexRow>
       <EngineSelect />
-      <SearchBar />
       <ColorSchemeToggle />
     </FlexRow>
+    <SearchBar />
     <UrlBar />
     <Preview />
     <CommandCenter />
