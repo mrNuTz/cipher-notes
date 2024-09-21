@@ -102,3 +102,33 @@ export function log<T>(x: T): T {
   console.log(x)
   return x
 }
+
+/**
+ * Calls {fn} immediately when the returned function is called, after that at most once per {timeout}.
+ */
+export const throttle = <Args extends any[]>(fn: (...args: Args) => unknown, timeout: number) => {
+  let pending = false
+  let waiting = false
+  let lastArgs: Args
+  const wait = () =>
+    delay(timeout).then(() => {
+      if (pending) {
+        pending = false
+        fn(...lastArgs)
+        wait()
+      } else {
+        waiting = false
+      }
+    })
+  return (...args: Args) => {
+    lastArgs = args
+    if (pending) return
+    if (waiting) {
+      pending = true
+      return
+    }
+    waiting = true
+    Promise.resolve().then(() => fn(...args))
+    wait()
+  }
+}

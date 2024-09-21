@@ -1,6 +1,6 @@
 import {create} from 'zustand'
 import {immer} from 'zustand/middleware/immer'
-import {defaultEngines, Engine} from './defaultEngines'
+import {defaultEngines, Engine} from './business/defaultEngines'
 import {createSelector} from 'reselect'
 import {compare} from './util/misc'
 
@@ -8,16 +8,23 @@ type State = {
   query: string
   engines: Engine[]
   selectedEngine: string | null
+  defaultEngine: string
 }
 const init: State = {
   query: '',
   engines: [...defaultEngines],
   selectedEngine: null,
+  defaultEngine: 'Dict',
 }
 export const useSelector = create<State>()(immer(() => init))
 export const getState = useSelector.getState
 export const setState = useSelector.setState
 export const subscribe = useSelector.subscribe
+;(function init() {
+  setState((s) => {
+    s.selectedEngine = s.engines.find((e) => e.name === s.defaultEngine)?.name ?? null
+  })
+})()
 
 export const queryChanged = (query: string) =>
   setState((state) => {
@@ -38,5 +45,5 @@ export const selectSelectedEngine = createSelector(
 )
 export const selectSelectedUrl = (s: State): string => selectSelectedEngine(s)?.url ?? ''
 export const selectCurrentUrl = createSelector([(s: State) => s.query, selectSelectedUrl], (q, url): string =>
-  url.replace('%s', encodeURIComponent(q))
+  url.replace('%s', encodeURIComponent(q.trim()))
 )

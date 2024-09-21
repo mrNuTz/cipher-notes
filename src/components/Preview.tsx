@@ -1,12 +1,13 @@
-import {useComputedColorScheme} from '@mantine/core'
 import {selectCurrentUrl, selectSelectedEngine, useSelector} from '../store'
 import {useEffect, useRef, useState} from 'react'
+import {useDebouncedValue} from '@mantine/hooks'
 
 export const Preview = () => {
   const engine = useSelector(selectSelectedEngine)
   const url = useSelector(selectCurrentUrl)
+  const queryEmpty = useSelector((s) => s.query.length === 0)
   const {iframe = false} = engine ?? {}
-  const cs = useComputedColorScheme()
+  const [debouncedUrl] = useDebouncedValue(url, 500)
   // hide to prevent focus stealing
   const [hidden, setHidden] = useState(true)
   const ref = useRef<number | undefined>(undefined)
@@ -15,11 +16,11 @@ export const Preview = () => {
   }, [url])
   return (
     <>
-      {iframe ? (
+      {iframe && !queryEmpty ? (
         <iframe
-          style={{colorScheme: cs, flex: 1, display: hidden ? 'none' : 'block'}}
-          key={url}
-          src={url}
+          style={{flex: 1, display: hidden ? 'none' : 'block'}}
+          key={debouncedUrl}
+          src={debouncedUrl}
           onLoad={() => {
             if (ref.current) clearTimeout(ref.current)
             ref.current = setTimeout(() => setHidden(false), 500)
