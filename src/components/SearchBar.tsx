@@ -9,18 +9,19 @@ const getClosestAndCompletions = debouncePromise(comlink.getClosestAndCompletion
 export const SearchBar = () => {
   const query = useSelector((s) => s.query)
   const [focus, setFocus] = useState(false)
-  const [top, setTop] = useState<string[]>([])
-  const [selected, setSelected] = useState(0)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [index, setIndex] = useState(-1)
   const [cursor, setCursor] = useState(0)
+
   const {start, end} = getWordBounds(query, cursor)
   const selectedWord = query.slice(start, end)
   useEffect(() => {
     if (selectedWord) {
       getClosestAndCompletions(selectedWord, 20)
-        .then(setTop)
+        .then(setSuggestions)
         .catch(() => {})
     } else {
-      setTop([])
+      setSuggestions([])
     }
   }, [selectedWord])
 
@@ -31,29 +32,31 @@ export const SearchBar = () => {
           value={query}
           onSelect={(e) => setCursor(e.currentTarget.selectionEnd)}
           onChange={(e) => {
-            setSelected(0)
+            setIndex(-1)
             queryChanged(e.target.value)
           }}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           onKeyDown={(e) => {
-            if (e.key === 'ArrowDown' && top.length) {
-              setSelected((s) => Math.min(s + 1, top.length - 1))
+            if (e.key === 'Escape') {
+              setSuggestions([])
+              setIndex(-1)
+            }
+            if (e.key === 'ArrowDown' && suggestions.length) {
+              setIndex((i) => Math.min(i + 1, suggestions.length - 1))
               e.preventDefault()
             }
-            if (e.key === 'ArrowUp' && top.length) {
-              setSelected((s) => Math.max(s - 1, 0))
+            if (e.key === 'ArrowUp' && suggestions.length) {
+              setIndex((i) => Math.max(i - 1, 0))
               e.preventDefault()
             }
-            if (e.key === 'Tab' && selectedWord && !e.shiftKey) {
-              if (top[selected]) {
-                const {start, end} = getWordBounds(query, e.currentTarget.selectionEnd)
-                const replaceWord = top[selected]
-                queryChanged(
-                  spliceString(query, start, end, replaceWord) + (query.length === end ? ' ' : '')
-                )
-                e.preventDefault()
-              }
+            if (e.key === 'Tab' && selectedWord && !e.shiftKey && suggestions[index]) {
+              const {start, end} = getWordBounds(query, e.currentTarget.selectionEnd)
+              const replaceWord = suggestions[index]
+              queryChanged(
+                spliceString(query, start, end, replaceWord) + (query.length === end ? ' ' : '')
+              )
+              e.preventDefault()
             }
           }}
           autosize
@@ -61,11 +64,11 @@ export const SearchBar = () => {
           maxRows={10}
         />
       </Menu.Target>
-      {!!top.length && (
+      {!!suggestions.length && (
         <Menu.Dropdown>
-          {top.map((w, i) => (
+          {suggestions.map((w, i) => (
             <Menu.Item
-              bg={selected === i ? 'cyan' : undefined}
+              bg={index === i ? 'cyan' : undefined}
               key={w}
               onClick={() => {
                 const {start, end} = getWordBounds(query, cursor)
