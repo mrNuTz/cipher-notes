@@ -1,6 +1,6 @@
 import {ComboboxItem, Select} from '@mantine/core'
 import {engineSelected, selectEngineOptions, useSelector} from '../store'
-import {bySelector} from '../util/misc'
+import {compare} from '../util/misc'
 import {levenshtein} from '../util/levenshtein'
 
 export const EngineSelect = () => {
@@ -12,7 +12,10 @@ export const EngineSelect = () => {
       searchable
       filter={({limit, options, search}) =>
         (options as ComboboxItem[])
-          .sort(bySelector((o) => levenshtein(o.label.slice(0, search.length), search)))
+          .map((o) => [levenshtein(o.label.slice(0, search.length), search), o] as const)
+          .sort(compare)
+          .filter(([d]) => d <= 1)
+          .map(([, o]) => o)
           .slice(0, limit)
       }
       withScrollArea={false}

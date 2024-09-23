@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-var */
-function _min(d0: any, d1: any, d2: any, bx: any, ay: any) {
+function _min(d0: number, d1: number, d2: number, bx: number, ay: number): number {
   return d0 < d1 || d2 < d1 ? (d0 > d2 ? d2 + 1 : d0 + 1) : bx === ay ? d1 : d1 + 1
 }
 
-export function levenshtein(a: string, b: string): number {
+export function levenshtein(a: string, b: string, caseSensitive: boolean = false): number {
+  a = caseSensitive ? a : a.toLowerCase()
+  b = caseSensitive ? b : b.toLowerCase()
   if (a === b) {
     return 0
   }
@@ -37,20 +38,20 @@ export function levenshtein(a: string, b: string): number {
   }
 
   var x = 0
-  var y
-  var d0
-  var d1
-  var d2
-  var d3
-  var dd
-  var dy
-  var ay
-  var bx0
-  var bx1
-  var bx2
-  var bx3
+  var y: number
+  var d0: number
+  var d1: number
+  var d2: number
+  var d3: number
+  var dd: number
+  var dy: number
+  var ay: number
+  var bx0: number
+  var bx1: number
+  var bx2: number
+  var bx3: number
 
-  var vector = []
+  var vector: number[] = []
 
   for (y = 0; y < la; y++) {
     vector.push(y + 1)
@@ -66,8 +67,8 @@ export function levenshtein(a: string, b: string): number {
     bx3 = b.charCodeAt(offset + (d3 = x + 3))
     dd = x += 4
     for (y = 0; y < len; y += 2) {
-      dy = vector[y]
-      ay = vector[y + 1]
+      dy = vector[y]!
+      ay = vector[y + 1]!
       d0 = _min(dy, d0, d1, bx0, ay)
       d1 = _min(d0, d1, d2, bx1, ay)
       d2 = _min(d1, d2, d3, bx2, ay)
@@ -84,11 +85,11 @@ export function levenshtein(a: string, b: string): number {
     bx0 = b.charCodeAt(offset + (d0 = x))
     dd = ++x
     for (y = 0; y < len; y += 2) {
-      dy = vector[y]
-      vector[y] = dd = _min(dy, d0, dd, bx0, vector[y + 1])
+      dy = vector[y]!
+      vector[y] = dd = _min(dy, d0, dd, bx0, vector[y + 1]!)
       d0 = dy
     }
   }
 
-  return dd
+  return dd!
 }

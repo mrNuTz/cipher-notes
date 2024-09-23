@@ -17,7 +17,7 @@ export const SearchBar = () => {
   const selectedWord = query.slice(start, end)
   useEffect(() => {
     if (selectedWord) {
-      getClosestAndCompletions(selectedWord, 20)
+      getClosestAndCompletions(selectedWord, 10)
         .then(setSuggestions)
         .catch(() => {})
     } else {
