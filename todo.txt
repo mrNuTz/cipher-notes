@@ -1,0 +1,6 @@
+DONE:
+FIRST:
+TODO:
+  persist notes
+LATER:
+MAYBE:

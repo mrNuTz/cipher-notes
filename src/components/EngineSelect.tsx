@@ -5,7 +5,7 @@ import {levenshtein} from '../util/levenshtein'
 
 export const EngineSelect = () => {
   const options = useSelector(selectEngineOptions)
-  const value = useSelector((s) => s.selectedEngine)
+  const value = useSelector((s) => s.search.selectedEngine)
   return (
     <Select
       autoFocus
@@ -19,7 +19,6 @@ export const EngineSelect = () => {
           .slice(0, limit)
       }
       withScrollArea={false}
-      flex={1}
       styles={{dropdown: {maxHeight: 500, overflow: 'auto'}}}
       clearable
       data={options}

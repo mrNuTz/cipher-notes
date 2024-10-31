@@ -7,7 +7,7 @@ import {comlink} from '../comlink'
 const getClosestAndCompletions = debouncePromise(comlink.getClosestAndCompletions, 100, 'abort')
 
 export const SearchBar = () => {
-  const query = useSelector((s) => s.query)
+  const query = useSelector((s) => s.search.query)
   const [focus, setFocus] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [index, setIndex] = useState(-1)

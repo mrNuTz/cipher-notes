@@ -5,7 +5,14 @@ export const ColorSchemeToggle = () => {
   const {toggleColorScheme} = useMantineColorScheme()
   const cs = useComputedColorScheme()
   return (
-    <Button tabIndex={999} onClick={toggleColorScheme}>
+    <Button
+      pos='absolute'
+      top='0.25rem'
+      right='0.25rem'
+      size='compact-sm'
+      tabIndex={-1}
+      onClick={toggleColorScheme}
+    >
       {cs === 'light' ? <IconMoon /> : <IconSun />}
     </Button>
   )

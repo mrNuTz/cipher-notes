@@ -2,9 +2,14 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--mantine-color-gray-0);
 }
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+html[data-mantine-color-scheme='dark'] body {
+  background-color: var(--mantine-color-dark-8);
 }

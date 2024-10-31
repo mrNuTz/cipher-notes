@@ -5,7 +5,7 @@ import {useDebouncedValue} from '@mantine/hooks'
 export const Preview = () => {
   const engine = useSelector(selectSelectedEngine)
   const url = useSelector(selectCurrentUrl)
-  const queryEmpty = useSelector((s) => s.query.length === 0)
+  const queryEmpty = useSelector((s) => s.search.query.length === 0)
   const {iframe = false} = engine ?? {}
   const [debouncedUrl] = useDebouncedValue(url, 500)
   // hide to prevent focus stealing
