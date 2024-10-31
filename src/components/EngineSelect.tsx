@@ -1,7 +1,8 @@
 import {ComboboxItem, Select} from '@mantine/core'
-import {engineSelected, selectEngineOptions, useSelector} from '../store'
+import {useSelector} from '../state/store'
 import {compare} from '../util/misc'
 import {levenshtein} from '../util/levenshtein'
+import {engineSelected, selectEngineOptions} from '../state/search'
 
 export const EngineSelect = () => {
   const options = useSelector(selectEngineOptions)

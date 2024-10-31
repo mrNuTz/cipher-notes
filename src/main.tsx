@@ -4,7 +4,7 @@ import '@mantine/core/styles.css'
 import '@mantine/spotlight/styles.css'
 import {MantineProvider} from '@mantine/core'
 
-import {useSelector} from './store.ts'
+import {useSelector} from './state/store.ts'
 import {App} from './components/App.tsx'
 import {theme} from './theme.ts'
 import './index.css'

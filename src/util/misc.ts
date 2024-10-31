@@ -149,3 +149,11 @@ export const getWordBounds = (text: string, pos: number): {start: number; end: n
 }
 export const spliceString = (str: string, start: number, end: number, insert: string) =>
   str.slice(0, start) + insert + str.slice(end)
+
+export const indexBy = <T, K extends string>(arr: T[], keyFn: (item: T) => K) => {
+  const map = {} as Record<K, T>
+  for (const item of arr) {
+    map[keyFn(item)] = item
+  }
+  return map
+}

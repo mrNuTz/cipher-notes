@@ -1,8 +1,9 @@
 import {Menu, Textarea} from '@mantine/core'
-import {queryChanged, useSelector} from '../store'
+import {useSelector} from '../state/store'
 import {useEffect, useState} from 'react'
 import {debouncePromise, getWordBounds, spliceString} from '../util/misc'
 import {comlink} from '../comlink'
+import {queryChanged} from '../state/search'
 
 const getClosestAndCompletions = debouncePromise(comlink.getClosestAndCompletions, 100, 'abort')
 

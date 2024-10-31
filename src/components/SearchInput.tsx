@@ -1,5 +1,6 @@
 import {TextInput} from '@mantine/core'
-import {noteQueryChanged, useSelector} from '../store'
+import {useSelector} from '../state/store'
+import {noteQueryChanged} from '../state/notes'
 
 export const SearchInput = () => {
   const query = useSelector((s) => s.notes.query)

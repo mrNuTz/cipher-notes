@@ -1,6 +1,7 @@
-import {selectCurrentUrl, selectSelectedEngine, useSelector} from '../store'
+import {useSelector} from '../state/store'
 import {useEffect, useRef, useState} from 'react'
 import {useDebouncedValue} from '@mantine/hooks'
+import {selectCurrentUrl, selectSelectedEngine} from '../state/search'
 
 export const Preview = () => {
   const engine = useSelector(selectSelectedEngine)

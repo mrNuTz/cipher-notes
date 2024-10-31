@@ -1,5 +1,5 @@
 import {Tabs} from '@mantine/core'
-import {tabChanged, useSelector} from '../store'
+import {tabChanged, useSelector} from '../state/store'
 import {SearchTab} from './SearchTab'
 import {NotesTab} from './NotesTab'
 

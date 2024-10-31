@@ -1,5 +1,6 @@
 import {Box, Paper} from '@mantine/core'
-import {openNote, selectFilteredNotes, useSelector} from '../store'
+import {useSelector} from '../state/store'
+import {openNote, selectFilteredNotes} from '../state/notes'
 
 export const NotesGrid = () => {
   const notes = useSelector(selectFilteredNotes)

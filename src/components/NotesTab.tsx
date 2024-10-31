@@ -3,8 +3,8 @@ import {memo} from 'react'
 import {FlexRow} from './misc'
 import {SearchInput} from './SearchInput'
 import {IconPlus} from '@tabler/icons-react'
-import {addNote} from '../store'
 import {NotesGrid} from './NotesGrid'
+import {addNote} from '../state/notes'
 
 export const NotesTab = memo(() => (
   <Tabs.Panel value='notes' style={{flex: 1, padding: '1rem'}}>
