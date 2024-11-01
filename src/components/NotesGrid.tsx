@@ -11,18 +11,36 @@ export const NotesGrid = () => {
         gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
         gap: '1rem',
         marginTop: '1rem',
+        alignItems: 'start',
       }}
     >
       {notes.map((note) => (
         <Paper
           key={note.id}
-          style={{padding: '1rem', whiteSpace: 'pre-wrap'}}
+          style={{padding: '1rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word'}}
           shadow='sm'
           onClick={() => openNote(note.id)}
         >
-          {note.txt}
+          {truncate(note.txt)}
         </Paper>
       ))}
     </Box>
   )
+}
+
+const truncate = (txt: string) => {
+  const lines = txt.split('\n')
+  let ellipsis: boolean = false
+  if (lines.length > 5) {
+    txt = lines.slice(0, 5).join('\n')
+    ellipsis = true
+  }
+  if (txt.length > 200) {
+    txt = txt.slice(0, 200)
+    ellipsis = true
+  }
+  if (ellipsis) {
+    txt += '...'
+  }
+  return txt
 }

@@ -1,6 +1,7 @@
 DONE:
+  persist notes
 FIRST:
 TODO:
-  persist notes
+  delete notes
 LATER:
 MAYBE:

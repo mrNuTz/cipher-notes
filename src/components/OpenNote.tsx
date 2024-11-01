@@ -11,6 +11,7 @@ export const OpenNote = () => {
         onChange={(e) => openNoteChanged(e.target.value)}
         autosize
         minRows={5}
+        styles={{input: {fontFamily: "Monaco, 'Cascadia Code', Consolas, monospace"}}}
       />
     </Modal>
   )

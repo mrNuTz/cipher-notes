@@ -1,10 +1,10 @@
 import {createSelector} from 'reselect'
 import {generateId} from '../business/generateId'
 import {Note} from '../business/models'
-import {getState, RootState, setState} from './store'
+import {RootState, setState, subscribe} from './store'
 import {loadNotes, storeNotes} from '../services/notesStorage'
 import {showMessage} from './messages'
-import {indexBy} from '../util/misc'
+import {debounce, indexBy} from '../util/misc'
 
 export type NotesState = {
   query: string
@@ -18,12 +18,14 @@ export const notesInit: NotesState = {
   openNote: null,
 }
 
+// init
 loadNotes().then((notes) =>
   setState((s) => {
     s.notes.notes = indexBy(notes, (n) => n.id)
   })
 )
 
+// actions
 export const noteQueryChanged = (query: string) =>
   setState((s) => {
     s.notes.query = query
@@ -32,14 +34,10 @@ export const openNote = (id: string) =>
   setState((s) => {
     s.notes.openNote = id
   })
-export const closeNote = () => {
+export const closeNote = () =>
   setState((s) => {
     s.notes.openNote = null
   })
-  storeNotes(Object.values(getState().notes.notes)).catch(() =>
-    showMessage({title: 'Error', text: 'Failed to save notes'})
-  )
-}
 export const addNote = () =>
   setState((s) => {
     const id = generateId()
@@ -58,6 +56,7 @@ export const openNoteChanged = (txt: string) =>
     }
   })
 
+// selectors
 export const selectFilteredNotes = createSelector(
   [(s: RootState) => s.notes.notes, (s: RootState) => s.notes.query],
   (notes, query) => Object.values(notes).filter((n) => !query || n.txt.includes(query))
@@ -66,3 +65,19 @@ export const selectOpenNote = createSelector(
   [(s: RootState) => s.notes.notes, (s: RootState) => s.notes.openNote],
   (notes, id): Note | undefined => (id ? notes[id] : undefined)
 )
+
+// subscriptions
+const storeNotesDebounced = debounce(
+  (notes: NotesState['notes']) =>
+    storeNotes(Object.values(notes)).catch(() =>
+      showMessage({title: 'Error', text: 'Failed to save notes'})
+    ),
+  1000
+)
+
+export const registerNotesSubscriptions = () => {
+  subscribe(
+    (s) => s.notes.notes,
+    (notes) => storeNotesDebounced(notes)
+  )
+}
