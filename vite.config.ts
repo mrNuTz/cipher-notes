@@ -5,6 +5,9 @@ import {comlink} from 'vite-plugin-comlink'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    outDir: 'docs',
+  },
   plugins: [
     react(),
     comlink(),
