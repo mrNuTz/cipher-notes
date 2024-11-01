@@ -25,9 +25,9 @@ export default defineConfig({
       },
 
       manifest: {
-        name: 'search-interceptor',
-        short_name: 'search-interceptor',
-        description: 'search-interceptor',
+        name: 'local-launcher',
+        short_name: 'local-launcher',
+        description: 'local-launcher',
         theme_color: '#ff00ff',
       },
 
