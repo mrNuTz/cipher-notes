@@ -6,6 +6,7 @@ import {IconPlus} from '@tabler/icons-react'
 import {NotesGrid} from './NotesGrid'
 import {addNote} from '../state/notes'
 import {NotesSortSelect} from './NotesSortSelect'
+import {OpenNote} from './OpenNote'
 
 export const NotesTab = memo(() => (
   <Tabs.Panel
@@ -29,5 +30,6 @@ export const NotesTab = memo(() => (
     <Button onClick={addNote} pos='absolute' bottom='1rem' right='1rem'>
       <IconPlus />
     </Button>
+    <OpenNote />
   </Tabs.Panel>
 ))

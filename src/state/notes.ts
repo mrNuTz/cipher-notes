@@ -5,12 +5,18 @@ import {getState, RootState, setState, subscribe} from './store'
 import {loadNotes, storeNotes} from '../services/notesStorage'
 import {showMessage} from './messages'
 import {byProp, debounce, downloadJson, indexBy} from '../util/misc'
+import {importNotesSchema} from '../business/importNotesSchema'
 
 export type NotesState = {
   query: string
   notes: {[id: string]: Note}
   openNote: string | null
   sort: {prop: NoteSortProp; desc: boolean}
+  importDialog: {
+    open: boolean
+    file: File | null
+    error: string | null
+  }
 }
 
 export const notesInit: NotesState = {
@@ -18,6 +24,7 @@ export const notesInit: NotesState = {
   notes: {},
   openNote: null,
   sort: {prop: 'created', desc: true},
+  importDialog: {open: false, file: null, error: null},
 }
 
 // init
@@ -72,11 +79,58 @@ export const removeOpenNote = () =>
       s.notes.openNote = null
     }
   })
+export const openImportDialog = () =>
+  setState((s) => {
+    s.notes.importDialog = {open: true, file: null, error: null}
+  })
+export const closeImportDialog = () =>
+  setState((s) => {
+    s.notes.importDialog = {open: false, file: null, error: null}
+  })
+export const importFileChanged = (file: File | null) =>
+  setState((s) => {
+    s.notes.importDialog.file = file
+    s.notes.importDialog.error = null
+  })
 
 // effects
 export const exportNotes = () => {
   const notes = Object.values(getState().notes.notes)
   downloadJson(notes, 'notes.json')
+}
+export const importNotes = async (): Promise<void> => {
+  const state = getState()
+  const file = state.notes.importDialog.file
+  if (!file) {
+    return
+  }
+  try {
+    const importNotes = importNotesSchema.parse(JSON.parse(await file.text()))
+    const res: Note[] = []
+    for (const importNote of importNotes) {
+      let {id, created, modified} = importNote
+      const {txt} = importNote
+      if (id === undefined) id = generateId()
+      if (created === undefined) created = Date.now()
+      if (modified === undefined) modified = Date.now()
+      const newNote: Note = {created, id, modified, txt}
+      const existingNote = state.notes.notes[id]
+      if (!existingNote || (importNote.modified ?? -Infinity) > existingNote.modified) {
+        res.push(newNote)
+      }
+    }
+    setState((s) => {
+      for (const note of res) {
+        s.notes.notes[note.id] = note
+      }
+    })
+    closeImportDialog()
+    showMessage({title: 'Success', text: 'Notes imported'})
+  } catch (e) {
+    setState((s) => {
+      s.notes.importDialog.error = 'Invalid file format'
+    })
+  }
 }
 
 // selectors

@@ -1,5 +1,5 @@
 import {Spotlight} from '@mantine/spotlight'
-import {exportNotes} from '../state/notes'
+import {exportNotes, openImportDialog} from '../state/notes'
 
 export const CommandCenter = () => {
   return (
@@ -10,6 +10,11 @@ export const CommandCenter = () => {
           id: 'exportNotes',
           label: 'Export notes',
           onClick: exportNotes,
+        },
+        {
+          id: 'importNotes',
+          label: 'Import notes',
+          onClick: openImportDialog,
         },
       ]}
     />
