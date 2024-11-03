@@ -4,3 +4,5 @@ export type Note = {
   created: number
   modified: number
 }
+
+export type NoteSortProp = Exclude<keyof Note, 'id'>

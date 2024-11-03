@@ -1,4 +1,5 @@
 import {Spotlight} from '@mantine/spotlight'
+import {exportNotes} from '../state/notes'
 
 export const CommandCenter = () => {
   return (
@@ -6,8 +7,9 @@ export const CommandCenter = () => {
       shortcut={['Ctrl + K', 'Cmd + K']}
       actions={[
         {
-          id: 'addEngine',
-          label: 'Add search engine',
+          id: 'exportNotes',
+          label: 'Export notes',
+          onClick: exportNotes,
         },
       ]}
     />

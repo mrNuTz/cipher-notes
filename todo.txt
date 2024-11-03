@@ -1,7 +1,9 @@
 DONE:
   persist notes
+  sort notes
+  delete notes
 FIRST:
 TODO:
-  delete notes
+  import notes
 LATER:
 MAYBE:

@@ -8,7 +8,7 @@ export const ColorSchemeToggle = () => {
     <Button
       pos='absolute'
       top='0.25rem'
-      right='0.25rem'
+      left='0.25rem'
       size='compact-sm'
       tabIndex={-1}
       onClick={toggleColorScheme}

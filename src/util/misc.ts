@@ -1,3 +1,5 @@
+import {JsonRoot} from './type'
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const compare = (a: any, b: any) => {
   if (Array.isArray(a) && Array.isArray(b)) {
@@ -30,6 +32,7 @@ export const byProp =
 
 const wordSplitter = /[\t\n ]+/g
 export const splitWords = (text: string): string[] => text.split(wordSplitter)
+
 export const last = <T>(array: T[]): T | undefined => array[array.length - 1]
 
 export const debounce = <Args extends unknown[]>(fn: (...args: Args) => unknown, delay: number) => {
@@ -156,4 +159,19 @@ export const indexBy = <T, K extends string>(arr: T[], keyFn: (item: T) => K) =>
     map[keyFn(item)] = item
   }
   return map
+}
+
+export const downloadJson = (data: JsonRoot, filename = 'data.json') => {
+  const jsonStr = JSON.stringify(data, null, 2)
+  const blob = new Blob([jsonStr], {type: 'application/json'})
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }

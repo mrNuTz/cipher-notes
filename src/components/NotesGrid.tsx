@@ -10,16 +10,21 @@ export const NotesGrid = () => {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
         gap: '1rem',
-        marginTop: '1rem',
-        alignItems: 'start',
+        padding: '1rem',
       }}
     >
       {notes.map((note) => (
         <Paper
           key={note.id}
-          style={{padding: '1rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word'}}
+          style={{
+            padding: '1rem',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            cursor: 'pointer',
+          }}
           shadow='sm'
           onClick={() => openNote(note.id)}
+          role='button'
         >
           {truncate(note.txt)}
         </Paper>

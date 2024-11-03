@@ -1,13 +1,19 @@
+html {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 100%;
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
   background-color: var(--mantine-color-gray-0);
 }
 #root {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  flex: 1 1 100%;
   position: relative;
 }
 html[data-mantine-color-scheme='dark'] body {

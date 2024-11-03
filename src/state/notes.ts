@@ -1,21 +1,23 @@
 import {createSelector} from 'reselect'
 import {generateId} from '../business/generateId'
-import {Note} from '../business/models'
-import {RootState, setState, subscribe} from './store'
+import {Note, NoteSortProp} from '../business/models'
+import {getState, RootState, setState, subscribe} from './store'
 import {loadNotes, storeNotes} from '../services/notesStorage'
 import {showMessage} from './messages'
-import {debounce, indexBy} from '../util/misc'
+import {byProp, debounce, downloadJson, indexBy} from '../util/misc'
 
 export type NotesState = {
   query: string
   notes: {[id: string]: Note}
   openNote: string | null
+  sort: {prop: NoteSortProp; desc: boolean}
 }
 
 export const notesInit: NotesState = {
   query: '',
   notes: {},
   openNote: null,
+  sort: {prop: 'created', desc: true},
 }
 
 // init
@@ -55,11 +57,39 @@ export const openNoteChanged = (txt: string) =>
       s.notes.notes[s.notes.openNote]!.modified = Date.now()
     }
   })
+export const sortChanged = (prop: NoteSortProp) =>
+  setState((s) => {
+    s.notes.sort.prop = prop
+  })
+export const sortDirectionChanged = () =>
+  setState((s) => {
+    s.notes.sort.desc = !s.notes.sort.desc
+  })
+export const removeOpenNote = () =>
+  setState((s) => {
+    if (s.notes.openNote) {
+      delete s.notes.notes[s.notes.openNote]
+      s.notes.openNote = null
+    }
+  })
+
+// effects
+export const exportNotes = () => {
+  const notes = Object.values(getState().notes.notes)
+  downloadJson(notes, 'notes.json')
+}
 
 // selectors
 export const selectFilteredNotes = createSelector(
-  [(s: RootState) => s.notes.notes, (s: RootState) => s.notes.query],
-  (notes, query) => Object.values(notes).filter((n) => !query || n.txt.includes(query))
+  [
+    (s: RootState) => s.notes.notes,
+    (s: RootState) => s.notes.query,
+    (s: RootState) => s.notes.sort,
+  ],
+  (notes, query, {prop, desc}) =>
+    Object.values(notes)
+      .filter((n) => !query || n.txt.includes(query))
+      .sort(byProp(prop, desc))
 )
 export const selectOpenNote = createSelector(
   [(s: RootState) => s.notes.notes, (s: RootState) => s.notes.openNote],
