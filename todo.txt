@@ -2,8 +2,8 @@ DONE:
   persist notes
   sort notes
   delete notes
+  import notes
 FIRST:
 TODO:
-  import notes
 LATER:
 MAYBE:

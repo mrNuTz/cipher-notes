@@ -1,0 +1,36 @@
+{
+  "editor.useTabStops": true,
+  "editor.tabSize": 2,
+  "editor.indentSize": "tabSize",
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "cSpell.words": [
+    "Abandonware",
+    "autosize",
+    "comlink",
+    "CSIC",
+    "CTAN",
+    "Dailymotion",
+    "Ecosia",
+    "Eurogamer",
+    "Kotaku",
+    "levenshtein",
+    "mantine",
+    "matplotlib",
+    "Metacritic",
+    "precache",
+    "precaching",
+    "Qwant",
+    "Searchalot",
+    "stackexchange",
+    "Swisscows",
+    "tabler"
+  ],
+  "cssVariables.lookupFiles": [
+    "**/*.css",
+    "**/*.scss",
+    "**/*.sass",
+    "**/*.less",
+    "frontend/node_modules/@mantine/core/styles.css"
+  ]
+}
