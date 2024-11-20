@@ -18,6 +18,8 @@
     "mantine",
     "matplotlib",
     "Metacritic",
+    "postgres",
+    "postgresql",
     "precache",
     "precaching",
     "Qwant",
