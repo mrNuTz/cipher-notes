@@ -28,6 +28,9 @@
     "Swisscows",
     "tabler"
   ],
+  "cSpell.ignorePaths": [
+    "**/yarn.lock",
+  ],
   "cssVariables.lookupFiles": [
     "**/*.css",
     "**/*.scss",
