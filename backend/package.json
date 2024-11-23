@@ -8,7 +8,9 @@
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "build": "bun build src/index.ts --outdir dist --target bun --minify",
+    "start": "NODE_ENV=production bun dist/index.js"
   },
   "dependencies": {
     "drizzle-orm": "^0.36.4",
