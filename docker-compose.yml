@@ -1,4 +1,19 @@
 services:
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    container_name: notes_backend
+    ports:
+      - '5200:5100'
+    env_file:
+      - backend/.env
+    depends_on:
+      - postgres
+    networks:
+      - notes-network
+    environment:
+      DATABASE_URL: postgresql://notes:notes@postgres:5432/notes
   postgres:
     image: postgres:15
     container_name: notes_postgres
@@ -11,3 +26,9 @@ services:
     ports:
       - '5432:5432'
     restart: 'no'
+    networks:
+      - notes-network
+
+networks:
+  notes-network:
+    driver: bridge
