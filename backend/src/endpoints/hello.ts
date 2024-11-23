@@ -1,8 +1,8 @@
 import {defaultEndpointsFactory} from 'express-zod-api'
 import {z} from 'zod'
-import {methodProviderMiddleware} from '../middleware.js'
-import {db} from '../db/index.js'
-import {usersTbl} from '../db/schema.js'
+import {methodProviderMiddleware} from '../middleware'
+import {db} from '../db/index'
+import {usersTbl} from '../db/schema'
 
 export const helloWorldEndpoint = defaultEndpointsFactory
   .addMiddleware(methodProviderMiddleware)

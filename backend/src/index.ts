@@ -1,5 +1,5 @@
 import {createServer} from 'express-zod-api'
-import {config} from './config.js'
-import {routing} from './routing.js'
+import {config} from './config'
+import {routing} from './routing'
 
 createServer(config, routing)

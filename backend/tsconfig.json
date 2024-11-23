@@ -1,6 +1,9 @@
 {
-  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["bun-types"],
     "noImplicitAny": true,
     "strict": true,
     "skipLibCheck": true,
