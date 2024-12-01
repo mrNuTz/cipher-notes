@@ -16,6 +16,7 @@
     "@sendgrid/mail": "^8.1.4",
     "drizzle-orm": "^0.36.4",
     "express": "^5.0.1",
+    "express-rate-limit": "^7.4.1",
     "express-zod-api": "^21.1.0",
     "http-errors": "^2.0.0",
     "pg": "^8.13.1",
