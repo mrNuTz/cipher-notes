@@ -1,4 +1,4 @@
-const keys = ['DATABASE_URL'] as const
+const keys = ['DATABASE_URL', 'SENDGRID_API_KEY'] as const
 type Key = (typeof keys)[number]
 
 const vars: {[K in Key]?: string} = {}

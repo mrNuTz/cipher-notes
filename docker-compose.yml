@@ -15,7 +15,7 @@ services:
     environment:
       DATABASE_URL: postgresql://notes:notes@postgres:5432/notes
   postgres:
-    image: postgres:15
+    image: postgres:16
     container_name: notes_postgres
     volumes:
       - ~/.db_data/notes:/var/lib/postgresql/data
