@@ -1,5 +1,10 @@
 import {Method, Middleware} from 'express-zod-api'
 import {env} from './env'
+import {z} from 'zod'
+import {usersTbl} from './db/schema'
+import {db} from './db'
+import {eq} from 'drizzle-orm'
+import createHttpError from 'http-errors'
 
 export const methodProviderMiddleware = new Middleware({
   handler: async ({request}) => ({
@@ -15,10 +20,9 @@ let lastInterval = getInterval()
 
 export const rateLimitMiddleware = new Middleware({
   handler: async ({request}) => {
-    console.log('rateLimitMiddleware')
     const ip = request.ip
     if (!ip) {
-      throw 'No IP address'
+      throw new Error('No IP address')
     }
     const interval = getInterval()
     if (interval !== lastInterval) {
@@ -28,8 +32,21 @@ export const rateLimitMiddleware = new Middleware({
     const count = (ipToCount.get(ip) ?? 0) + 1
     ipToCount.set(ip, count)
     if (count > limit) {
-      throw 'Rate limit exceeded'
+      throw createHttpError(429, 'Rate limit exceeded')
     }
     return {}
+  },
+})
+
+export const authMiddleware = new Middleware({
+  input: z.object({
+    access_token: z.string().length(36),
+  }),
+  handler: async ({input: {access_token}}) => {
+    const users = await db.select().from(usersTbl).where(eq(usersTbl.access_token, access_token))
+    if (users.length !== 1) {
+      throw createHttpError(401, 'Invalid access token')
+    }
+    return {user: users[0]}
   },
 })

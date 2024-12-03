@@ -1,15 +1,12 @@
-import {endpointsFactory} from '../endpointsFactory'
+import {authEndpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
-import {methodProviderMiddleware} from '../middleware'
 
-export const helloWorldEndpoint = endpointsFactory.addMiddleware(methodProviderMiddleware).build({
-  method: ['get', 'post'],
-  input: z.object({}),
+export const helloEndpoint = authEndpointsFactory.build({
+  method: 'get',
   output: z.object({
-    array: z.array(z.string()),
+    email: z.string(),
   }),
-  handler: async ({input, logger}) => {
-    logger.debug('input', input)
-    return {array: ['foo']}
+  handler: async ({options: {user}}) => {
+    return {email: user.email}
   },
 })

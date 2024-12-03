@@ -8,5 +8,5 @@ export const sendMail = async (to: string, subject: string, text: string) => {
 }
 
 export const sendLoginCode = async (to: string, code: string) => {
-  return await sendMail(to, 'local-launcher login code', `Your login code is: ${code}`)
+  return await sendMail(to, 'cipher-notes login code', `Your login code is: ${code}`)
 }

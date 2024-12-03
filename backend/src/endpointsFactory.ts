@@ -1,4 +1,28 @@
-import {defaultEndpointsFactory} from 'express-zod-api'
-import {rateLimitMiddleware} from './middleware'
+import {EndpointsFactory, ensureHttpError, ResultHandler} from 'express-zod-api'
+import {authMiddleware, rateLimitMiddleware} from './middleware'
+import {z} from 'zod'
 
-export const endpointsFactory = defaultEndpointsFactory.addMiddleware(rateLimitMiddleware)
+const resultHandler = new ResultHandler({
+  positive: (data) => ({
+    schema: z.object({success: z.literal(true), data}),
+    mimeType: 'application/json',
+  }),
+  negative: z.object({success: z.literal(false), error: z.string()}),
+  handler: ({error, output, response, logger}) => {
+    if (error) {
+      logger.error(error.stack ?? error.toString())
+      const {statusCode, message} = ensureHttpError(error)
+      return void response.status(statusCode).json({
+        success: false,
+        error: statusCode === 500 ? 'Internal Server Error' : message,
+      })
+    }
+    response.status(200).json({success: true, data: output})
+  },
+})
+
+export const endpointsFactory = new EndpointsFactory(resultHandler).addMiddleware(
+  rateLimitMiddleware
+)
+
+export const authEndpointsFactory = endpointsFactory.addMiddleware(authMiddleware)
