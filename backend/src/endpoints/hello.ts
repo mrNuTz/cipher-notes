@@ -1,26 +1,15 @@
-import {defaultEndpointsFactory} from 'express-zod-api'
+import {endpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
 import {methodProviderMiddleware} from '../middleware'
-import {db} from '../db/index'
-import {usersTbl} from '../db/schema'
 
-export const helloWorldEndpoint = defaultEndpointsFactory
-  .addMiddleware(methodProviderMiddleware)
-  .build({
-    method: ['get', 'post'],
-    input: z.object({}),
-    output: z.object({
-      array: z.array(z.string()),
-    }),
-    handler: async ({input, options, logger}) => {
-      logger.debug('input', input)
-      if (options.method === 'post') {
-        const ins: typeof usersTbl.$inferInsert = {
-          email: 'test@test.com',
-        }
-        await db.insert(usersTbl).values(ins)
-      }
-      const res = await db.select().from(usersTbl)
-      return {array: res.map((r) => r.email)}
-    },
-  })
+export const helloWorldEndpoint = endpointsFactory.addMiddleware(methodProviderMiddleware).build({
+  method: ['get', 'post'],
+  input: z.object({}),
+  output: z.object({
+    array: z.array(z.string()),
+  }),
+  handler: async ({input, logger}) => {
+    logger.debug('input', input)
+    return {array: ['foo']}
+  },
+})

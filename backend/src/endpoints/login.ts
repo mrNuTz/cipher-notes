@@ -1,4 +1,4 @@
-import {defaultEndpointsFactory} from 'express-zod-api'
+import {endpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
 import {db} from '../db/index'
 import {usersTbl} from '../db/schema'
@@ -6,7 +6,7 @@ import {eq} from 'drizzle-orm'
 import {generateAccessToken, generateLoginCode} from '../business/misc'
 import {sendLoginCode} from '../services/mail'
 
-export const loginEmailEndpoint = defaultEndpointsFactory.build({
+export const loginEmailEndpoint = endpointsFactory.build({
   method: 'post',
   input: z.object({
     email: z.string().email(),
@@ -43,7 +43,7 @@ export const loginEmailEndpoint = defaultEndpointsFactory.build({
   },
 })
 
-export const loginCodeEndpoint = defaultEndpointsFactory.build({
+export const loginCodeEndpoint = endpointsFactory.build({
   method: 'post',
   input: z.object({
     email: z.string().email(),
