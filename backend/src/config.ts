@@ -1,8 +1,9 @@
 import {createConfig} from 'express-zod-api'
+import {env} from './env'
 
 export const config = createConfig({
   http: {
-    listen: 5100,
+    listen: env.PORT,
   },
   cors: true,
 })

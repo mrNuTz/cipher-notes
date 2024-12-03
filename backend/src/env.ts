@@ -4,6 +4,7 @@ const keys = [
   'SENDGRID_API_KEY',
   'RATE_WINDOW_SEC',
   'RATE_LIMIT',
+  'PORT',
 ] as const
 type Key = (typeof keys)[number]
 
