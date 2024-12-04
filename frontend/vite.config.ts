@@ -7,7 +7,7 @@ import {comlink} from 'vite-plugin-comlink'
 export default defineConfig({
   base: './',
   build: {
-    outDir: '../docs',
+    outDir: 'dist',
   },
   plugins: [
     react(),
