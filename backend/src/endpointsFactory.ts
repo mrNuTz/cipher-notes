@@ -7,7 +7,7 @@ const resultHandler = new ResultHandler({
     schema: z.object({success: z.literal(true), data}),
     mimeType: 'application/json',
   }),
-  negative: z.object({success: z.literal(false), error: z.string()}),
+  negative: z.object({success: z.literal(false), error: z.string(), statusCode: z.number()}),
   handler: ({error, output, response, logger}) => {
     if (error) {
       logger.error(error.stack ?? error.toString())
@@ -15,6 +15,7 @@ const resultHandler = new ResultHandler({
       return void response.status(statusCode).json({
         success: false,
         error: statusCode === 500 ? 'Internal Server Error' : message,
+        statusCode,
       })
     }
     response.status(200).json({success: true, data: output})

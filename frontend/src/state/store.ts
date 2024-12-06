@@ -4,6 +4,7 @@ import {searchInit, SearchState} from './search'
 import {notesInit, NotesState, registerNotesSubscriptions} from './notes'
 import {messagesInit, MessagesState} from './messages'
 import {subscribeWithSelector} from 'zustand/middleware'
+import {userInit, UserState} from './user'
 
 type MainTab = 'search' | 'notes'
 export type RootState = {
@@ -11,12 +12,14 @@ export type RootState = {
   search: SearchState
   notes: NotesState
   messages: MessagesState
+  user: UserState
 }
 const init: RootState = {
   activeTab: 'notes',
   search: searchInit,
   notes: notesInit,
   messages: messagesInit,
+  user: userInit,
 }
 export const useSelector = create<RootState>()(immer(subscribeWithSelector(() => init)))
 export const getState = useSelector.getState

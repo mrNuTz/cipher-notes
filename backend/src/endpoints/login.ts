@@ -12,14 +12,14 @@ export const registerEmailEndpoint = endpointsFactory.build({
   input: z.object({
     email: z.string().email(),
   }),
-  output: z.object({success: z.literal(true)}),
+  output: z.object({}),
   handler: async ({input: {email}}) => {
     const users = await db.select().from(usersTbl).where(eq(usersTbl.email, email))
     if (users.length === 1) {
       throw createHttpError(400, 'User already exists')
     }
     await db.insert(usersTbl).values({email})
-    return {success: true} as const
+    return {}
   },
 })
 
@@ -63,7 +63,7 @@ export const loginCodeEndpoint = endpointsFactory.build({
     email: z.string().email(),
     login_code: z.string().length(6),
   }),
-  output: z.object({}),
+  output: z.object({access_token: z.string()}),
   handler: async ({input}) => {
     const users = await db.select().from(usersTbl).where(eq(usersTbl.email, input.email))
     if (users.length !== 1) {
@@ -91,12 +91,12 @@ export const loginCodeEndpoint = endpointsFactory.build({
       throw createHttpError(400, 'Invalid login code')
     }
 
-    const accessToken = generateAccessToken()
+    const access_token = generateAccessToken()
     await db
       .update(usersTbl)
-      .set({access_token: accessToken, access_token_created_at: Date.now()})
+      .set({access_token, access_token_created_at: Date.now()})
       .where(eq(usersTbl.id, user.id))
 
-    return {}
+    return {access_token}
   },
 })
