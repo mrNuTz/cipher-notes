@@ -1,6 +1,5 @@
-import {Button, Tabs} from '@mantine/core'
+import {Button, Flex, Tabs} from '@mantine/core'
 import {memo} from 'react'
-import {FlexRow} from './misc'
 import {SearchInput} from './SearchInput'
 import {IconPlus} from '@tabler/icons-react'
 import {NotesGrid} from './NotesGrid'
@@ -14,18 +13,11 @@ export const NotesTab = memo(() => (
     style={{flex: 1, display: 'flex', flexDirection: 'column'}}
     pos='relative'
   >
-    <FlexRow
-      style={{
-        gap: '.5rem',
-        justifyContent: 'end',
-        padding: '1rem',
-        backgroundColor: 'rgba(0,0,0,.1)',
-      }}
-    >
+    <Flex gap='xs' p='md' bg='rgba(0,0,0,.1)'>
       <SearchInput />
       <div style={{flex: 1}} />
       <NotesSortSelect />
-    </FlexRow>
+    </Flex>
     <NotesGrid />
     <Button onClick={addNote} pos='absolute' bottom='1rem' right='1rem'>
       <IconPlus />

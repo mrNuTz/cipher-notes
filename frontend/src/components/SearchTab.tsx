@@ -13,7 +13,7 @@ export const SearchTab = memo(() => (
       flexDirection: 'column',
       padding: '1rem',
       flex: 1,
-      gap: '.5rem',
+      gap: 'var(--mantine-spacing-xs)',
     }}
   >
     <EngineSelect />

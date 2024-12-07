@@ -1,13 +1,12 @@
-import {Button, TextInput} from '@mantine/core'
+import {Button, Flex, TextInput} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {FlexRow} from './misc'
 import {IconExternalLink} from '@tabler/icons-react'
 import {selectCurrentUrl} from '../state/search'
 
 export const UrlBar = () => {
   const url = useSelector(selectCurrentUrl)
   return (
-    <FlexRow style={{gap: '.5rem'}}>
+    <Flex gap='xs'>
       <TextInput disabled value={url} flex={1} />
       <Button
         onClick={() => {
@@ -16,6 +15,6 @@ export const UrlBar = () => {
       >
         <IconExternalLink />
       </Button>
-    </FlexRow>
+    </Flex>
   )
 }
