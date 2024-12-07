@@ -1,11 +1,10 @@
 import {createSelector} from 'reselect'
-import {generateId} from '../business/generateId'
 import {Note, NoteSortProp} from '../business/models'
 import {getState, RootState, setState, subscribe} from './store'
 import {loadNotes, storeNotes} from '../services/notesStorage'
 import {showMessage} from './messages'
 import {byProp, debounce, downloadJson, indexBy} from '../util/misc'
-import {importNotesSchema} from '../business/importNotesSchema'
+import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 
 export type NotesState = {
   query: string
@@ -23,7 +22,7 @@ export const notesInit: NotesState = {
   query: '',
   notes: {},
   openNote: null,
-  sort: {prop: 'created', desc: true},
+  sort: {prop: 'created_at', desc: true},
   importDialog: {open: false, file: null, error: null},
 }
 
@@ -47,12 +46,19 @@ export const closeNote = () =>
   setState((s) => {
     s.notes.openNote = null
   })
-export const addNote = () =>
+export const addNote = () => {
+  const now = Date.now()
   setState((s) => {
-    const id = generateId()
-    s.notes.notes[id] = {id, txt: '', created: Date.now(), modified: Date.now()}
+    const id = crypto.randomUUID()
+    s.notes.notes[id] = {
+      id,
+      txt: '',
+      created_at: now,
+      updated_at: now,
+    }
     s.notes.openNote = id
   })
+}
 export const deleteNote = (id: string) =>
   setState((s) => {
     delete s.notes.notes[id]
@@ -61,7 +67,7 @@ export const openNoteChanged = (txt: string) =>
   setState((s) => {
     if (s.notes.openNote && s.notes.notes[s.notes.openNote]) {
       s.notes.notes[s.notes.openNote]!.txt = txt
-      s.notes.notes[s.notes.openNote]!.modified = Date.now()
+      s.notes.notes[s.notes.openNote]!.updated_at = Date.now()
     }
   })
 export const sortChanged = (prop: NoteSortProp) =>
@@ -95,7 +101,7 @@ export const importFileChanged = (file: File | null) =>
 
 // effects
 export const exportNotes = () => {
-  const notes = Object.values(getState().notes.notes)
+  const notes: ImportNote[] = Object.values(getState().notes.notes)
   downloadJson(notes, 'notes.json')
 }
 export const importNotes = async (): Promise<void> => {
@@ -108,15 +114,14 @@ export const importNotes = async (): Promise<void> => {
     const importNotes = importNotesSchema.parse(JSON.parse(await file.text()))
     const res: Note[] = []
     for (const importNote of importNotes) {
-      let {id, created, modified} = importNote
-      const {txt} = importNote
-      if (id === undefined) id = generateId()
-      if (created === undefined) created = Date.now()
-      if (modified === undefined) modified = Date.now()
-      const newNote: Note = {created, id, modified, txt}
+      const now = Date.now()
+      let {id} = importNote
+      if (id === undefined) id = crypto.randomUUID()
+      const {txt, updated_at = now} = importNote
       const existingNote = state.notes.notes[id]
-      if (!existingNote || (importNote.modified ?? -Infinity) > existingNote.modified) {
-        res.push(newNote)
+      if (!existingNote || updated_at > existingNote.updated_at) {
+        // ignore imported dates, since they would cause sync issues
+        res.push({id, created_at: existingNote?.created_at ?? now, updated_at: now, txt})
       }
     }
     setState((s) => {

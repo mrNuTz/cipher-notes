@@ -41,13 +41,13 @@ export const loginEmailEndpoint = endpointsFactory.build({
       throw createHttpError(400, 'Code already sent recently')
     }
 
-    const loginCode = generateLoginCode()
-    await sendLoginCode(email, loginCode)
+    const login_code = generateLoginCode()
+    await sendLoginCode(email, login_code)
 
     await db
       .update(usersTbl)
       .set({
-        login_code: loginCode,
+        login_code,
         login_code_created_at: Date.now(),
         login_tries_left: 3,
       })

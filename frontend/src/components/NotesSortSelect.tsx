@@ -1,7 +1,7 @@
 import {Button, Select} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {sortChanged, sortDirectionChanged} from '../state/notes'
-import {NoteSortProp} from '../business/models'
+import {noteSortOptions, NoteSortProp} from '../business/models'
 import {IconSortAscending, IconSortDescending} from '@tabler/icons-react'
 
 export const NotesSortSelect = () => {
@@ -9,7 +9,7 @@ export const NotesSortSelect = () => {
   return (
     <>
       <Select
-        data={['txt', 'created', 'modified']}
+        data={noteSortOptions}
         value={prop}
         onChange={(value) => value && sortChanged(value as NoteSortProp)}
       />
