@@ -5,6 +5,7 @@ import {ColorSchemeToggle} from './ColorSchemeToggle.tsx'
 import {MessageBox} from './MessageBox.tsx'
 import {CommandButton} from './CommandButton.tsx'
 import {ImportNotesDialog} from './ImportNotesDialog.tsx'
+import {LoginDialog} from './LoginDialog.tsx'
 import {RegisterDialog} from './RegisterDialog.tsx'
 
 export const App = () => (
@@ -15,6 +16,7 @@ export const App = () => (
     <CommandCenter />
     <ImportNotesDialog />
     <RegisterDialog />
+    <LoginDialog />
     <PWABadge />
     <MessageBox />
   </>

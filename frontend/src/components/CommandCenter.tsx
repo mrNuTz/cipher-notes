@@ -1,6 +1,6 @@
 import {Spotlight} from '@mantine/spotlight'
 import {exportNotes, openImportDialog} from '../state/notes'
-import {openRegisterDialog} from '../state/user'
+import {openLoginDialog, openRegisterDialog} from '../state/user'
 
 export const CommandCenter = () => {
   return (
@@ -21,6 +21,11 @@ export const CommandCenter = () => {
           id: 'register',
           label: 'Register',
           onClick: openRegisterDialog,
+        },
+        {
+          id: 'login',
+          label: 'Login',
+          onClick: openLoginDialog,
         },
       ]}
     />
