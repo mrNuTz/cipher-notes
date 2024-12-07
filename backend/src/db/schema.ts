@@ -44,5 +44,5 @@ export const notesDeletesTbl = pgTable(
     clientside_deleted_at: bigint({mode: 'number'}).notNull(),
     serverside_created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
   },
-  (t) => [unique('user_client_id').on(t.user_id, t.clientside_id)]
+  (t) => [unique('deletes_user_client_id').on(t.user_id, t.clientside_id)]
 )
