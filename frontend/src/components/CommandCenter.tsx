@@ -46,7 +46,7 @@ export const CommandCenter = () => {
           label: 'Encryption key',
           onClick: openEncryptionKeyDialog,
         },
-      ]}
+      ].filter((a) => !a.disabled)}
     />
   )
 }

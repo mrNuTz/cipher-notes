@@ -1,8 +1,9 @@
-import {generateKey} from '../util/encryption'
+import {generateKey, generateSalt} from '../util/encryption'
 import {reqLoginCode, reqLoginEmail, reqRegisterEmail} from '../services/backend'
 import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
 import {getState, setState, subscribe} from './store'
+import {isValidKeyTokenPair} from '../business/notesEncryption'
 
 export type UserState = {
   user: {
@@ -10,6 +11,7 @@ export type UserState = {
     accessToken: string
     lastNotesSync: number
     cryptoKey: string
+    syncToken: string
   }
   registerDialog: {open: boolean; email: string; loading: boolean}
   loginDialog: {
@@ -20,15 +22,15 @@ export type UserState = {
     status: 'email' | 'code'
   }
   syncDialog: {open: boolean; syncing: boolean}
-  encryptionKeyDialog: {open: boolean; cryptoKey: string}
+  encryptionKeyDialog: {open: boolean; keyTokenPair: string}
 }
 
 export const userInit: UserState = {
-  user: {email: '', accessToken: '', lastNotesSync: 0, cryptoKey: ''},
+  user: {email: '', accessToken: '', lastNotesSync: 0, cryptoKey: '', syncToken: ''},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
-  encryptionKeyDialog: {open: false, cryptoKey: ''},
+  encryptionKeyDialog: {open: false, keyTokenPair: ''},
 }
 
 // init
@@ -36,9 +38,9 @@ loadUser().then(async (user) => {
   if (!user) {
     user = {...userInit.user}
   }
-  if (!user.cryptoKey) {
-    const key = await generateKey()
-    user.cryptoKey = key
+  if (!user.cryptoKey || !user.syncToken) {
+    user.cryptoKey = await generateKey()
+    user.syncToken = generateSalt(16)
   }
   setState((s) => {
     s.user.user = user
@@ -104,7 +106,10 @@ export const closeSyncDialog = () => {
 }
 export const openEncryptionKeyDialog = () => {
   setState((state) => {
-    state.user.encryptionKeyDialog = {open: true, cryptoKey: state.user.user.cryptoKey}
+    state.user.encryptionKeyDialog = {
+      open: true,
+      keyTokenPair: `${state.user.user.cryptoKey}:${state.user.user.syncToken}`,
+    }
   })
 }
 export const closeEncryptionKeyDialog = () => {
@@ -112,14 +117,18 @@ export const closeEncryptionKeyDialog = () => {
     state.user.encryptionKeyDialog.open = false
   })
 }
-export const encryptionKeyChanged = (cryptoKey: string) => {
+export const keyTokenPairChanged = (keyTokenPair: string) => {
   setState((state) => {
-    state.user.encryptionKeyDialog.cryptoKey = cryptoKey
+    state.user.encryptionKeyDialog.keyTokenPair = keyTokenPair
   })
 }
-export const saveEncryptionKey = async () => {
+export const saveEncryptionKey = async (keyTokenPair: string) => {
+  if (!isValidKeyTokenPair(keyTokenPair)) return
+  const [cryptoKey, syncToken] = keyTokenPair.split(':')
+  if (!cryptoKey || !syncToken) return
   setState((state) => {
-    state.user.user.cryptoKey = state.user.encryptionKeyDialog.cryptoKey
+    state.user.user.cryptoKey = cryptoKey
+    state.user.user.syncToken = syncToken
     state.user.encryptionKeyDialog.open = false
   })
 }

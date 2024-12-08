@@ -11,6 +11,7 @@ export const usersTbl = pgTable('users', {
   created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
   updated_at: bigint({mode: 'number'}).$default(Date.now).$onUpdate(Date.now).notNull(),
   last_synced_at: bigint({mode: 'number'}),
+  sync_token: varchar({length: 24}),
 })
 
 export const notesTbl = pgTable(

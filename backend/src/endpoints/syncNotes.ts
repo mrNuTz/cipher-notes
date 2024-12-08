@@ -1,8 +1,9 @@
 import {and, eq, gt, inArray, isNotNull, not} from 'drizzle-orm'
 import {db} from '../db'
-import {notesTbl} from '../db/schema'
+import {notesTbl, usersTbl} from '../db/schema'
 import {authEndpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
+import createHttpError from 'http-errors'
 
 const updateSchema = z.object({
   id: z.string().uuid(),
@@ -31,13 +32,22 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
     creates: z.array(createSchema),
     updates: z.array(updateSchema),
     deletes: z.array(deleteSchema),
+    sync_token: z.string().base64().length(24),
   }),
   output: z.object({
     creates: z.array(createSchema),
     updates: z.array(updateSchema),
     deletes: z.array(deleteSchema),
   }),
-  handler: async ({input: {last_synced_at, creates, updates, deletes}, options: {user}}) => {
+  handler: async ({
+    input: {last_synced_at, creates, updates, deletes, sync_token},
+    options: {user},
+  }) => {
+    if (!user.sync_token) {
+      await db.update(usersTbl).set({sync_token}).where(eq(usersTbl.id, user.id))
+    } else if (sync_token !== user.sync_token) {
+      throw createHttpError(400, 'Invalid sync token')
+    }
     const pullData = await getPullData(last_synced_at, user.id)
     await pushNotes(creates, updates, deletes, user.id)
     return pullData

@@ -1,5 +1,5 @@
-export function generateSalt(): string {
-  return binToBase64(crypto.getRandomValues(new Uint8Array(16)))
+export function generateSalt(length = 16): string {
+  return binToBase64(crypto.getRandomValues(new Uint8Array(length)))
 }
 
 export async function hashWithSalt(key: CryptoKey, salt: string): Promise<string> {

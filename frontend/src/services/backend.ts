@@ -77,8 +77,13 @@ export type EncSyncData = {
   deletes: Delete[]
 }
 
-export const reqSyncNotes = (lastSyncedAt: number, data: EncSyncData, accessToken: string) =>
+export const reqSyncNotes = (
+  lastSyncedAt: number,
+  data: EncSyncData,
+  accessToken: string,
+  syncToken: string
+) =>
   request<EncSyncData>('/syncNotes', {
     method: 'POST',
-    body: {access_token: accessToken, last_synced_at: lastSyncedAt, ...data},
+    body: {access_token: accessToken, last_synced_at: lastSyncedAt, sync_token: syncToken, ...data},
   })

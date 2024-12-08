@@ -152,6 +152,7 @@ export const syncNotes = async () => {
   const state = getState()
   const lastSync = state.user.user.lastNotesSync
   const accessToken = state.user.user.accessToken
+  const syncToken = state.user.user.syncToken
   if (
     !state.user.user.accessToken ||
     state.user.syncDialog.syncing ||
@@ -183,9 +184,9 @@ export const syncNotes = async () => {
   }
   const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientSyncData)
 
-  const res = await reqSyncNotes(lastSync, encClientSyncData, accessToken)
+  const res = await reqSyncNotes(lastSync, encClientSyncData, accessToken, syncToken)
   if (!res.success) {
-    showMessage({title: 'Error', text: 'Failed to sync notes'})
+    showMessage({title: 'Failed to sync notes', text: res.error})
     setState((s) => {
       s.user.syncDialog.syncing = false
     })

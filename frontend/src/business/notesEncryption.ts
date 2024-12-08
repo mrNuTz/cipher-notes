@@ -1,3 +1,4 @@
+import {z} from 'zod'
 import {EncSyncData} from '../services/backend'
 import {Delete} from '../services/backend'
 import {decryptData, encryptData, importKey} from '../util/encryption'
@@ -54,4 +55,12 @@ export const encryptSyncData = async (
     )
   )
   return {creates, updates, deletes: syncData.deletes}
+}
+
+export const isValidKeyTokenPair = (keyTokenPair: string) => {
+  const [cryptoKey, syncToken] = keyTokenPair.split(':')
+  return (
+    z.string().base64().length(44).safeParse(cryptoKey).success &&
+    z.string().base64().length(24).safeParse(syncToken).success
+  )
 }
