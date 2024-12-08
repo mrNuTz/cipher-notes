@@ -1,23 +1,28 @@
-import {and, eq, gt, inArray, not} from 'drizzle-orm'
+import {and, eq, gt, inArray, isNotNull, not} from 'drizzle-orm'
 import {db} from '../db'
-import {notesDeletesTbl, notesTbl} from '../db/schema'
+import {notesTbl} from '../db/schema'
 import {authEndpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
 
 const updateSchema = z.object({
   id: z.string().uuid(),
   cipher_text: z.string(),
+  iv: z.string(),
   updated_at: z.number().int().positive(),
 })
+type Update = z.infer<typeof updateSchema>
 const createSchema = z.object({
   id: z.string().uuid(),
   created_at: z.number().int().positive(),
   cipher_text: z.string(),
+  iv: z.string(),
 })
+type Create = z.infer<typeof createSchema>
 const deleteSchema = z.object({
   id: z.string().uuid(),
   deleted_at: z.number().int().positive(),
 })
+type Delete = z.infer<typeof deleteSchema>
 
 export const pullNotesEndpoint = authEndpointsFactory.build({
   method: 'get',
@@ -28,45 +33,54 @@ export const pullNotesEndpoint = authEndpointsFactory.build({
     deletes: z.array(deleteSchema),
   }),
   handler: async ({input: {last_synced_at}, options: {user}}) => {
+    // creates
     const dbCreates = await db
       .select()
       .from(notesTbl)
-      .where(and(eq(notesTbl.user_id, user.id), gt(notesTbl.clientside_created_at, last_synced_at)))
-    const creates = dbCreates.map((n) => ({
+      .where(
+        and(
+          eq(notesTbl.user_id, user.id),
+          gt(notesTbl.serverside_created_at, last_synced_at),
+          isNotNull(notesTbl.cipher_text),
+          isNotNull(notesTbl.iv)
+        )
+      )
+    const creates: Create[] = dbCreates.map((n) => ({
       id: n.clientside_id,
       created_at: n.clientside_created_at,
-      cipher_text: n.cipher_text,
+      cipher_text: n.cipher_text!,
+      iv: n.iv!,
     }))
     const createIds = creates.map((c) => c.id)
 
+    // updates
     const dbUpdates = await db
       .select()
       .from(notesTbl)
       .where(
         and(
           eq(notesTbl.user_id, user.id),
-          gt(notesTbl.clientside_updated_at, last_synced_at),
-          not(inArray(notesTbl.clientside_id, createIds))
+          gt(notesTbl.serverside_updated_at, last_synced_at),
+          not(inArray(notesTbl.clientside_id, createIds)),
+          isNotNull(notesTbl.cipher_text),
+          isNotNull(notesTbl.iv)
         )
       )
-    const updates = dbUpdates.map((n) => ({
+    const updates: Update[] = dbUpdates.map((n) => ({
       id: n.clientside_id,
-      cipher_text: n.cipher_text,
+      cipher_text: n.cipher_text!,
+      iv: n.iv!,
       updated_at: n.clientside_updated_at,
     }))
 
+    // deletes
     const dbDeletes = await db
       .select()
-      .from(notesDeletesTbl)
-      .where(
-        and(
-          eq(notesDeletesTbl.user_id, user.id),
-          gt(notesDeletesTbl.clientside_deleted_at, last_synced_at)
-        )
-      )
-    const deletes = dbDeletes.map((d) => ({
+      .from(notesTbl)
+      .where(and(eq(notesTbl.user_id, user.id), gt(notesTbl.serverside_deleted_at, last_synced_at)))
+    const deletes: Delete[] = dbDeletes.map((d) => ({
       id: d.clientside_id,
-      deleted_at: d.clientside_deleted_at,
+      deleted_at: d.clientside_deleted_at!,
     }))
 
     return {creates, updates, deletes}
@@ -89,6 +103,7 @@ export const pushNotesEndpoint = authEndpointsFactory.build({
           user_id: user.id,
           clientside_id: n.id,
           cipher_text: n.cipher_text,
+          iv: n.iv,
           clientside_created_at: n.created_at,
           clientside_updated_at: n.created_at,
         }))
@@ -98,22 +113,23 @@ export const pushNotesEndpoint = authEndpointsFactory.build({
       for (const u of updates) {
         await tx
           .update(notesTbl)
-          .set({cipher_text: u.cipher_text, clientside_updated_at: u.updated_at})
+          .set({cipher_text: u.cipher_text, iv: u.iv, clientside_updated_at: u.updated_at})
           .where(and(eq(notesTbl.user_id, user.id), eq(notesTbl.clientside_id, u.id)))
       }
 
       // deletes
-      const deleteIds = deletes.map((d) => d.id)
-      await tx
-        .delete(notesTbl)
-        .where(and(eq(notesTbl.user_id, user.id), inArray(notesTbl.clientside_id, deleteIds)))
-      await tx.insert(notesDeletesTbl).values(
-        deletes.map((d) => ({
-          user_id: user.id,
-          clientside_id: d.id,
-          clientside_deleted_at: d.deleted_at,
-        }))
-      )
+      const now = Date.now()
+      for (const d of deletes) {
+        await tx
+          .update(notesTbl)
+          .set({
+            clientside_deleted_at: d.deleted_at,
+            iv: null,
+            cipher_text: null,
+            serverside_deleted_at: now,
+          })
+          .where(and(eq(notesTbl.user_id, user.id), eq(notesTbl.clientside_id, d.id)))
+      }
     })
     return {}
   },

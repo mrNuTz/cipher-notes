@@ -1,10 +1,16 @@
+import {generateKey} from '../business/notesEncryption'
 import {reqLoginCode, reqLoginEmail, reqRegisterEmail} from '../services/backend'
+import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
-import {getState, setState} from './store'
+import {getState, setState, subscribe} from './store'
 
 export type UserState = {
-  email: string
-  accessToken: string
+  user: {
+    email: string
+    accessToken: string
+    lastSync: number
+    cryptoKey: string
+  }
   registerDialog: {open: boolean; email: string; loading: boolean}
   loginDialog: {
     open: boolean
@@ -16,11 +22,24 @@ export type UserState = {
 }
 
 export const userInit: UserState = {
-  email: '',
-  accessToken: '',
+  user: {email: '', accessToken: '', lastSync: 0, cryptoKey: ''},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
 }
+
+// init
+loadUser().then(async (user) => {
+  if (!user) {
+    user = userInit.user
+  }
+  if (!user.cryptoKey) {
+    const key = await generateKey()
+    user.cryptoKey = key
+  }
+  setState((s) => {
+    s.user.user = user
+  })
+})
 
 export const registerEmailChanged = (email: string) => {
   setState((state) => {
@@ -50,14 +69,14 @@ export const registerEmail = async () => {
     text: 'Email registered, proceed to login',
   })
   setState((state) => {
-    state.user.email = email
+    state.user.user.email = email
     state.user.registerDialog.open = false
   })
   openLoginDialog()
 }
 export const openRegisterDialog = () => {
   setState((state) => {
-    state.user.registerDialog = {open: true, email: state.user.email, loading: false}
+    state.user.registerDialog = {open: true, email: state.user.user.email, loading: false}
   })
 }
 export const closeRegisterDialog = () => {
@@ -69,7 +88,7 @@ export const openLoginDialog = () => {
   setState((state) => {
     state.user.loginDialog = {
       open: true,
-      email: state.user.email,
+      email: state.user.user.email,
       code: '',
       loading: false,
       status: 'email',
@@ -139,12 +158,20 @@ export const loginCode = async () => {
     return
   }
   setState((state) => {
-    state.user.accessToken = res.data.access_token
-    state.user.email = email
+    state.user.user.accessToken = res.data.access_token
+    state.user.user.email = email
   })
   showMessage({
     title: 'Login Code',
     text: 'Login successful',
   })
   closeLoginDialog()
+}
+
+export const registerUserSubscriptions = () => {
+  subscribe(
+    (s) => s.user.user,
+    (user) =>
+      storeUser(user).catch((e) => showMessage({title: 'Store User Failed', text: e.message}))
+  )
 }

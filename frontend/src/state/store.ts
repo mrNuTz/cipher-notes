@@ -4,7 +4,7 @@ import {searchInit, SearchState} from './search'
 import {notesInit, NotesState, registerNotesSubscriptions} from './notes'
 import {messagesInit, MessagesState} from './messages'
 import {subscribeWithSelector} from 'zustand/middleware'
-import {userInit, UserState} from './user'
+import {registerUserSubscriptions, userInit, UserState} from './user'
 
 type MainTab = 'search' | 'notes'
 export type RootState = {
@@ -35,3 +35,4 @@ export const tabChanged = (tab: string | null) => {
 }
 
 registerNotesSubscriptions()
+registerUserSubscriptions()

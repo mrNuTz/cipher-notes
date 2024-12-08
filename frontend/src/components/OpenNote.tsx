@@ -1,6 +1,6 @@
 import {Button, Modal, Textarea} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {closeNote, openNoteChanged, removeOpenNote, selectOpenNote} from '../state/notes'
+import {closeNote, openNoteChanged, deleteOpenNote, selectOpenNote} from '../state/notes'
 import {modals} from '@mantine/modals'
 
 export const OpenNote = () => {
@@ -30,7 +30,7 @@ export const OpenNote = () => {
             centered: true,
             labels: {confirm: 'Delete', cancel: 'Cancel'},
             confirmProps: {color: 'red'},
-            onConfirm: removeOpenNote,
+            onConfirm: deleteOpenNote,
           })
         }
       >

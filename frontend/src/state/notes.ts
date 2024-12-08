@@ -1,7 +1,7 @@
 import {createSelector} from 'reselect'
-import {Note, NoteSortProp} from '../business/models'
+import {isNotDeletedNote, NotDeletedNote, Note, NoteSortProp} from '../business/models'
 import {getState, RootState, setState, subscribe} from './store'
-import {loadNotes, storeNotes} from '../services/notesStorage'
+import {loadNotes, storeNotes} from '../services/localStorage'
 import {showMessage} from './messages'
 import {byProp, debounce, downloadJson, indexBy} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
@@ -59,10 +59,6 @@ export const addNote = () => {
     s.notes.openNote = id
   })
 }
-export const deleteNote = (id: string) =>
-  setState((s) => {
-    delete s.notes.notes[id]
-  })
 export const openNoteChanged = (txt: string) =>
   setState((s) => {
     if (s.notes.openNote && s.notes.notes[s.notes.openNote]) {
@@ -78,10 +74,11 @@ export const sortDirectionChanged = () =>
   setState((s) => {
     s.notes.sort.desc = !s.notes.sort.desc
   })
-export const removeOpenNote = () =>
+export const deleteOpenNote = () =>
   setState((s) => {
-    if (s.notes.openNote) {
-      delete s.notes.notes[s.notes.openNote]
+    if (s.notes.openNote && s.notes.openNote in s.notes.notes) {
+      s.notes.notes[s.notes.openNote]!.deleted_at = Date.now()
+      s.notes.notes[s.notes.openNote]!.txt = undefined
       s.notes.openNote = null
     }
   })
@@ -101,7 +98,7 @@ export const importFileChanged = (file: File | null) =>
 
 // effects
 export const exportNotes = () => {
-  const notes: ImportNote[] = Object.values(getState().notes.notes)
+  const notes: ImportNote[] = Object.values(getState().notes.notes).filter(isNotDeletedNote)
   downloadJson(notes, 'notes.json')
 }
 export const importNotes = async (): Promise<void> => {
@@ -112,14 +109,18 @@ export const importNotes = async (): Promise<void> => {
   }
   try {
     const importNotes = importNotesSchema.parse(JSON.parse(await file.text()))
-    const res: Note[] = []
+    const res: NotDeletedNote[] = []
     for (const importNote of importNotes) {
       const now = Date.now()
       let {id} = importNote
       if (id === undefined) id = crypto.randomUUID()
       const {txt, updated_at = now} = importNote
       const existingNote = state.notes.notes[id]
-      if (!existingNote || updated_at > existingNote.updated_at) {
+      if (
+        !existingNote ||
+        !isNotDeletedNote(existingNote) ||
+        updated_at > existingNote.updated_at
+      ) {
         // ignore imported dates, since they would cause sync issues
         res.push({id, created_at: existingNote?.created_at ?? now, updated_at: now, txt})
       }
@@ -145,8 +146,9 @@ export const selectFilteredNotes = createSelector(
     (s: RootState) => s.notes.query,
     (s: RootState) => s.notes.sort,
   ],
-  (notes, query, {prop, desc}) =>
+  (notes, query, {prop, desc}): NotDeletedNote[] =>
     Object.values(notes)
+      .filter(isNotDeletedNote)
       .filter((n) => !query || n.txt.includes(query))
       .sort(byProp(prop, desc))
 )
