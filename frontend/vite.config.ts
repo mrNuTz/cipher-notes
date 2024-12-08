@@ -25,9 +25,9 @@ export default defineConfig({
       },
 
       manifest: {
-        name: 'local-launcher',
-        short_name: 'local-launcher',
-        description: 'local-launcher',
+        name: 'cipher-notes',
+        short_name: 'cipher-notes',
+        description: 'cipher-notes',
         theme_color: '#1864ab',
         background_color: '#000000',
       },
