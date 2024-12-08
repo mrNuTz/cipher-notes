@@ -7,6 +7,8 @@ import {CommandButton} from './CommandButton.tsx'
 import {ImportNotesDialog} from './ImportNotesDialog.tsx'
 import {LoginDialog} from './LoginDialog.tsx'
 import {RegisterDialog} from './RegisterDialog.tsx'
+import {SyncDialog} from './SyncDialog.tsx'
+import {EncryptionKeyDialog} from './EncryptionKeyDialog.tsx'
 
 export const App = () => (
   <>
@@ -17,6 +19,8 @@ export const App = () => (
     <ImportNotesDialog />
     <RegisterDialog />
     <LoginDialog />
+    <SyncDialog />
+    <EncryptionKeyDialog />
     <PWABadge />
     <MessageBox />
   </>

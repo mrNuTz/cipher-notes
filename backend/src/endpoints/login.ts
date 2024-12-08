@@ -91,11 +91,13 @@ export const loginCodeEndpoint = endpointsFactory.build({
       throw createHttpError(400, 'Invalid login code')
     }
 
-    const access_token = generateAccessToken()
-    await db
-      .update(usersTbl)
-      .set({access_token, access_token_created_at: Date.now()})
-      .where(eq(usersTbl.id, user.id))
+    const access_token = user.access_token ?? generateAccessToken()
+    if (!user.access_token) {
+      await db
+        .update(usersTbl)
+        .set({access_token, access_token_created_at: Date.now()})
+        .where(eq(usersTbl.id, user.id))
+    }
 
     return {access_token}
   },

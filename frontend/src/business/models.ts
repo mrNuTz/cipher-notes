@@ -14,6 +14,7 @@ export type NotDeletedNote = {
 
 export const isNotDeletedNote = (note: Note): note is NotDeletedNote =>
   note.deleted_at === undefined
+export const isDeletedNote = (note: Note): note is DeletedNote => note.deleted_at !== undefined
 
 export const noteSortProps = ['created_at', 'updated_at', 'txt'] satisfies (keyof Note)[]
 export const noteSortOptions = noteSortProps.map((prop) => ({

@@ -53,3 +53,32 @@ export const reqLoginEmail = (email: string) =>
 
 export const reqLoginCode = (email: string, code: string) =>
   request<{access_token: string}>('/loginCode', {method: 'POST', body: {email, login_code: code}})
+
+export type EncCreate = {
+  id: string
+  created_at: number
+  cipher_text: string
+  iv: string
+}
+export type EncUpdate = {
+  id: string
+  cipher_text: string
+  iv: string
+  updated_at: number
+}
+export type Delete = {
+  id: string
+  deleted_at: number
+}
+
+export type EncSyncData = {
+  creates: EncCreate[]
+  updates: EncUpdate[]
+  deletes: Delete[]
+}
+
+export const reqSyncNotes = (lastSyncedAt: number, data: EncSyncData, accessToken: string) =>
+  request<EncSyncData>('/syncNotes', {
+    method: 'POST',
+    body: {access_token: accessToken, last_synced_at: lastSyncedAt, ...data},
+  })
