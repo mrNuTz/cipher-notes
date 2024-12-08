@@ -28,7 +28,8 @@ export default defineConfig({
         name: 'local-launcher',
         short_name: 'local-launcher',
         description: 'local-launcher',
-        theme_color: '#ff00ff',
+        theme_color: '#1864ab',
+        background_color: '#000000',
       },
 
       injectManifest: {
