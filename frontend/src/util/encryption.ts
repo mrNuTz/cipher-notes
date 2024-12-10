@@ -1,3 +1,7 @@
+export function calculateChecksum(data: Uint8Array): number {
+  return data.reduce((checksum, byte) => (checksum + byte) % 256, 0)
+}
+
 export function generateSalt(length = 16): string {
   return binToBase64(crypto.getRandomValues(new Uint8Array(length)))
 }
@@ -11,10 +15,10 @@ export async function hashWithSalt(key: CryptoKey, salt: string): Promise<string
   return arrayBufferToBase64(hashBuffer)
 }
 
-function binToBase64(iv: Uint8Array): string {
+export function binToBase64(iv: Uint8Array): string {
   return btoa(String.fromCharCode(...iv))
 }
-function base64ToBin(base64: string): Uint8Array {
+export function base64ToBin(base64: string): Uint8Array {
   return Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
 }
 function arrayBufferToBase64(buffer: ArrayBuffer): string {

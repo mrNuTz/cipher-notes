@@ -3,7 +3,7 @@ import {reqLoginCode, reqLoginEmail, reqRegisterEmail} from '../services/backend
 import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
 import {getState, setState, subscribe} from './store'
-import {isValidKeyTokenPair} from '../business/notesEncryption'
+import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
 
 export type UserState = {
   user: {
@@ -22,7 +22,7 @@ export type UserState = {
     status: 'email' | 'code'
   }
   syncDialog: {open: boolean; syncing: boolean}
-  encryptionKeyDialog: {open: boolean; keyTokenPair: string}
+  encryptionKeyDialog: {open: boolean; keyTokenPair: string; visible: boolean}
 }
 
 export const userInit: UserState = {
@@ -30,7 +30,7 @@ export const userInit: UserState = {
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
-  encryptionKeyDialog: {open: false, keyTokenPair: ''},
+  encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false},
 }
 
 // init
@@ -106,10 +106,17 @@ export const closeSyncDialog = () => {
 }
 export const openEncryptionKeyDialog = () => {
   setState((state) => {
+    const checksum = calcChecksum(state.user.user.cryptoKey, state.user.user.syncToken)
     state.user.encryptionKeyDialog = {
       open: true,
-      keyTokenPair: `${state.user.user.cryptoKey}:${state.user.user.syncToken}`,
+      keyTokenPair: `${state.user.user.cryptoKey}:${state.user.user.syncToken}:${checksum}`,
+      visible: false,
     }
+  })
+}
+export const toggleEncryptionKeyDialogVisibility = () => {
+  setState((state) => {
+    state.user.encryptionKeyDialog.visible = !state.user.encryptionKeyDialog.visible
   })
 }
 export const closeEncryptionKeyDialog = () => {

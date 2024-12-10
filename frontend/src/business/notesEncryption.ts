@@ -1,7 +1,13 @@
 import {z} from 'zod'
 import {EncSyncData} from '../services/backend'
 import {Delete} from '../services/backend'
-import {decryptData, encryptData, importKey} from '../util/encryption'
+import {
+  base64ToBin,
+  calculateChecksum,
+  decryptData,
+  encryptData,
+  importKey,
+} from '../util/encryption'
 
 export type Create = {
   id: string
@@ -57,10 +63,20 @@ export const encryptSyncData = async (
   return {creates, updates, deletes: syncData.deletes}
 }
 
+export const calcChecksum = (key: string, syncToken: string) => {
+  const keyBin = base64ToBin(key)
+  const syncTokenBin = base64ToBin(syncToken)
+  return calculateChecksum(new Uint8Array([...keyBin, ...syncTokenBin]))
+}
+
 export const isValidKeyTokenPair = (keyTokenPair: string) => {
-  const [cryptoKey, syncToken] = keyTokenPair.split(':')
+  const [cryptoKey, syncToken, checksum] = keyTokenPair.split(':')
   return (
+    cryptoKey &&
+    syncToken &&
+    checksum &&
     z.string().base64().length(44).safeParse(cryptoKey).success &&
-    z.string().base64().length(24).safeParse(syncToken).success
+    z.string().base64().length(24).safeParse(syncToken).success &&
+    calcChecksum(cryptoKey, syncToken) === Number(checksum)
   )
 }
