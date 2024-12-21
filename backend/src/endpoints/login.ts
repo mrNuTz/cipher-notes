@@ -1,9 +1,9 @@
 import {endpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
 import {db} from '../db/index'
-import {usersTbl} from '../db/schema'
+import {sessionsTbl, usersTbl} from '../db/schema'
 import {eq} from 'drizzle-orm'
-import {generateAccessToken, generateLoginCode} from '../business/misc'
+import {generateLoginCode, generateSession} from '../business/misc'
 import {sendLoginCode} from '../services/mail'
 import createHttpError from 'http-errors'
 
@@ -63,7 +63,7 @@ export const loginCodeEndpoint = endpointsFactory.build({
     email: z.string().email(),
     login_code: z.string().length(6),
   }),
-  output: z.object({access_token: z.string()}),
+  output: z.object({access_token: z.string(), session_id: z.number()}),
   handler: async ({input}) => {
     const users = await db.select().from(usersTbl).where(eq(usersTbl.email, input.email))
     if (users.length !== 1) {
@@ -91,14 +91,16 @@ export const loginCodeEndpoint = endpointsFactory.build({
       throw createHttpError(400, 'Invalid login code')
     }
 
-    const access_token = user.access_token ?? generateAccessToken()
-    if (!user.access_token) {
-      await db
-        .update(usersTbl)
-        .set({access_token, access_token_created_at: Date.now()})
-        .where(eq(usersTbl.id, user.id))
-    }
+    const {accessToken, salt, hash} = generateSession()
+    const [{session_id}] = await db
+      .insert(sessionsTbl)
+      .values({
+        user_id: user.id,
+        access_token_hash: hash,
+        access_token_salt: salt,
+      })
+      .returning({session_id: sessionsTbl.id})
 
-    return {access_token}
+    return {access_token: accessToken, session_id}
   },
 })

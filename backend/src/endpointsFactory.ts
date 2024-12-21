@@ -19,13 +19,21 @@ const resultHandler = new ResultHandler({
         statusCode,
       })
     }
-    if (output && output.access_token) {
-      response.cookie('access_token', output.access_token, {
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
-      })
+    if (
+      output &&
+      typeof output.access_token === 'string' &&
+      typeof output.session_id === 'number'
+    ) {
+      response.cookie(
+        'session',
+        JSON.stringify({access_token: output.access_token, session_id: output.session_id}),
+        {
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+          sameSite: env.NODE_ENV === 'production' ? 'none' : 'strict',
+        }
+      )
       delete output.access_token
     }
     response.status(200).json({success: true, data: output})
