@@ -26,6 +26,7 @@ export const request = async <D>(
       'Content-Type': 'application/json',
     }
   }
+  options.credentials = 'include'
   try {
     return await fetchJson<Res<D>>(
       backendUrl + path,
@@ -52,7 +53,7 @@ export const reqLoginEmail = (email: string) =>
   request<void>('/loginEmail', {method: 'POST', body: {email}})
 
 export const reqLoginCode = (email: string, code: string) =>
-  request<{access_token: string}>('/loginCode', {method: 'POST', body: {email, login_code: code}})
+  request<void>('/loginCode', {method: 'POST', body: {email, login_code: code}})
 
 export type EncCreate = {
   id: string
@@ -77,13 +78,8 @@ export type EncSyncData = {
   deletes: Delete[]
 }
 
-export const reqSyncNotes = (
-  lastSyncedAt: number,
-  data: EncSyncData,
-  accessToken: string,
-  syncToken: string
-) =>
+export const reqSyncNotes = (lastSyncedAt: number, data: EncSyncData, syncToken: string) =>
   request<EncSyncData>('/syncNotes', {
     method: 'POST',
-    body: {access_token: accessToken, last_synced_at: lastSyncedAt, sync_token: syncToken, ...data},
+    body: {last_synced_at: lastSyncedAt, sync_token: syncToken, ...data},
   })

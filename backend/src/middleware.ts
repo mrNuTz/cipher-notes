@@ -1,6 +1,5 @@
 import {Method, Middleware} from 'express-zod-api'
 import {env} from './env'
-import {z} from 'zod'
 import {usersTbl} from './db/schema'
 import {db} from './db'
 import {eq} from 'drizzle-orm'
@@ -39,11 +38,16 @@ export const rateLimitMiddleware = new Middleware({
 })
 
 export const authMiddleware = new Middleware({
-  input: z.object({
-    access_token: z.string().length(36),
-  }),
-  handler: async ({input: {access_token}}) => {
-    const users = await db.select().from(usersTbl).where(eq(usersTbl.access_token, access_token))
+  handler: async ({request}) => {
+    const cookies = request.cookies
+    const access_token: any = cookies.access_token
+    if (!access_token) {
+      throw createHttpError(401, 'No access token')
+    }
+    const users = await db
+      .select()
+      .from(usersTbl)
+      .where(eq(usersTbl.access_token, String(access_token)))
     if (users.length !== 1) {
       throw createHttpError(401, 'Invalid access token')
     }

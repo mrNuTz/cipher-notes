@@ -151,13 +151,8 @@ export const importNotes = async (): Promise<void> => {
 export const syncNotes = async () => {
   const state = getState()
   const lastSync = state.user.user.lastNotesSync
-  const accessToken = state.user.user.accessToken
   const syncToken = state.user.user.syncToken
-  if (
-    !state.user.user.accessToken ||
-    state.user.syncDialog.syncing ||
-    !state.user.syncDialog.open
-  ) {
+  if (!state.user.user.loggedIn || state.user.syncDialog.syncing || !state.user.syncDialog.open) {
     return
   }
   setState((s) => {
@@ -184,11 +179,15 @@ export const syncNotes = async () => {
   }
   const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientSyncData)
 
-  const res = await reqSyncNotes(lastSync, encClientSyncData, accessToken, syncToken)
+  const res = await reqSyncNotes(lastSync, encClientSyncData, syncToken)
   if (!res.success) {
+    const loggedOut = res.statusCode === 401
     showMessage({title: 'Failed to sync notes', text: res.error})
     setState((s) => {
       s.user.syncDialog.syncing = false
+      if (loggedOut) {
+        s.user.user.loggedIn = false
+      }
     })
     return
   }

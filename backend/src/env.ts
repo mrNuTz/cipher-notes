@@ -5,6 +5,7 @@ const keys = [
   'RATE_WINDOW_SEC',
   'RATE_LIMIT',
   'PORT',
+  'ACCESS_CONTROL_ALLOW_ORIGIN',
 ] as const
 type Key = (typeof keys)[number]
 

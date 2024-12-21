@@ -9,7 +9,7 @@ import {
 import {useSelector} from '../state/store'
 
 export const CommandCenter = () => {
-  const accessToken = useSelector((s) => s.user.user.accessToken)
+  const loggedIn = useSelector((s) => s.user.user.loggedIn)
   return (
     <Spotlight
       shortcut={['Ctrl + K', 'Cmd + K']}
@@ -28,18 +28,19 @@ export const CommandCenter = () => {
           id: 'register',
           label: 'Register',
           onClick: openRegisterDialog,
-          disabled: !!accessToken,
+          disabled: loggedIn,
         },
         {
           id: 'login',
           label: 'Login',
           onClick: openLoginDialog,
+          disabled: loggedIn,
         },
         {
           id: 'sync',
           label: 'Synchronize notes with server',
           onClick: openSyncDialog,
-          disabled: !accessToken,
+          disabled: !loggedIn,
         },
         {
           id: 'encryptionKey',
