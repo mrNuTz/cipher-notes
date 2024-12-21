@@ -24,7 +24,7 @@ const resultHandler = new ResultHandler({
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        sameSite: 'strict',
+        sameSite: 'lax',
       })
       delete output.access_token
     }
