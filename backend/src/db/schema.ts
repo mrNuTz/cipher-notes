@@ -6,12 +6,20 @@ export const usersTbl = pgTable('users', {
   login_code: varchar({length: 6}),
   login_code_created_at: bigint({mode: 'number'}),
   login_tries_left: integer().default(0).notNull(),
-  access_token: varchar({length: 63}).unique(),
-  access_token_created_at: bigint({mode: 'number'}),
   created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
   updated_at: bigint({mode: 'number'}).$default(Date.now).$onUpdate(Date.now).notNull(),
   last_synced_at: bigint({mode: 'number'}),
   sync_token: varchar({length: 24}),
+})
+
+export const sessionsTbl = pgTable('sessions', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  user_id: integer()
+    .references(() => usersTbl.id)
+    .notNull(),
+  access_token_hash: varchar({length: 64}).notNull(),
+  access_token_salt: varchar({length: 32}).notNull(),
+  created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
 })
 
 export const notesTbl = pgTable(
