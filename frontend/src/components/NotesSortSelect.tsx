@@ -2,7 +2,8 @@ import {Button, Select} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {sortChanged, sortDirectionChanged} from '../state/notes'
 import {noteSortOptions, NoteSortProp} from '../business/models'
-import {IconSortAscending, IconSortDescending} from '@tabler/icons-react'
+import {IconSortAscending} from './icons/IconSortAscending'
+import {IconSortDescending} from './icons/IconSortDescending'
 
 export const NotesSortSelect = () => {
   const {prop, desc} = useSelector((state) => state.notes.sort)

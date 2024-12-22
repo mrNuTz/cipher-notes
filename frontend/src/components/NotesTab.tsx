@@ -1,11 +1,11 @@
 import {Button, Flex, Tabs} from '@mantine/core'
 import {memo} from 'react'
 import {SearchInput} from './SearchInput'
-import {IconPlus} from '@tabler/icons-react'
 import {NotesGrid} from './NotesGrid'
 import {addNote} from '../state/notes'
 import {NotesSortSelect} from './NotesSortSelect'
 import {OpenNote} from './OpenNote'
+import {IconPlus} from './icons/IconPlus'
 
 export const NotesTab = memo(() => (
   <Tabs.Panel

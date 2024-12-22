@@ -1,6 +1,6 @@
 import {Button} from '@mantine/core'
 import {spotlight} from '@mantine/spotlight'
-import {IconCommand} from '@tabler/icons-react'
+import {IconCommand} from './icons/IconCommand'
 
 export const CommandButton = () => (
   <Button

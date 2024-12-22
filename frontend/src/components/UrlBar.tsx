@@ -1,7 +1,7 @@
 import {Button, Flex, TextInput} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {IconExternalLink} from '@tabler/icons-react'
 import {selectCurrentUrl} from '../state/search'
+import {IconExternalLink} from './icons/IconExternalLink'
 
 export const UrlBar = () => {
   const url = useSelector(selectCurrentUrl)
