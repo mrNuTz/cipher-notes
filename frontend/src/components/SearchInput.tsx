@@ -1,7 +1,7 @@
 import {TextInput} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {noteQueryChanged} from '../state/notes'
-import {IconSearch} from '@tabler/icons-react'
+import {IconSearch} from './icons/IconSearch'
 
 export const SearchInput = () => {
   const query = useSelector((s) => s.notes.query)

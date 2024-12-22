@@ -3,11 +3,12 @@ DONE:
   sort notes
   delete notes
   import notes
+  sync toke to prevent sync with wrong key
+  get rid of tabler
 FIRST:
 TODO:
 LATER:
-  sync toke to prevent sync with wrong key
-  get rid of tabler
+  use IndexedDB instead of localStorage
   delete server notes when cryptoKey lost
   prompt user to set cryptoKey before sync
 MAYBE:
