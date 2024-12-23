@@ -7,13 +7,20 @@ import {
   openSyncDialog,
 } from '../state/user'
 import {useSelector} from '../state/store'
+import {useMantineColorScheme} from '@mantine/core'
 
 export const CommandCenter = () => {
+  const {toggleColorScheme} = useMantineColorScheme()
   const loggedIn = useSelector((s) => s.user.user.loggedIn)
   return (
     <Spotlight
       shortcut={['Ctrl + K', 'Cmd + K']}
       actions={[
+        {
+          id: 'toggleColorScheme',
+          label: 'Toggle Dark Mode',
+          onClick: toggleColorScheme,
+        },
         {
           id: 'exportNotes',
           label: 'Export notes',
@@ -44,7 +51,7 @@ export const CommandCenter = () => {
         },
         {
           id: 'encryptionKey',
-          label: 'Encryption key',
+          label: 'Import/Export Encryption-Key',
           onClick: openEncryptionKeyDialog,
         },
       ].filter((a) => !a.disabled)}

@@ -10,11 +10,12 @@ export const NotesSortSelect = () => {
   return (
     <>
       <Select
+        flex='0 0 7rem'
         data={noteSortOptions}
         value={prop}
         onChange={(value) => value && sortChanged(value as NoteSortProp)}
       />
-      <Button flex='0 0 auto' onClick={sortDirectionChanged}>
+      <Button flex='0 0 auto' p='xs' onClick={sortDirectionChanged}>
         {!desc ? <IconSortDescending /> : <IconSortAscending />}
       </Button>
     </>
