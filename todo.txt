@@ -5,6 +5,7 @@ DONE:
   import notes
   sync toke to prevent sync with wrong key
   get rid of tabler
+  favicon
 FIRST:
 TODO:
 LATER:
