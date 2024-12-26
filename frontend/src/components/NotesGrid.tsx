@@ -1,9 +1,19 @@
 import {Box, Paper} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {openNote, selectFilteredNotes} from '../state/notes'
+import {openNote} from '../state/notes'
+import {useLiveQuery} from 'dexie-react-hooks'
+import {db} from '../db'
+import {byProp} from '../util/misc'
 
 export const NotesGrid = () => {
-  const notes = useSelector(selectFilteredNotes)
+  const query = useSelector((s) => s.notes.query)
+  const sort = useSelector((s) => s.notes.sort)
+  const notes = useLiveQuery(async () => {
+    const allNotes = await db.notes.where('deleted_at').equals(0).toArray()
+    return allNotes
+      .filter((n) => !query || n.txt.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+      .sort(byProp(sort.prop, sort.desc))
+  }, [query, sort])
   return (
     <Box
       style={{
@@ -13,7 +23,7 @@ export const NotesGrid = () => {
         padding: '1rem',
       }}
     >
-      {notes.map((note) => (
+      {notes?.map((note) => (
         <Paper
           key={note.id}
           style={{

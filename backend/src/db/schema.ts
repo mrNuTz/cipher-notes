@@ -32,6 +32,7 @@ export const notesTbl = pgTable(
     clientside_id: varchar({length: 36}).notNull(),
     cipher_text: text(),
     iv: varchar({length: 16}),
+    version: integer().default(1).notNull(),
     serverside_created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
     serverside_updated_at: bigint({mode: 'number'})
       .$default(Date.now)

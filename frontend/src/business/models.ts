@@ -1,20 +1,12 @@
-import {XOR} from '../util/type'
-
-export type Note = XOR<DeletedNote, NotDeletedNote>
-export type DeletedNote = {
-  id: string
-  deleted_at: number
-}
-export type NotDeletedNote = {
+export type Note = {
   id: string
   txt: string
   created_at: number
   updated_at: number
+  version: number
+  state: 'dirty' | 'synced'
+  deleted_at: number
 }
-
-export const isNotDeletedNote = (note: Note): note is NotDeletedNote =>
-  note.deleted_at === undefined
-export const isDeletedNote = (note: Note): note is DeletedNote => note.deleted_at !== undefined
 
 export const noteSortProps = ['created_at', 'updated_at', 'txt'] satisfies (keyof Note)[]
 export const noteSortOptions = noteSortProps.map((prop) => ({

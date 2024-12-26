@@ -1,15 +1,7 @@
-import {createSelector} from 'reselect'
-import {
-  isDeletedNote,
-  isNotDeletedNote,
-  NotDeletedNote,
-  Note,
-  NoteSortProp,
-} from '../business/models'
-import {getState, RootState, setState, subscribe} from './store'
-import {loadNotes, storeNotes} from '../services/localStorage'
+import {Note, NoteSortProp} from '../business/models'
+import {getState, setState} from './store'
 import {showMessage} from './messages'
-import {byProp, debounce, downloadJson, indexBy} from '../util/misc'
+import {downloadJson} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {Delete, reqSyncNotes} from '../services/backend'
 import {
@@ -19,11 +11,11 @@ import {
   SyncData,
   Update,
 } from '../business/notesEncryption'
+import {db} from '../db'
 
 export type NotesState = {
   query: string
-  notes: {[id: string]: Note}
-  openNote: string | null
+  openNote: {id: string; txt: string} | null
   sort: {prop: NoteSortProp; desc: boolean}
   importDialog: {
     open: boolean
@@ -34,51 +26,60 @@ export type NotesState = {
 
 export const notesInit: NotesState = {
   query: '',
-  notes: {},
   openNote: null,
   sort: {prop: 'created_at', desc: true},
   importDialog: {open: false, file: null, error: null},
 }
-
-// init
-loadNotes().then((notes) =>
-  setState((s) => {
-    s.notes.notes = indexBy(notes, (n) => n.id)
-  })
-)
 
 // actions
 export const noteQueryChanged = (query: string) =>
   setState((s) => {
     s.notes.query = query
   })
-export const openNote = (id: string) =>
+export const openNote = async (id: string) => {
+  const note = await db.notes.get(id)
+  if (!note || note.txt === null) return
   setState((s) => {
-    s.notes.openNote = id
+    s.notes.openNote = {id, txt: note.txt ?? ''}
   })
-export const closeNote = () =>
+}
+export const closeNote = async () => {
+  const state = getState()
+  if (!state.notes.openNote) return
+  const note = await db.notes.get(state.notes.openNote.id)
+  if (!note) return
+  await db.notes.update(state.notes.openNote.id, {
+    txt: state.notes.openNote.txt,
+    updated_at: Date.now(),
+    state: 'dirty',
+    version: note.state === 'dirty' ? note.version : note.version + 1,
+  })
   setState((s) => {
     s.notes.openNote = null
   })
-export const addNote = () => {
+}
+export const addNote = async () => {
   const now = Date.now()
+
+  const id = crypto.randomUUID()
+  const note: Note = {
+    id,
+    txt: '',
+    version: 1,
+    state: 'dirty',
+    created_at: now,
+    updated_at: now,
+    deleted_at: 0,
+  }
+  await db.notes.add(note)
   setState((s) => {
-    const id = crypto.randomUUID()
-    s.notes.notes[id] = {
-      id,
-      txt: '',
-      created_at: now,
-      updated_at: now,
-    }
-    s.notes.openNote = id
+    s.notes.openNote = {id, txt: ''}
   })
 }
 export const openNoteChanged = (txt: string) =>
   setState((s) => {
-    if (s.notes.openNote && s.notes.notes[s.notes.openNote]) {
-      s.notes.notes[s.notes.openNote]!.txt = txt
-      s.notes.notes[s.notes.openNote]!.updated_at = Date.now()
-    }
+    if (!s.notes.openNote) return
+    s.notes.openNote.txt = txt
   })
 export const sortChanged = (prop: NoteSortProp) =>
   setState((s) => {
@@ -88,14 +89,25 @@ export const sortDirectionChanged = () =>
   setState((s) => {
     s.notes.sort.desc = !s.notes.sort.desc
   })
-export const deleteOpenNote = () =>
+export const deleteOpenNote = async () => {
+  const state = getState()
+  if (!state.notes.openNote) return
+  const note = await db.notes.get(state.notes.openNote.id)
+  if (!note) return
+  if (note.version === 1 && note.state === 'dirty') {
+    await db.notes.delete(state.notes.openNote.id)
+  } else {
+    await db.notes.update(state.notes.openNote.id, {
+      deleted_at: Date.now(),
+      txt: '',
+      state: 'dirty',
+      version: note.state === 'dirty' ? note.version : note.version + 1,
+    })
+  }
   setState((s) => {
-    if (s.notes.openNote && s.notes.openNote in s.notes.notes) {
-      s.notes.notes[s.notes.openNote]!.deleted_at = Date.now()
-      s.notes.notes[s.notes.openNote]!.txt = undefined
-      s.notes.openNote = null
-    }
+    s.notes.openNote = null
   })
+}
 export const openImportDialog = () =>
   setState((s) => {
     s.notes.importDialog = {open: true, file: null, error: null}
@@ -111,9 +123,15 @@ export const importFileChanged = (file: File | null) =>
   })
 
 // effects
-export const exportNotes = () => {
-  const notes: ImportNote[] = Object.values(getState().notes.notes).filter(isNotDeletedNote)
-  downloadJson(notes, 'notes.json')
+export const exportNotes = async () => {
+  const notes = await db.notes.where('deleted_at').equals(0).toArray()
+  const notesToExport: ImportNote[] = notes.map((n) => ({
+    id: n.id,
+    txt: n.txt,
+    created_at: n.created_at,
+    updated_at: n.updated_at,
+  }))
+  downloadJson(notesToExport, 'notes.json')
 }
 export const importNotes = async (): Promise<void> => {
   const state = getState()
@@ -123,23 +141,30 @@ export const importNotes = async (): Promise<void> => {
   }
   try {
     const importNotes = importNotesSchema.parse(JSON.parse(await file.text()))
-    const res: NotDeletedNote[] = []
+    const res: Note[] = []
     for (const importNote of importNotes) {
       const now = Date.now()
       let {id} = importNote
       if (id === undefined) id = crypto.randomUUID()
       const {txt, updated_at = now} = importNote
-      const existingNote = state.notes.notes[id]
-      if (!existingNote || isDeletedNote(existingNote) || updated_at > existingNote.updated_at) {
-        // ignore imported dates, since they would cause sync issues
-        res.push({id, created_at: existingNote?.created_at ?? now, updated_at: now, txt})
+      const existingNote = await db.notes.get(id)
+      if (!existingNote || existingNote.deleted_at !== 0 || updated_at > existingNote.updated_at) {
+        res.push({
+          id,
+          created_at: existingNote?.created_at ?? now,
+          updated_at: Math.max(updated_at, existingNote?.updated_at ?? 0),
+          txt,
+          state: 'dirty',
+          version: !existingNote
+            ? 1
+            : existingNote.state === 'dirty'
+            ? existingNote.version
+            : existingNote.version + 1,
+          deleted_at: 0,
+        })
       }
     }
-    setState((s) => {
-      for (const note of res) {
-        s.notes.notes[note.id] = note
-      }
-    })
+    await db.notes.bulkPut(res)
     closeImportDialog()
     showMessage({title: 'Success', text: 'Notes imported'})
   } catch (e) {
@@ -150,7 +175,7 @@ export const importNotes = async (): Promise<void> => {
 }
 export const syncNotes = async () => {
   const state = getState()
-  const lastSync = state.user.user.lastNotesSync
+  const lastSyncedTo = state.user.user.lastSyncedTo
   const syncToken = state.user.user.syncToken
   if (!state.user.user.loggedIn || state.user.syncDialog.syncing || !state.user.syncDialog.open) {
     return
@@ -158,98 +183,80 @@ export const syncNotes = async () => {
   setState((s) => {
     s.user.syncDialog.syncing = true
   })
+  try {
+    const dirtyNotes = await db.notes.where('state').equals('dirty').toArray()
+    const clientCreates: Create[] = dirtyNotes
+      .filter((n) => n.deleted_at === 0)
+      .filter((n) => n.version === 1)
+      .map((n) => ({id: n.id, created_at: n.created_at, txt: n.txt, updated_at: n.updated_at}))
+    const clientUpdates: Update[] = dirtyNotes
+      .filter((n) => n.deleted_at === 0)
+      .filter((n) => n.version > 1)
+      .map((n) => ({id: n.id, updated_at: n.updated_at, txt: n.txt, version: n.version}))
+    const clientDeletes: Delete[] = dirtyNotes
+      .filter((n) => n.deleted_at !== 0)
+      .map((d) => ({id: d.id, deleted_at: d.deleted_at}))
+    const clientSyncData: SyncData = {
+      creates: clientCreates,
+      updates: clientUpdates,
+      deletes: clientDeletes,
+    }
+    const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientSyncData)
 
-  const notes = Object.values(state.notes.notes)
-  const clientCreates: Create[] = notes
-    .filter(isNotDeletedNote)
-    .filter((n) => n.created_at > lastSync)
-    .map((n) => ({id: n.id, created_at: n.created_at, txt: n.txt}))
-  const clientUpdates: Update[] = notes
-    .filter(isNotDeletedNote)
-    .filter((n) => n.updated_at > lastSync && n.created_at < lastSync)
-    .map((n) => ({id: n.id, updated_at: n.updated_at, txt: n.txt}))
-  const clientDeletes: Delete[] = notes
-    .filter(isDeletedNote)
-    .filter((n) => n.deleted_at > lastSync)
-    .map((d) => ({id: d.id, deleted_at: d.deleted_at}))
-  const clientSyncData: SyncData = {
-    creates: clientCreates,
-    updates: clientUpdates,
-    deletes: clientDeletes,
-  }
-  const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientSyncData)
+    const res = await reqSyncNotes(lastSyncedTo, encClientSyncData, syncToken)
+    if (!res.success) {
+      const loggedOut = res.statusCode === 401
+      showMessage({title: 'Failed to sync notes', text: res.error})
+      setState((s) => {
+        s.user.syncDialog.syncing = false
+        if (loggedOut) {
+          s.user.user.loggedIn = false
+        }
+      })
+      return
+    }
+    const syncData = await decryptSyncData(state.user.user.cryptoKey, res.data)
+    const {creates, updates, deletes} = syncData
 
-  const res = await reqSyncNotes(lastSync, encClientSyncData, syncToken)
-  if (!res.success) {
-    const loggedOut = res.statusCode === 401
-    showMessage({title: 'Failed to sync notes', text: res.error})
-    setState((s) => {
-      s.user.syncDialog.syncing = false
-      if (loggedOut) {
-        s.user.user.loggedIn = false
-      }
-    })
-    return
-  }
-  const syncData = await decryptSyncData(state.user.user.cryptoKey, res.data)
-  const {creates, updates, deletes} = syncData
-  setState((s) => {
-    for (const create of creates) {
-      s.notes.notes[create.id] = {
+    await db.notes.bulkPut(
+      creates.map((create) => ({
         id: create.id,
         created_at: create.created_at,
         updated_at: create.created_at,
         txt: create.txt,
-      }
-    }
-    for (const update of updates) {
-      if (update.id in s.notes.notes) {
-        s.notes.notes[update.id]!.txt = update.txt
-        s.notes.notes[update.id]!.updated_at = update.updated_at
-      }
-    }
-    for (const del of deletes) {
-      if (del.id in s.notes.notes) {
-        s.notes.notes[del.id]!.deleted_at = del.deleted_at
-      }
-    }
-    s.user.user.lastNotesSync = Date.now()
-    s.user.syncDialog.syncing = false
-    s.user.syncDialog.open = false
-  })
-  showMessage({title: 'Success', text: 'Notes synced'})
-}
+        version: 1,
+        state: 'synced',
+        deleted_at: 0,
+      }))
+    )
 
-// selectors
-export const selectFilteredNotes = createSelector(
-  [
-    (s: RootState) => s.notes.notes,
-    (s: RootState) => s.notes.query,
-    (s: RootState) => s.notes.sort,
-  ],
-  (notes, query, {prop, desc}): NotDeletedNote[] =>
-    Object.values(notes)
-      .filter(isNotDeletedNote)
-      .filter((n) => !query || n.txt.includes(query))
-      .sort(byProp(prop, desc))
-)
-export const selectOpenNote = createSelector(
-  [(s: RootState) => s.notes.notes, (s: RootState) => s.notes.openNote],
-  (notes, id): Note | undefined => (id ? notes[id] : undefined)
-)
+    await db.notes.bulkUpdate(
+      updates.map((update) => ({
+        key: update.id,
+        changes: {
+          updated_at: update.updated_at,
+          txt: update.txt,
+          version: update.version,
+          state: 'synced',
+        },
+      }))
+    )
 
-// subscriptions
-const storeNotesDebounced = debounce(
-  (notes: NotesState['notes']) =>
-    storeNotes(Object.values(notes)).catch(() =>
-      showMessage({title: 'Error', text: 'Failed to save notes'})
-    ),
-  1000
-)
+    await db.notes.bulkDelete(deletes.map((d) => d.id))
 
-export const registerNotesSubscriptions = () => {
-  subscribe(
-    (s) => s.notes.notes,
-    (notes) => storeNotesDebounced(notes)
-  )
+    setState((s) => {
+      s.user.user.lastSyncedTo = res.data.synced_to
+      s.user.syncDialog.syncing = false
+      s.user.syncDialog.open = false
+    })
+    showMessage({title: 'Success', text: 'Notes synced'})
+  } catch (e) {
+    setState((s) => {
+      s.user.syncDialog.syncing = false
+    })
+    showMessage({
+      title: 'Failed to sync notes',
+      text: e instanceof Error ? e.message : 'Unknown error',
+    })
+  }
 }
