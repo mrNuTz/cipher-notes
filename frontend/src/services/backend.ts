@@ -58,6 +58,7 @@ export const reqLoginCode = (email: string, code: string) =>
 export type EncCreate = {
   id: string
   created_at: number
+  updated_at: number
   cipher_text: string
   iv: string
 }
@@ -66,6 +67,7 @@ export type EncUpdate = {
   cipher_text: string
   iv: string
   updated_at: number
+  version: number
 }
 export type Delete = {
   id: string
@@ -78,8 +80,10 @@ export type EncSyncData = {
   deletes: Delete[]
 }
 
-export const reqSyncNotes = (lastSyncedAt: number, data: EncSyncData, syncToken: string) =>
-  request<EncSyncData>('/syncNotes', {
+export type EncSyncRes = EncSyncData & {synced_to: number}
+
+export const reqSyncNotes = (lastSyncedTo: number, data: EncSyncData, syncToken: string) =>
+  request<EncSyncRes>('/syncNotes', {
     method: 'POST',
-    body: {last_synced_at: lastSyncedAt, sync_token: syncToken, ...data},
+    body: {last_synced_to: lastSyncedTo, sync_token: syncToken, ...data},
   })

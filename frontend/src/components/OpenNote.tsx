@@ -1,10 +1,10 @@
 import {Button, Modal, Textarea} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {closeNote, openNoteChanged, deleteOpenNote, selectOpenNote} from '../state/notes'
+import {closeNote, openNoteChanged, deleteOpenNote} from '../state/notes'
 import {modals} from '@mantine/modals'
 
 export const OpenNote = () => {
-  const note = useSelector(selectOpenNote)
+  const note = useSelector((s) => s.notes.openNote)
   return (
     <Modal
       opened={!!note}

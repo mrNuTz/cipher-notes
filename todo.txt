@@ -6,10 +6,15 @@ DONE:
   sync toke to prevent sync with wrong key
   get rid of tabler
   favicon
+  use IndexedDB instead of localStorage
+  finally delete notes never synced
 FIRST:
 TODO:
 LATER:
-  use IndexedDB instead of localStorage
+  deal with sync conflicts
+  usability
+    prompt user to set cryptoKey before first sync
+  change email
+  change crypto key
   delete server notes when cryptoKey lost
-  prompt user to set cryptoKey before sync
 MAYBE:

@@ -9,7 +9,7 @@ export type UserState = {
   user: {
     email: string
     loggedIn: boolean
-    lastNotesSync: number
+    lastSyncedTo: number
     cryptoKey: string
     syncToken: string
   }
@@ -26,7 +26,7 @@ export type UserState = {
 }
 
 export const userInit: UserState = {
-  user: {email: '', loggedIn: false, lastNotesSync: 0, cryptoKey: '', syncToken: ''},
+  user: {email: '', loggedIn: false, lastSyncedTo: 0, cryptoKey: '', syncToken: ''},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
