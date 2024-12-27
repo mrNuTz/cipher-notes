@@ -4,13 +4,7 @@ import {showMessage} from './messages'
 import {downloadJson} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {Delete, reqSyncNotes} from '../services/backend'
-import {
-  Create,
-  decryptSyncData,
-  encryptSyncData,
-  SyncData,
-  Update,
-} from '../business/notesEncryption'
+import {Put, decryptSyncData, encryptSyncData, SyncData} from '../business/notesEncryption'
 import {db} from '../db'
 
 export type NotesState = {
@@ -185,20 +179,20 @@ export const syncNotes = async () => {
   })
   try {
     const dirtyNotes = await db.notes.where('state').equals('dirty').toArray()
-    const clientCreates: Create[] = dirtyNotes
+    const clientPuts: Put[] = dirtyNotes
       .filter((n) => n.deleted_at === 0)
-      .filter((n) => n.version === 1)
-      .map((n) => ({id: n.id, created_at: n.created_at, txt: n.txt, updated_at: n.updated_at}))
-    const clientUpdates: Update[] = dirtyNotes
-      .filter((n) => n.deleted_at === 0)
-      .filter((n) => n.version > 1)
-      .map((n) => ({id: n.id, updated_at: n.updated_at, txt: n.txt, version: n.version}))
+      .map((n) => ({
+        id: n.id,
+        created_at: n.created_at,
+        txt: n.txt,
+        updated_at: n.updated_at,
+        version: n.version,
+      }))
     const clientDeletes: Delete[] = dirtyNotes
       .filter((n) => n.deleted_at !== 0)
       .map((d) => ({id: d.id, deleted_at: d.deleted_at}))
     const clientSyncData: SyncData = {
-      creates: clientCreates,
-      updates: clientUpdates,
+      puts: clientPuts,
       deletes: clientDeletes,
     }
     const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientSyncData)
@@ -216,29 +210,17 @@ export const syncNotes = async () => {
       return
     }
     const syncData = await decryptSyncData(state.user.user.cryptoKey, res.data)
-    const {creates, updates, deletes} = syncData
+    const {puts, deletes} = syncData
 
     await db.notes.bulkPut(
-      creates.map((create) => ({
-        id: create.id,
-        created_at: create.created_at,
-        updated_at: create.created_at,
-        txt: create.txt,
-        version: 1,
+      puts.map((put) => ({
+        id: put.id,
+        created_at: put.created_at,
+        updated_at: put.updated_at,
+        txt: put.txt,
+        version: put.version,
         state: 'synced',
         deleted_at: 0,
-      }))
-    )
-
-    await db.notes.bulkUpdate(
-      updates.map((update) => ({
-        key: update.id,
-        changes: {
-          updated_at: update.updated_at,
-          txt: update.txt,
-          version: update.version,
-          state: 'synced',
-        },
       }))
     )
 

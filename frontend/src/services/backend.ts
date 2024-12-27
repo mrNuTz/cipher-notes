@@ -55,18 +55,12 @@ export const reqLoginEmail = (email: string) =>
 export const reqLoginCode = (email: string, code: string) =>
   request<void>('/loginCode', {method: 'POST', body: {email, login_code: code}})
 
-export type EncCreate = {
+export type EncPut = {
   id: string
   created_at: number
   updated_at: number
   cipher_text: string
   iv: string
-}
-export type EncUpdate = {
-  id: string
-  cipher_text: string
-  iv: string
-  updated_at: number
   version: number
 }
 export type Delete = {
@@ -75,8 +69,7 @@ export type Delete = {
 }
 
 export type EncSyncData = {
-  creates: EncCreate[]
-  updates: EncUpdate[]
+  puts: EncPut[]
   deletes: Delete[]
 }
 
