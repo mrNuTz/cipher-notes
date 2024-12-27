@@ -9,21 +9,15 @@ import {
   importKey,
 } from '../util/encryption'
 
-export type Create = {
+export type Put = {
   id: string
   created_at: number
   updated_at: number
   txt: string
-}
-export type Update = {
-  id: string
-  txt: string
-  updated_at: number
   version: number
 }
 export type SyncData = {
-  creates: Create[]
-  updates: Update[]
+  puts: Put[]
   deletes: Delete[]
 }
 
@@ -32,19 +26,12 @@ export const decryptSyncData = async (
   syncData: EncSyncData
 ): Promise<SyncData> => {
   const key = await importKey(cryptoKey)
-
-  const creates = await Promise.all(
-    syncData.creates.map(({id, created_at, cipher_text, iv, updated_at}) =>
-      decryptData(key, cipher_text, iv).then((txt) => ({id, created_at, txt, updated_at}))
+  const puts = await Promise.all(
+    syncData.puts.map(({id, created_at, cipher_text, iv, updated_at, version}) =>
+      decryptData(key, cipher_text, iv).then((txt) => ({id, created_at, txt, updated_at, version}))
     )
   )
-  const updates = await Promise.all(
-    syncData.updates.map(({id, updated_at, cipher_text, iv, version}) =>
-      decryptData(key, cipher_text, iv).then((txt) => ({id, txt, updated_at, version}))
-    )
-  )
-
-  return {creates, updates, deletes: syncData.deletes}
+  return {puts, deletes: syncData.deletes}
 }
 
 export const encryptSyncData = async (
@@ -52,29 +39,19 @@ export const encryptSyncData = async (
   syncData: SyncData
 ): Promise<EncSyncData> => {
   const key = await importKey(cryptoKey)
-  const creates = await Promise.all(
-    syncData.creates.map(({id, created_at, txt, updated_at}) =>
+  const puts = await Promise.all(
+    syncData.puts.map(({id, created_at, txt, updated_at, version}) =>
       encryptData(key, txt).then(({cipher_text, iv}) => ({
         id,
         created_at,
         cipher_text,
         iv,
         updated_at,
-      }))
-    )
-  )
-  const updates = await Promise.all(
-    syncData.updates.map(({id, updated_at, txt, version}) =>
-      encryptData(key, txt).then(({cipher_text, iv}) => ({
-        id,
-        updated_at,
-        cipher_text,
-        iv,
         version,
       }))
     )
   )
-  return {creates, updates, deletes: syncData.deletes}
+  return {puts, deletes: syncData.deletes}
 }
 
 export const calcChecksum = (key: string, syncToken: string) => {

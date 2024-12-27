@@ -12,9 +12,11 @@ FIRST:
 TODO:
 LATER:
   deal with sync conflicts
+  sync button
   usability
     prompt user to set cryptoKey before first sync
   change email
   change crypto key
-  delete server notes when cryptoKey lost
+  delete account
+  fix open note scrolle on iOS
 MAYBE:
