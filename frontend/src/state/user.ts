@@ -8,7 +8,7 @@ import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
 export type UserState = {
   user: {
     email: string
-    loggedIn: boolean
+    session: {access_token: string; session_id: number} | null
     lastSyncedTo: number
     cryptoKey: string
     syncToken: string
@@ -26,7 +26,7 @@ export type UserState = {
 }
 
 export const userInit: UserState = {
-  user: {email: '', loggedIn: false, lastSyncedTo: 0, cryptoKey: '', syncToken: ''},
+  user: {email: '', session: null, lastSyncedTo: 0, cryptoKey: '', syncToken: ''},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
@@ -212,7 +212,7 @@ export const loginCode = async () => {
     return
   }
   setState((state) => {
-    state.user.user.loggedIn = true
+    state.user.user.session = res.data
     state.user.user.email = email
   })
   showMessage({

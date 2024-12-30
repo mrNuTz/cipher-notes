@@ -11,7 +11,7 @@ import {useMantineColorScheme} from '@mantine/core'
 
 export const CommandCenter = () => {
   const {toggleColorScheme} = useMantineColorScheme()
-  const loggedIn = useSelector((s) => s.user.user.loggedIn)
+  const session = useSelector((s) => s.user.user.session)
   return (
     <Spotlight
       shortcut={['Ctrl + K', 'Cmd + K']}
@@ -35,19 +35,19 @@ export const CommandCenter = () => {
           id: 'register',
           label: 'Register',
           onClick: openRegisterDialog,
-          disabled: loggedIn,
+          disabled: !!session,
         },
         {
           id: 'login',
           label: 'Login',
           onClick: openLoginDialog,
-          disabled: loggedIn,
+          disabled: !!session,
         },
         {
           id: 'sync',
           label: 'Synchronize notes with server',
           onClick: openSyncDialog,
-          disabled: !loggedIn,
+          disabled: !session,
         },
         {
           id: 'encryptionKey',

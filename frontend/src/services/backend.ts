@@ -53,7 +53,10 @@ export const reqLoginEmail = (email: string) =>
   request<void>('/loginEmail', {method: 'POST', body: {email}})
 
 export const reqLoginCode = (email: string, code: string) =>
-  request<void>('/loginCode', {method: 'POST', body: {email, login_code: code}})
+  request<{session_id: number; access_token: string}>('/loginCode', {
+    method: 'POST',
+    body: {email, login_code: code},
+  })
 
 export type EncPut = {
   id: string
@@ -75,8 +78,13 @@ export type EncSyncData = {
 
 export type EncSyncRes = EncSyncData & {synced_to: number}
 
-export const reqSyncNotes = (lastSyncedTo: number, data: EncSyncData, syncToken: string) =>
+export const reqSyncNotes = (
+  session: {access_token: string; session_id: number},
+  lastSyncedTo: number,
+  data: EncSyncData,
+  syncToken: string
+) =>
   request<EncSyncRes>('/syncNotes', {
     method: 'POST',
-    body: {last_synced_to: lastSyncedTo, sync_token: syncToken, ...data},
+    body: {session, last_synced_to: lastSyncedTo, sync_token: syncToken, ...data},
   })
