@@ -8,7 +8,6 @@ export const usersTbl = pgTable('users', {
   login_tries_left: integer().default(0).notNull(),
   created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
   updated_at: bigint({mode: 'number'}).$default(Date.now).$onUpdate(Date.now).notNull(),
-  last_synced_at: bigint({mode: 'number'}),
   sync_token: varchar({length: 24}),
 })
 
