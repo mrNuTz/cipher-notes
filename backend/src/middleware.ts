@@ -39,19 +39,15 @@ export const rateLimitMiddleware = new Middleware({
   },
 })
 
-const sessionSchema = z.object({
-  access_token: z.string(),
-  session_id: z.number(),
-})
-
 export const authMiddleware = new Middleware({
-  handler: async ({request}) => {
-    const cookies = request.cookies
-    const cookieSession: any = cookies.session
-    if (!cookieSession) {
-      throw createHttpError(401, 'No session cookie')
-    }
-    const {access_token, session_id} = sessionSchema.parse(JSON.parse(cookieSession))
+  input: z.object({
+    session: z.object({
+      access_token: z.string(),
+      session_id: z.number(),
+    }),
+  }),
+  handler: async ({input}) => {
+    const {access_token, session_id} = input.session
     const sessions = await db
       .select()
       .from(sessionsTbl)
