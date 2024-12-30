@@ -1,6 +1,4 @@
 import {z} from 'zod'
-import {EncSyncData} from '../services/backend'
-import {Delete} from '../services/backend'
 import {
   base64ToBin,
   calculateChecksum,
@@ -8,50 +6,53 @@ import {
   encryptData,
   importKey,
 } from '../util/encryption'
+import {EncPut} from '../services/backend'
 
-export type Put = {
-  id: string
-  created_at: number
-  updated_at: number
-  txt: string
-  version: number
-}
-export type SyncData = {
-  puts: Put[]
-  deletes: Delete[]
-}
+export type Put =
+  | {
+      id: string
+      created_at: number
+      updated_at: number
+      txt: string
+      version: number
+      deleted_at: null
+    }
+  | {
+      id: string
+      created_at: number
+      updated_at: number
+      txt: null
+      version: number
+      deleted_at: number
+    }
 
-export const decryptSyncData = async (
-  cryptoKey: string,
-  syncData: EncSyncData
-): Promise<SyncData> => {
+export const decryptSyncData = async (cryptoKey: string, puts: EncPut[]): Promise<Put[]> => {
   const key = await importKey(cryptoKey)
-  const puts = await Promise.all(
-    syncData.puts.map(({id, created_at, cipher_text, iv, updated_at, version}) =>
-      decryptData(key, cipher_text, iv).then((txt) => ({id, created_at, txt, updated_at, version}))
+  return await Promise.all(
+    puts.map((p) =>
+      p.deleted_at === null && p.cipher_text !== null && p.iv !== null
+        ? decryptData(key, p.cipher_text, p.iv).then((txt) => ({
+            ...p,
+            txt,
+          }))
+        : {...p, txt: null}
     )
   )
-  return {puts, deletes: syncData.deletes}
 }
 
-export const encryptSyncData = async (
-  cryptoKey: string,
-  syncData: SyncData
-): Promise<EncSyncData> => {
+export const encryptSyncData = async (cryptoKey: string, puts: Put[]): Promise<EncPut[]> => {
   const key = await importKey(cryptoKey)
-  const puts = await Promise.all(
-    syncData.puts.map(({id, created_at, txt, updated_at, version}) =>
-      encryptData(key, txt).then(({cipher_text, iv}) => ({
-        id,
-        created_at,
-        cipher_text,
-        iv,
-        updated_at,
-        version,
-      }))
+  return await Promise.all(
+    puts.map((p) =>
+      p.txt !== null && p.deleted_at === null
+        ? encryptData(key, p.txt).then(({cipher_text, iv}) => ({
+            ...p,
+            cipher_text,
+            iv,
+          }))
+        : {...p, cipher_text: null, iv: null}
     )
   )
-  return {puts, deletes: syncData.deletes}
 }
 
 export const calcChecksum = (key: string, syncToken: string) => {

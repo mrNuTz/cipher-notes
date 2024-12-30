@@ -37,7 +37,6 @@ export const notesTbl = pgTable(
       .$default(Date.now)
       .$onUpdate(Date.now)
       .notNull(),
-    serverside_deleted_at: bigint({mode: 'number'}),
     clientside_created_at: bigint({mode: 'number'}).notNull(),
     clientside_updated_at: bigint({mode: 'number'}).notNull(),
     clientside_deleted_at: bigint({mode: 'number'}),

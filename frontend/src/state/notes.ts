@@ -3,8 +3,8 @@ import {getState, setState} from './store'
 import {showMessage} from './messages'
 import {downloadJson} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
-import {Delete, reqSyncNotes} from '../services/backend'
-import {Put, decryptSyncData, encryptSyncData, SyncData} from '../business/notesEncryption'
+import {reqSyncNotes} from '../services/backend'
+import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db} from '../db'
 
 export type NotesState = {
@@ -181,22 +181,20 @@ export const syncNotes = async () => {
   try {
     const dirtyNotes = await db.notes.where('state').equals('dirty').toArray()
     const clientPuts: Put[] = dirtyNotes
-      .filter((n) => n.deleted_at === 0)
       .map((n) => ({
         id: n.id,
         created_at: n.created_at,
-        txt: n.txt,
+        txt: n.deleted_at === 0 ? n.txt : null,
         updated_at: n.updated_at,
         version: n.version,
+        deleted_at: n.deleted_at === 0 ? null : n.deleted_at,
       }))
-    const clientDeletes: Delete[] = dirtyNotes
-      .filter((n) => n.deleted_at !== 0)
-      .map((d) => ({id: d.id, deleted_at: d.deleted_at}))
-    const clientSyncData: SyncData = {
-      puts: clientPuts,
-      deletes: clientDeletes,
-    }
-    const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientSyncData)
+      .filter(
+        (p): p is typeof p & ({deleted_at: number; txt: null} | {deleted_at: null; txt: string}) =>
+          (typeof p.deleted_at === 'number' && p.txt === null) ||
+          (p.deleted_at === null && typeof p.txt === 'string')
+      )
+    const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientPuts)
 
     const res = await reqSyncNotes(session, lastSyncedTo, encClientSyncData, syncToken)
     if (!res.success) {
@@ -210,22 +208,26 @@ export const syncNotes = async () => {
       })
       return
     }
-    const syncData = await decryptSyncData(state.user.user.cryptoKey, res.data)
-    const {puts, deletes} = syncData
+    const puts = await decryptSyncData(state.user.user.cryptoKey, res.data.puts)
 
     await db.notes.bulkPut(
       puts.map((put) => ({
         id: put.id,
         created_at: put.created_at,
         updated_at: put.updated_at,
-        txt: put.txt,
+        txt: put.txt ?? '',
         version: put.version,
         state: 'synced',
-        deleted_at: 0,
+        deleted_at: put.deleted_at ? put.deleted_at : 0,
       }))
     )
 
-    await db.notes.bulkDelete(deletes.map((d) => d.id))
+    const syncedDeletes = await db.notes
+      .where('deleted_at')
+      .notEqual(0)
+      .and((n) => n.state === 'synced')
+      .toArray()
+    await db.notes.bulkDelete(syncedDeletes.map((d) => d.id))
 
     setState((s) => {
       s.user.user.lastSyncedTo = res.data.synced_to

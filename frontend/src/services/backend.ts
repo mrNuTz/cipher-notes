@@ -58,33 +58,35 @@ export const reqLoginCode = (email: string, code: string) =>
     body: {email, login_code: code},
   })
 
-export type EncPut = {
-  id: string
-  created_at: number
-  updated_at: number
-  cipher_text: string
-  iv: string
-  version: number
-}
-export type Delete = {
-  id: string
-  deleted_at: number
-}
+export type EncPut =
+  | {
+      id: string
+      created_at: number
+      updated_at: number
+      cipher_text: string
+      iv: string
+      version: number
+      deleted_at: null
+    }
+  | {
+      id: string
+      created_at: number
+      updated_at: number
+      cipher_text: null
+      iv: null
+      version: number
+      deleted_at: number
+    }
 
-export type EncSyncData = {
-  puts: EncPut[]
-  deletes: Delete[]
-}
-
-export type EncSyncRes = EncSyncData & {synced_to: number}
+export type EncSyncRes = {puts: EncPut[]; synced_to: number}
 
 export const reqSyncNotes = (
   session: {access_token: string; session_id: number},
   lastSyncedTo: number,
-  data: EncSyncData,
+  puts: EncPut[],
   syncToken: string
 ) =>
   request<EncSyncRes>('/syncNotes', {
     method: 'POST',
-    body: {session, last_synced_to: lastSyncedTo, sync_token: syncToken, ...data},
+    body: {session, last_synced_to: lastSyncedTo, sync_token: syncToken, puts},
   })
