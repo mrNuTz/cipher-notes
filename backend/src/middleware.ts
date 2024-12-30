@@ -60,13 +60,13 @@ export const authMiddleware = new Middleware({
     if (!verifyToken(access_token, storedHash, access_token_salt)) {
       throw createHttpError(401, 'Invalid access token')
     }
-    if (Date.now() - created_at > 1000 * 60 * 60 * 24 * 7) {
+    if (Date.now() - created_at > 1000 * 60 * Number(env.SESSION_TTL_MIN)) {
       throw createHttpError(401, 'Session expired')
     }
     const users = await db.select().from(usersTbl).where(eq(usersTbl.id, sessions[0].user_id))
 
     if (users.length !== 1) {
-      throw createHttpError(401, 'Invalid access token')
+      throw createHttpError(401, 'User not found')
     }
     return {user: users[0]}
   },
