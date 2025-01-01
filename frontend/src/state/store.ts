@@ -4,16 +4,19 @@ import {notesInit, NotesState} from './notes'
 import {messagesInit, MessagesState} from './messages'
 import {subscribeWithSelector} from 'zustand/middleware'
 import {registerUserSubscriptions, userInit, UserState} from './user'
+import {conflictsInit, ConflictsState} from './conflicts'
 
 export type RootState = {
   notes: NotesState
   messages: MessagesState
   user: UserState
+  conflicts: ConflictsState
 }
 const init: RootState = {
   notes: notesInit,
   messages: messagesInit,
   user: userInit,
+  conflicts: conflictsInit,
 }
 export const useSelector = create<RootState>()(immer(subscribeWithSelector(() => init)))
 export const getState = useSelector.getState

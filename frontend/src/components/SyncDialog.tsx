@@ -9,8 +9,6 @@ export const SyncDialog = () => {
     <Modal title='Synchronize notes with the server' opened={open} onClose={closeSyncDialog}>
       <Text c='dimmed' pb='md'>
         Your notes are encrypted and stored on the server.
-        <br />
-        On conflicts, the latest version will be kept.
       </Text>
       <Button loading={syncing} onClick={syncNotes}>
         Synchronize

@@ -78,7 +78,7 @@ export type EncPut =
       deleted_at: number
     }
 
-export type EncSyncRes = {puts: EncPut[]; synced_to: number}
+export type EncSyncRes = {puts: EncPut[]; synced_to: number; conflicts: EncPut[]}
 
 export const reqSyncNotes = (
   session: {access_token: string; session_id: number},

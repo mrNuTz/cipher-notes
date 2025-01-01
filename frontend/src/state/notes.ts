@@ -209,6 +209,7 @@ export const syncNotes = async () => {
       return
     }
     const puts = await decryptSyncData(state.user.user.cryptoKey, res.data.puts)
+    const conflicts = await decryptSyncData(state.user.user.cryptoKey, res.data.conflicts)
 
     await db.notes.bulkPut(
       puts.map((put) => ({
@@ -230,6 +231,7 @@ export const syncNotes = async () => {
     await db.notes.bulkDelete(syncedDeletes.map((d) => d.id))
 
     setState((s) => {
+      s.conflicts.conflicts = conflicts
       s.user.user.lastSyncedTo = res.data.synced_to
       s.user.syncDialog.syncing = false
       s.user.syncDialog.open = false
