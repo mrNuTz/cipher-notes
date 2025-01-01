@@ -7,6 +7,7 @@ import {RegisterDialog} from './RegisterDialog.tsx'
 import {SyncDialog} from './SyncDialog.tsx'
 import {EncryptionKeyDialog} from './EncryptionKeyDialog.tsx'
 import {Main} from './Main.tsx'
+import {ConflictDialog} from './ConflictDialog.tsx'
 
 export const App = () => (
   <>
@@ -16,6 +17,7 @@ export const App = () => (
     <RegisterDialog />
     <LoginDialog />
     <SyncDialog />
+    <ConflictDialog />
     <EncryptionKeyDialog />
     <PWABadge />
     <MessageBox />

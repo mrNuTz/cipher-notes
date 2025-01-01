@@ -175,3 +175,5 @@ export const downloadJson = (data: JsonRoot, filename = 'data.json') => {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
+
+export const formatDateTime = (date: string | number) => new Date(date).toLocaleString()

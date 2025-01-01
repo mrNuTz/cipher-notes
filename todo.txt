@@ -8,11 +8,12 @@ DONE:
   favicon
   use IndexedDB instead of localStorage
   finally delete notes never synced
+  deal with sync conflicts
 FIRST:
 TODO:
 LATER:
-  deal with sync conflicts
   sync button
+  status bar that shows number of dirty notes
   usability
     prompt user to set cryptoKey before first sync
   change email
