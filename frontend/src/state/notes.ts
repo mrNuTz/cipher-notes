@@ -236,7 +236,10 @@ export const syncNotes = async () => {
       s.user.syncDialog.syncing = false
       s.user.syncDialog.open = false
     })
-    showMessage({title: 'Success', text: 'Notes synced'})
+    showMessage({
+      title: 'Success',
+      text: `Notes synced with ${conflicts.length} conflicts`,
+    })
   } catch (e) {
     setState((s) => {
       s.user.syncDialog.syncing = false

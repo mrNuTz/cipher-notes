@@ -4,7 +4,7 @@ import {
   openEncryptionKeyDialog,
   openLoginDialog,
   openRegisterDialog,
-  openSyncDialog,
+  openSyncDialogAndSync,
 } from '../state/user'
 import {useSelector} from '../state/store'
 import {useMantineColorScheme} from '@mantine/core'
@@ -20,6 +20,12 @@ export const CommandCenter = () => {
           id: 'toggleColorScheme',
           label: 'Toggle Dark Mode',
           onClick: toggleColorScheme,
+        },
+        {
+          id: 'sync',
+          label: 'Synchronize notes with server',
+          onClick: openSyncDialogAndSync,
+          disabled: !session,
         },
         {
           id: 'exportNotes',
@@ -42,12 +48,6 @@ export const CommandCenter = () => {
           label: 'Login',
           onClick: openLoginDialog,
           disabled: !!session,
-        },
-        {
-          id: 'sync',
-          label: 'Synchronize notes with server',
-          onClick: openSyncDialog,
-          disabled: !session,
         },
         {
           id: 'encryptionKey',

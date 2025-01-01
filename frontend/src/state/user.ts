@@ -4,6 +4,7 @@ import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
 import {getState, setState, subscribe} from './store'
 import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
+import {syncNotes} from './notes'
 
 export type UserState = {
   user: {
@@ -94,16 +95,20 @@ export const switchLoginStatus = () => {
     state.user.loginDialog.status = state.user.loginDialog.status === 'email' ? 'code' : 'email'
   })
 }
-export const openSyncDialog = () => {
+export const openSyncDialogAndSync = () => {
+  const state = getState()
+  if (state.user.syncDialog.syncing || state.user.syncDialog.open) return
   setState((state) => {
     state.user.syncDialog.open = true
   })
+  syncNotes()
 }
-export const closeSyncDialog = () => {
+export const closeSyncDialog = () =>
   setState((state) => {
+    if (!state.user.syncDialog.open || state.user.syncDialog.syncing) return
     state.user.syncDialog.open = false
   })
-}
+
 export const openEncryptionKeyDialog = () => {
   setState((state) => {
     const checksum = calcChecksum(state.user.user.cryptoKey, state.user.user.syncToken)
