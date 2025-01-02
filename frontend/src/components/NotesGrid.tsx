@@ -24,14 +24,23 @@ export const NotesGrid = () => {
         overflowY: 'auto',
       }}
     >
+      <style
+        children={`button:focus {
+          outline: 1px solid var(--mantine-primary-color-5);
+        }`}
+        scoped
+      />
       {notes?.map((note) => (
         <Paper
+          component='button'
           key={note.id}
           style={{
             padding: '1rem',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
             cursor: 'pointer',
+            border: 'none',
+            textAlign: 'left',
           }}
           shadow='sm'
           onClick={() => openNote(note.id)}
