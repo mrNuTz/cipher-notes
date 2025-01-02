@@ -9,11 +9,11 @@ DONE:
   use IndexedDB instead of localStorage
   finally delete notes never synced
   deal with sync conflicts
+  immediate sync command
+  status bar that shows number of dirty notes and email
 FIRST:
 TODO:
 LATER:
-  sync button
-  status bar that shows number of dirty notes
   usability
     prompt user to set cryptoKey before first sync
   change email

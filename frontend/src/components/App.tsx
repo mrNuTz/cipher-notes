@@ -8,10 +8,12 @@ import {SyncDialog} from './SyncDialog.tsx'
 import {EncryptionKeyDialog} from './EncryptionKeyDialog.tsx'
 import {Main} from './Main.tsx'
 import {ConflictDialog} from './ConflictDialog.tsx'
+import {OpenNoteDialog} from './OpenNoteDialog.tsx'
 
 export const App = () => (
   <>
     <Main />
+    <OpenNoteDialog />
     <CommandCenter />
     <ImportNotesDialog />
     <RegisterDialog />

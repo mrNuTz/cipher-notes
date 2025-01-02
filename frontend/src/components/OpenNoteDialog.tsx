@@ -3,7 +3,7 @@ import {useSelector} from '../state/store'
 import {closeNote, openNoteChanged, deleteOpenNote} from '../state/notes'
 import {modals} from '@mantine/modals'
 
-export const OpenNote = () => {
+export const OpenNoteDialog = () => {
   const note = useSelector((s) => s.notes.openNote)
   return (
     <Modal
