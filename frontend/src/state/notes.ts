@@ -184,9 +184,9 @@ export const importNotes = async (): Promise<void> => {
 export const syncNotes = async () => {
   const state = getState()
   const lastSyncedTo = state.user.user.lastSyncedTo
-  const syncToken = state.user.user.syncToken
+  const keyTokenPair = state.user.user.keyTokenPair
   const session = state.user.user.session
-  if (!session || state.user.syncDialog.syncing || !state.user.syncDialog.open) {
+  if (!keyTokenPair || !session || state.user.syncDialog.syncing || !state.user.syncDialog.open) {
     return
   }
   setState((s) => {
@@ -208,9 +208,9 @@ export const syncNotes = async () => {
           (typeof p.deleted_at === 'number' && p.txt === null) ||
           (p.deleted_at === null && typeof p.txt === 'string')
       )
-    const encClientSyncData = await encryptSyncData(state.user.user.cryptoKey, clientPuts)
+    const encClientSyncData = await encryptSyncData(keyTokenPair.cryptoKey, clientPuts)
 
-    const res = await reqSyncNotes(session, lastSyncedTo, encClientSyncData, syncToken)
+    const res = await reqSyncNotes(session, lastSyncedTo, encClientSyncData, keyTokenPair.syncToken)
     if (!res.success) {
       const loggedOut = res.statusCode === 401
       showMessage({title: 'Failed to sync notes', text: res.error})
@@ -222,8 +222,8 @@ export const syncNotes = async () => {
       })
       return
     }
-    const puts = await decryptSyncData(state.user.user.cryptoKey, res.data.puts)
-    const conflicts = await decryptSyncData(state.user.user.cryptoKey, res.data.conflicts)
+    const puts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
+    const conflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
 
     await db.notes.bulkPut(
       puts.map((put) => ({

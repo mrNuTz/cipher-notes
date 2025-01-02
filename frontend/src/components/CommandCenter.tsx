@@ -51,7 +51,7 @@ export const CommandCenter = () => {
         },
         {
           id: 'encryptionKey',
-          label: 'Import/Export Encryption-Key',
+          label: 'Encryption-Key (Generate/Import/Export)',
           onClick: openEncryptionKeyDialog,
         },
       ].filter((a) => !a.disabled)}
