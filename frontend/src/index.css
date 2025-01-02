@@ -1,20 +1,11 @@
-html {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+html, body, #root {
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
 }
 body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 100%;
   margin: 0;
   background-color: var(--mantine-color-gray-0);
-}
-#root {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 100%;
-  position: relative;
 }
 html[data-mantine-color-scheme='dark'] body {
   background-color: var(--mantine-color-dark-8);

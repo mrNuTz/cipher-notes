@@ -3,13 +3,13 @@ import {SearchInput} from './SearchInput'
 import {NotesGrid} from './NotesGrid'
 import {addNote} from '../state/notes'
 import {NotesSortSelect} from './NotesSortSelect'
-import {OpenNote} from './OpenNote'
 import {IconPlus} from './icons/IconPlus'
 import {IconCommand} from './icons/IconCommand'
 import {spotlight} from '@mantine/spotlight'
+import {StatusBar} from './StatusBar'
 
 export const Main = () => (
-  <Stack flex={1} pos='relative'>
+  <Stack flex={1} h='100%' gap={0}>
     <Flex gap='xs' p='md' bg='rgba(0,0,0,.1)'>
       <SearchInput />
       <Box flex={1} />
@@ -19,9 +19,11 @@ export const Main = () => (
       </Button>
     </Flex>
     <NotesGrid />
-    <Button onClick={addNote} pos='absolute' bottom='1rem' right='1rem'>
-      <IconPlus />
-    </Button>
-    <OpenNote />
+    <Box pos='relative' flex={1} style={{overflow: 'visible'}}>
+      <Button onClick={addNote} pos='absolute' bottom='1rem' right='1rem'>
+        <IconPlus />
+      </Button>
+    </Box>
+    <StatusBar />
   </Stack>
 )
