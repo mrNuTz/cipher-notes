@@ -1,6 +1,6 @@
 import {create} from 'zustand'
 import {immer} from 'zustand/middleware/immer'
-import {notesInit, NotesState} from './notes'
+import {notesInit, NotesState, registerNotesSubscriptions} from './notes'
 import {messagesInit, MessagesState} from './messages'
 import {subscribeWithSelector} from 'zustand/middleware'
 import {registerUserSubscriptions, userInit, UserState} from './user'
@@ -24,3 +24,4 @@ export const setState = useSelector.setState
 export const subscribe = useSelector.subscribe
 
 registerUserSubscriptions()
+registerNotesSubscriptions()
