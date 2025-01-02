@@ -11,11 +11,10 @@ DONE:
   deal with sync conflicts
   immediate sync command
   status bar that shows number of dirty notes and email
+  prompt user to set cryptoKey before first sync
 FIRST:
 TODO:
 LATER:
-  usability
-    prompt user to set cryptoKey before first sync
   change email
   change crypto key
   delete account

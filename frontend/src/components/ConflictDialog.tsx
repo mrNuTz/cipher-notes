@@ -9,7 +9,6 @@ export const ConflictDialog = () => {
   const conflicts = useSelector((s) => s.conflicts.conflicts)
   const serverPut = conflicts[0]
   const localNote = useLiveQuery(() => db.notes.get(serverPut?.id ?? ''), [serverPut?.id])
-  console.log(serverPut, localNote)
   if (!serverPut || !localNote) return null
   return (
     <Modal size='100%' opened={conflicts.length > 0} onClose={() => {}} title='Conflict Resolution'>

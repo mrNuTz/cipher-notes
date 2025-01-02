@@ -1,18 +1,17 @@
-import {generateKey, generateSalt} from '../util/encryption'
 import {reqLoginCode, reqLoginEmail, reqRegisterEmail} from '../services/backend'
 import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
 import {getState, setState, subscribe} from './store'
 import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
 import {syncNotes} from './notes'
+import {generateKey, generateSalt} from '../util/encryption'
 
 export type UserState = {
   user: {
     email: string
     session: {access_token: string; session_id: number} | null
     lastSyncedTo: number
-    cryptoKey: string
-    syncToken: string
+    keyTokenPair: {cryptoKey: string; syncToken: string} | null
   }
   registerDialog: {open: boolean; email: string; loading: boolean}
   loginDialog: {
@@ -27,7 +26,7 @@ export type UserState = {
 }
 
 export const userInit: UserState = {
-  user: {email: '', session: null, lastSyncedTo: 0, cryptoKey: '', syncToken: ''},
+  user: {email: '', session: null, lastSyncedTo: 0, keyTokenPair: null},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
@@ -36,16 +35,11 @@ export const userInit: UserState = {
 
 // init
 loadUser().then(async (user) => {
-  if (!user) {
-    user = {...userInit.user}
+  if (user) {
+    setState((s) => {
+      s.user.user = user
+    })
   }
-  if (!user.cryptoKey || !user.syncToken) {
-    user.cryptoKey = await generateKey()
-    user.syncToken = generateSalt(16)
-  }
-  setState((s) => {
-    s.user.user = user
-  })
 })
 
 // actions
@@ -109,12 +103,17 @@ export const closeSyncDialog = () =>
     state.user.syncDialog.open = false
   })
 
-export const openEncryptionKeyDialog = () => {
+export const openEncryptionKeyDialog = async () => {
+  const state = getState()
+  let keyTokenPair = state.user.user.keyTokenPair
+  if (!keyTokenPair) {
+    keyTokenPair = {cryptoKey: await generateKey(), syncToken: generateSalt(16)}
+  }
   setState((state) => {
-    const checksum = calcChecksum(state.user.user.cryptoKey, state.user.user.syncToken)
+    const checksum = calcChecksum(keyTokenPair.cryptoKey, keyTokenPair.syncToken)
     state.user.encryptionKeyDialog = {
       open: true,
-      keyTokenPair: `${state.user.user.cryptoKey}:${state.user.user.syncToken}:${checksum}`,
+      keyTokenPair: `${keyTokenPair.cryptoKey}:${keyTokenPair.syncToken}:${checksum}`,
       visible: false,
     }
   })
@@ -139,8 +138,7 @@ export const saveEncryptionKey = async (keyTokenPair: string) => {
   const [cryptoKey, syncToken] = keyTokenPair.split(':')
   if (!cryptoKey || !syncToken) return
   setState((state) => {
-    state.user.user.cryptoKey = cryptoKey
-    state.user.user.syncToken = syncToken
+    state.user.user.keyTokenPair = {cryptoKey, syncToken}
     state.user.encryptionKeyDialog.open = false
   })
 }

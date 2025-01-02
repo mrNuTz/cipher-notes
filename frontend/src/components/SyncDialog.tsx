@@ -5,12 +5,15 @@ import {syncNotes} from '../state/notes'
 
 export const SyncDialog = () => {
   const {open, syncing} = useSelector((s) => s.user.syncDialog)
+  const noKey = useSelector((s) => s.user.user.keyTokenPair === null)
   return (
     <Modal title='Synchronize notes with the server' opened={open} onClose={closeSyncDialog}>
       <Text c='dimmed' pb='md'>
-        Your notes are encrypted and stored on the server.
+        {noKey
+          ? 'You need to generate or import an Encryption-Key first!'
+          : 'Your notes are encrypted and stored on the server.'}
       </Text>
-      <Button loading={syncing} onClick={syncNotes}>
+      <Button disabled={noKey} loading={syncing} onClick={syncNotes}>
         Synchronize
       </Button>
     </Modal>
