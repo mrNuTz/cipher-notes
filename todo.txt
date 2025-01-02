@@ -14,9 +14,9 @@ DONE:
   prompt user to set cryptoKey before first sync
   notes are buttons
   new note command
+  deactivate command center if any dialog is open
 FIRST:
 TODO:
-  deactivate command center if dialog is open
 LATER:
   Impressum
   AGB
