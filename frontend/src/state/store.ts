@@ -25,3 +25,13 @@ export const subscribe = useSelector.subscribe
 
 registerUserSubscriptions()
 registerNotesSubscriptions()
+
+export const selectAnyDialogOpen = (s: RootState): boolean =>
+  s.conflicts.conflicts.length > 0 ||
+  s.messages.messages.length > 0 ||
+  s.notes.openNote !== null ||
+  s.notes.importDialog.open ||
+  s.user.syncDialog.open ||
+  s.user.registerDialog.open ||
+  s.user.loginDialog.open ||
+  s.user.encryptionKeyDialog.open

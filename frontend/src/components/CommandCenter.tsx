@@ -6,15 +6,17 @@ import {
   openRegisterDialog,
   openSyncDialogAndSync,
 } from '../state/user'
-import {useSelector} from '../state/store'
+import {selectAnyDialogOpen, useSelector} from '../state/store'
 import {useMantineColorScheme} from '@mantine/core'
 
 export const CommandCenter = () => {
   const {toggleColorScheme} = useMantineColorScheme()
   const session = useSelector((s) => s.user.user.session)
+  const anyDialogOpen = useSelector(selectAnyDialogOpen)
   return (
     <Spotlight
       shortcut={['Ctrl + K', 'Cmd + K']}
+      disabled={anyDialogOpen}
       actions={[
         {
           id: 'newNote',
