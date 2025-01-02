@@ -13,8 +13,8 @@ DONE:
   status bar that shows number of dirty notes and email
   prompt user to set cryptoKey before first sync
   notes are buttons
-FIRST:
   new note command
+FIRST:
 TODO:
   deactivate command center if dialog is open
 LATER:

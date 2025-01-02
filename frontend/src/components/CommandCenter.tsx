@@ -1,5 +1,5 @@
 import {Spotlight} from '@mantine/spotlight'
-import {exportNotes, openImportDialog} from '../state/notes'
+import {addNote, exportNotes, openImportDialog} from '../state/notes'
 import {
   openEncryptionKeyDialog,
   openLoginDialog,
@@ -16,6 +16,11 @@ export const CommandCenter = () => {
     <Spotlight
       shortcut={['Ctrl + K', 'Cmd + K']}
       actions={[
+        {
+          id: 'newNote',
+          label: 'New note',
+          onClick: addNote,
+        },
         {
           id: 'toggleColorScheme',
           label: 'Toggle Dark Mode',

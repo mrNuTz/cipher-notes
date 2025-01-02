@@ -17,6 +17,7 @@ export const OpenNoteDialog = () => {
     >
       <Textarea
         w='100%'
+        autoFocus
         value={note?.txt}
         onChange={(e) => openNoteChanged(e.target.value)}
         autosize
