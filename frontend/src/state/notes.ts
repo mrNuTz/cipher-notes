@@ -1,11 +1,12 @@
 import {Note, NoteSortProp} from '../business/models'
-import {getState, setState} from './store'
+import {getState, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {downloadJson} from '../util/misc'
+import {debounce, downloadJson} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db} from '../db'
+import {loadOpenNote, storeOpenNote, storeOpenNoteSync} from '../services/localStorage'
 
 export type NotesState = {
   query: string
@@ -25,6 +26,17 @@ export const notesInit: NotesState = {
   importDialog: {open: false, file: null, error: null},
 }
 
+// init
+loadOpenNote().then((openNote) =>
+  setState((s) => {
+    s.notes.openNote = openNote
+  })
+)
+
+window.addEventListener('beforeunload', () => {
+  storeOpenNoteSync(getState().notes.openNote)
+})
+
 // actions
 export const noteQueryChanged = (query: string) =>
   setState((s) => {
@@ -39,15 +51,17 @@ export const openNote = async (id: string) => {
 }
 export const closeNote = async () => {
   const state = getState()
-  if (!state.notes.openNote) return
-  const note = await db.notes.get(state.notes.openNote.id)
-  if (!note) return
-  await db.notes.update(state.notes.openNote.id, {
-    txt: state.notes.openNote.txt,
-    updated_at: Date.now(),
-    state: 'dirty',
-    version: note.state === 'dirty' ? note.version : note.version + 1,
-  })
+  const openNote = state.notes.openNote
+  if (!openNote) return
+  const note = await db.notes.get(openNote.id)
+  if (note && note.txt !== openNote.txt) {
+    await db.notes.update(openNote.id, {
+      txt: openNote.txt,
+      updated_at: Date.now(),
+      state: 'dirty',
+      version: note.state === 'dirty' ? note.version : note.version + 1,
+    })
+  }
   setState((s) => {
     s.notes.openNote = null
   })
@@ -249,4 +263,10 @@ export const syncNotes = async () => {
       text: e instanceof Error ? e.message : 'Unknown error',
     })
   }
+}
+
+// subscriptions
+export const registerNotesSubscriptions = () => {
+  const openNoteSub = debounce(storeOpenNote, 100)
+  subscribe((s) => s.notes.openNote, openNoteSub)
 }
