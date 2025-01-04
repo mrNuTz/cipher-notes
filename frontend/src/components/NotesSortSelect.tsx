@@ -10,7 +10,8 @@ export const NotesSortSelect = () => {
   return (
     <>
       <Select
-        flex='0 0 7rem'
+        flex='0 0 auto'
+        w='7rem'
         data={noteSortOptions}
         value={prop}
         onChange={(value) => value && sortChanged(value as NoteSortProp)}
