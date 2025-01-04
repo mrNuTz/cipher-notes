@@ -1,10 +1,12 @@
 import {Spotlight} from '@mantine/spotlight'
 import {addNote, exportNotes, openImportDialog} from '../state/notes'
 import {
+  logout,
   openEncryptionKeyDialog,
   openLoginDialog,
   openRegisterDialog,
   openSyncDialogAndSync,
+  toggleImpressum,
 } from '../state/user'
 import {selectAnyDialogOpen, useSelector} from '../state/store'
 import {useMantineColorScheme} from '@mantine/core'
@@ -60,6 +62,17 @@ export const CommandCenter = () => {
           id: 'encryptionKey',
           label: 'Encryption-Key (Generate/Import/Export)',
           onClick: openEncryptionKeyDialog,
+        },
+        {
+          id: 'impressum',
+          label: 'Impressum',
+          onClick: toggleImpressum,
+        },
+        {
+          id: 'logout',
+          label: 'Logout',
+          onClick: logout,
+          disabled: !session,
         },
       ].filter((a) => !a.disabled)}
     />

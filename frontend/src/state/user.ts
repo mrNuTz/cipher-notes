@@ -23,6 +23,7 @@ export type UserState = {
   }
   syncDialog: {open: boolean; syncing: boolean}
   encryptionKeyDialog: {open: boolean; keyTokenPair: string; visible: boolean}
+  impressumOpen: boolean
 }
 
 export const userInit: UserState = {
@@ -31,6 +32,7 @@ export const userInit: UserState = {
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
   encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false},
+  impressumOpen: false,
 }
 
 // init
@@ -224,6 +226,17 @@ export const loginCode = async () => {
   })
   closeLoginDialog()
 }
+
+export const toggleImpressum = () => {
+  setState((state) => {
+    state.user.impressumOpen = !state.user.impressumOpen
+  })
+}
+
+export const logout = () =>
+  setState((state) => {
+    state.user.user.session = null
+  })
 
 // subscriptions
 export const registerUserSubscriptions = () => {
