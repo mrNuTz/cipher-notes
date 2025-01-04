@@ -7,7 +7,7 @@ export const SearchInput = () => {
   const query = useSelector((s) => s.notes.query)
   return (
     <TextInput
-      w='17.3rem'
+      flex='0 1 auto'
       value={query}
       onChange={(e) => noteQueryChanged(e.target.value)}
       rightSection={<IconSearch />}
