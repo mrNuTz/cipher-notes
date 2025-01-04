@@ -15,11 +15,12 @@ DONE:
   notes are buttons
   new note command
   deactivate command center if any dialog is open
+  Impressum
+  Terms and Conditions
+  logout
 FIRST:
 TODO:
 LATER:
-  Impressum
-  AGB
   change email
   change crypto key
   delete account

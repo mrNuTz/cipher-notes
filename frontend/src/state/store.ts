@@ -34,4 +34,5 @@ export const selectAnyDialogOpen = (s: RootState): boolean =>
   s.user.syncDialog.open ||
   s.user.registerDialog.open ||
   s.user.loginDialog.open ||
-  s.user.encryptionKeyDialog.open
+  s.user.encryptionKeyDialog.open ||
+  s.user.impressumOpen
