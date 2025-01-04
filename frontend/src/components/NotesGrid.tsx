@@ -41,6 +41,7 @@ export const NotesGrid = () => {
             cursor: 'pointer',
             border: 'none',
             textAlign: 'left',
+            color: 'var(--mantine-color-text)',
           }}
           shadow='sm'
           onClick={() => openNote(note.id)}
