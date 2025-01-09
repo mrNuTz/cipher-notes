@@ -22,20 +22,20 @@ export const CommandCenter = () => {
       id: 'newNote',
       label: 'New note',
       onClick: addNote,
-      shortcut: 'alt + n',
+      shortcut: 'alt+shift+n',
     },
     {
       id: 'toggleColorScheme',
       label: 'Toggle Dark Mode',
       onClick: toggleColorScheme,
-      shortcut: 'alt + t',
+      shortcut: 'alt+shift+t',
     },
     {
       id: 'sync',
       label: 'Synchronize notes with server',
       onClick: openSyncDialogAndSync,
       disabled: !session,
-      shortcut: 'alt + s',
+      shortcut: 'alt+shift+s',
     },
     {
       id: 'exportNotes',
@@ -58,7 +58,7 @@ export const CommandCenter = () => {
       label: 'Login',
       onClick: openLoginDialog,
       disabled: !!session,
-      shortcut: 'alt + l',
+      shortcut: 'alt+shift+l',
     },
     {
       id: 'encryptionKey',
@@ -75,7 +75,7 @@ export const CommandCenter = () => {
       label: 'Logout',
       onClick: logout,
       disabled: !session,
-      shortcut: 'alt + o',
+      shortcut: 'alt+shift+o',
     },
   ]
 
