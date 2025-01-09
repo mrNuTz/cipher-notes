@@ -18,11 +18,11 @@ DONE:
   Impressum
   Terms and Conditions
   logout
+  shortcuts
 FIRST:
 TODO:
 LATER:
   change email
   change crypto key
   delete account
-  fix open note scrolle on iOS
 MAYBE:
