@@ -9,6 +9,9 @@ export const usersTbl = pgTable('users', {
   created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
   updated_at: bigint({mode: 'number'}).$default(Date.now).$onUpdate(Date.now).notNull(),
   sync_token: varchar({length: 24}),
+  confirm_code: varchar({length: 6}),
+  confirm_code_created_at: bigint({mode: 'number'}),
+  confirm_code_tries_left: integer().default(0).notNull(),
 })
 
 export const sessionsTbl = pgTable('sessions', {

@@ -23,7 +23,7 @@ export const registerEmailEndpoint = endpointsFactory.build({
   },
 })
 
-export const loginEmailEndpoint = endpointsFactory.build({
+export const sendLoginCodeEndpoint = endpointsFactory.build({
   method: 'post',
   input: z.object({
     email: z.string().email(),

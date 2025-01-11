@@ -7,6 +7,7 @@ import {
   openRegisterDialog,
   openSyncDialogAndSync,
   toggleImpressum,
+  openDeleteServerNotesDialog,
 } from '../state/user'
 import {selectAnyDialogOpen, useSelector} from '../state/store'
 import {useMantineColorScheme} from '@mantine/core'
@@ -76,6 +77,12 @@ export const CommandCenter = () => {
       onClick: logout,
       disabled: !session,
       shortcut: 'alt+shift+o',
+    },
+    {
+      id: 'deleteServerNotes',
+      label: 'Delete Server Notes',
+      onClick: openDeleteServerNotesDialog,
+      disabled: !session,
     },
   ]
 
