@@ -20,6 +20,7 @@ DONE:
   logout
   shortcuts
 FIRST:
+  delete server notes
 TODO:
 LATER:
   change email

@@ -49,8 +49,8 @@ export const reqRegisterEmail = (email: string) =>
     body: {email},
   })
 
-export const reqLoginEmail = (email: string) =>
-  request<void>('/loginEmail', {method: 'POST', body: {email}})
+export const reqSendLoginCode = (email: string) =>
+  request<void>('/sendLoginCode', {method: 'POST', body: {email}})
 
 export const reqLoginCode = (email: string, code: string) =>
   request<{session_id: number; access_token: string}>('/loginCode', {
@@ -89,4 +89,19 @@ export const reqSyncNotes = (
   request<EncSyncRes>('/syncNotes', {
     method: 'POST',
     body: {session, last_synced_to: lastSyncedTo, sync_token: syncToken, puts},
+  })
+
+export const reqDeleteNotes = (
+  session: {access_token: string; session_id: number},
+  confirm: string
+) =>
+  request<void>('/deleteNotes', {
+    method: 'POST',
+    body: {session, confirm},
+  })
+
+export const reqSendConfirmCode = (session: {access_token: string; session_id: number}) =>
+  request<void>('/sendConfirmCode', {
+    method: 'POST',
+    body: {session},
   })

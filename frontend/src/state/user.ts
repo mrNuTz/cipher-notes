@@ -1,10 +1,17 @@
-import {reqLoginCode, reqLoginEmail, reqRegisterEmail} from '../services/backend'
+import {
+  reqLoginCode,
+  reqSendLoginCode,
+  reqRegisterEmail,
+  reqDeleteNotes,
+  reqSendConfirmCode,
+} from '../services/backend'
 import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
 import {getState, setState, subscribe} from './store'
 import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
 import {syncNotes} from './notes'
 import {generateKey, generateSalt} from '../util/encryption'
+import {db} from '../db'
 
 export type UserState = {
   user: {
@@ -23,6 +30,12 @@ export type UserState = {
   }
   syncDialog: {open: boolean; syncing: boolean}
   encryptionKeyDialog: {open: boolean; keyTokenPair: string; visible: boolean}
+  deleteServerNotesDialog: {
+    open: boolean
+    code: string
+    codeLoading: boolean
+    deleteLoading: boolean
+  }
   impressumOpen: boolean
 }
 
@@ -32,6 +45,7 @@ export const userInit: UserState = {
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
   encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false},
+  deleteServerNotesDialog: {open: false, code: '', codeLoading: false, deleteLoading: false},
   impressumOpen: false,
 }
 
@@ -145,6 +159,81 @@ export const saveEncryptionKey = async (keyTokenPair: string) => {
   })
 }
 
+export const openDeleteServerNotesDialog = async () => {
+  const state = getState()
+  const session = state.user.user.session
+  if (!session) return
+
+  setState((s) => {
+    s.user.deleteServerNotesDialog = {open: true, code: '', codeLoading: true, deleteLoading: false}
+  })
+
+  const res = await reqSendConfirmCode(session)
+
+  setState((s) => {
+    s.user.deleteServerNotesDialog.codeLoading = false
+    if (!res.success && res.statusCode === 401) {
+      s.user.user.session = null
+    }
+  })
+
+  if (!res.success) {
+    showMessage({
+      title: 'Failed to send confirmation code',
+      text: res.error,
+    })
+  } else {
+    showMessage({
+      title: 'Confirmation code sent',
+      text: 'Check your email for the confirmation code',
+    })
+  }
+}
+
+export const closeDeleteServerNotesDialog = () =>
+  setState((s) => {
+    if (s.user.deleteServerNotesDialog.deleteLoading || s.user.deleteServerNotesDialog.codeLoading)
+      return
+    s.user.deleteServerNotesDialog.open = false
+  })
+
+export const deleteServerNotesCodeChanged = (code: string) =>
+  setState((s) => {
+    s.user.deleteServerNotesDialog.code = code
+  })
+
+export const deleteServerNotes = async () => {
+  const state = getState()
+  const {code, deleteLoading} = state.user.deleteServerNotesDialog
+  const session = state.user.user.session
+  if (!code || deleteLoading || !session) return
+
+  setState((s) => {
+    s.user.deleteServerNotesDialog.deleteLoading = true
+  })
+
+  const res = await reqDeleteNotes(session, code)
+
+  setState((s) => {
+    s.user.deleteServerNotesDialog.deleteLoading = false
+    if (!res.success && res.statusCode === 401) {
+      s.user.user.session = null
+    }
+    if (res.success) {
+      s.user.deleteServerNotesDialog.open = false
+      s.user.user.lastSyncedTo = 0
+    }
+  })
+
+  const keys = await db.notes.toCollection().primaryKeys()
+  await db.notes.bulkUpdate(keys.map((key) => ({key, changes: {state: 'dirty'}})))
+
+  showMessage({
+    title: res.success ? 'Success' : 'Failed to delete notes',
+    text: res.success ? 'Server notes deleted' : res.error,
+  })
+}
+
 // effects
 export const registerEmail = async () => {
   const state = getState()
@@ -174,14 +263,14 @@ export const registerEmail = async () => {
   })
   openLoginDialog()
 }
-export const loginEmail = async () => {
+export const sendLoginCode = async () => {
   const state = getState()
   const {email, loading} = state.user.loginDialog
   if (!email || loading) return
   setState((state) => {
     state.user.loginDialog.loading = true
   })
-  const res = await reqLoginEmail(email)
+  const res = await reqSendLoginCode(email)
   setState((state) => {
     state.user.loginDialog.loading = false
   })

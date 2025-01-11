@@ -10,6 +10,7 @@ import {Main} from './Main.tsx'
 import {ConflictDialog} from './ConflictDialog.tsx'
 import {OpenNoteDialog} from './OpenNoteDialog.tsx'
 import {ImpressumDialog} from './ImpressumDialog.tsx'
+import {DeleteServerNotesDialog} from './DeleteServerNotesDialog'
 
 export const App = () => (
   <>
@@ -22,6 +23,7 @@ export const App = () => (
     <SyncDialog />
     <ConflictDialog />
     <EncryptionKeyDialog />
+    <DeleteServerNotesDialog />
     <ImpressumDialog />
     <PWABadge />
     <MessageBox />

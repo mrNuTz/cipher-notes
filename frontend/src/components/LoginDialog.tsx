@@ -4,7 +4,7 @@ import {
   closeLoginDialog,
   loginCode,
   loginCodeChanged,
-  loginEmail,
+  sendLoginCode,
   loginEmailChanged,
   switchLoginStatus,
 } from '../state/user'
@@ -20,7 +20,7 @@ export const LoginDialog = () => {
             value={email}
             onChange={(e) => loginEmailChanged(e.target.value)}
           />
-          <Button loading={loading} onClick={loginEmail}>
+          <Button loading={loading} onClick={sendLoginCode}>
             Request login code
           </Button>
           <Flex gap='md' align='center'>
