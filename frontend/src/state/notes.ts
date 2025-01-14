@@ -1,7 +1,7 @@
 import {Note, NoteSortProp} from '../business/models'
 import {getState, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {debounce, downloadJson} from '../util/misc'
+import {debounce, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
@@ -53,6 +53,11 @@ export const closeNote = async () => {
   const state = getState()
   const openNote = state.notes.openNote
   if (!openNote) return
+
+  if (openNote.txt === '') {
+    return await deleteOpenNote()
+  }
+
   const note = await db.notes.get(openNote.id)
   if (note && note.txt !== openNote.txt) {
     await db.notes.update(openNote.id, {
@@ -69,7 +74,7 @@ export const closeNote = async () => {
 export const addNote = async () => {
   const now = Date.now()
 
-  const id = crypto.randomUUID()
+  const id = import.meta.env.DEV ? uuidV4WithoutCrypto() : crypto.randomUUID()
   const note: Note = {
     id,
     txt: '',

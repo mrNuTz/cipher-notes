@@ -19,9 +19,12 @@ DONE:
   Terms and Conditions
   logout
   shortcuts
-FIRST:
   delete server notes
+  back button
+FIRST:
+  start into empty note
 TODO:
+  überschrift
 LATER:
   change email
   change crypto key
