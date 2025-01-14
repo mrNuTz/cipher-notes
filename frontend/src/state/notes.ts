@@ -1,7 +1,7 @@
 import {Note, NoteSortProp} from '../business/models'
 import {getState, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {debounce, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
+import {debounce, delay, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
@@ -27,11 +27,19 @@ export const notesInit: NotesState = {
 }
 
 // init
-loadOpenNote().then((openNote) =>
-  setState((s) => {
-    s.notes.openNote = openNote
+loadOpenNote()
+  .then((openNote) => {
+    setState((s) => {
+      s.notes.openNote = openNote
+    })
   })
-)
+  .then(() => delay(50))
+  .then(() => {
+    const state = getState()
+    if (!state.notes.openNote && state.settings.settings.newNoteOnLaunch) {
+      addNote()
+    }
+  })
 
 window.addEventListener('beforeunload', () => {
   storeOpenNoteSync(getState().notes.openNote)

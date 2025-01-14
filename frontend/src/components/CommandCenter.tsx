@@ -12,6 +12,7 @@ import {
 import {selectAnyDialogOpen, useSelector} from '../state/store'
 import {useMantineColorScheme} from '@mantine/core'
 import {useHotkeys} from '@mantine/hooks'
+import {openSettingsDialog} from '../state/settings'
 
 export const CommandCenter = () => {
   const {toggleColorScheme} = useMantineColorScheme()
@@ -77,6 +78,11 @@ export const CommandCenter = () => {
       onClick: logout,
       disabled: !session,
       shortcut: 'alt+shift+o',
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      onClick: openSettingsDialog,
     },
     {
       id: 'deleteServerNotes',
