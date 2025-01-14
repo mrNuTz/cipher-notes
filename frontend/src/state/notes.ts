@@ -1,5 +1,5 @@
 import {Note, NoteSortProp} from '../business/models'
-import {getState, setState, subscribe} from './store'
+import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {showMessage} from './messages'
 import {debounce, delay, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
@@ -39,7 +39,16 @@ loadOpenNote()
     if (!state.notes.openNote && state.settings.settings.newNoteOnLaunch) {
       addNote()
     }
+
+    window.addEventListener('focus', onFocus)
   })
+
+const onFocus = debounce(() => {
+  const state = getState()
+  if (!selectAnyDialogOpen(state) && state.settings.settings.newNoteOnLaunch) {
+    addNote()
+  }
+}, 10)
 
 window.addEventListener('beforeunload', () => {
   storeOpenNoteSync(getState().notes.openNote)
