@@ -27,7 +27,8 @@ export default defineConfig({
       manifest: {
         name: 'cipher-notes',
         short_name: 'cipher-notes',
-        description: 'cipher-notes',
+        description:
+          'A local-first note-taking app with end-to-end encryption for your private thoughts and data',
         theme_color: '#1864ab',
         background_color: '#000000',
         icons: [
@@ -47,7 +48,7 @@ export default defineConfig({
       },
 
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,txt}'],
       },
 
       devOptions: {
