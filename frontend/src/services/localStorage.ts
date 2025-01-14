@@ -1,4 +1,5 @@
 import {NotesState} from '../state/notes'
+import {SettingsState} from '../state/settings'
 import {UserState} from '../state/user'
 
 export const storeUser = (user: UserState['user']): Promise<void> =>
@@ -24,4 +25,15 @@ export const loadOpenNote = (): Promise<NotesState['openNote']> =>
   Promise.resolve().then(() => {
     const openNoteStr = localStorage.getItem('openNote')
     return openNoteStr ? JSON.parse(openNoteStr) : null
+  })
+
+export const storeSettings = (settings: SettingsState['settings']): Promise<void> =>
+  Promise.resolve().then(() => {
+    localStorage.setItem('settings', JSON.stringify(settings))
+  })
+
+export const loadSettings = (): Promise<Partial<SettingsState['settings']> | null> =>
+  Promise.resolve().then(() => {
+    const settingsStr = localStorage.getItem('settings')
+    return settingsStr ? JSON.parse(settingsStr) : null
   })
