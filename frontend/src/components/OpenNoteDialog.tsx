@@ -28,6 +28,19 @@ export const OpenNoteDialog = () => {
       <textarea
         value={note?.txt}
         onChange={(e) => openNoteChanged(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey) {
+            e.preventDefault()
+            const target = e.currentTarget
+            const cursor = target.selectionStart
+            const value = target.value
+            openNoteChanged(value.slice(0, cursor) + '\t' + value.slice(cursor))
+            Promise.resolve().then(() => {
+              target.selectionStart = cursor + 1
+              target.selectionEnd = cursor + 1
+            })
+          }
+        }}
         style={{
           fontFamily: "Monaco, 'Cascadia Code', Consolas, monospace",
           resize: 'none',
@@ -35,6 +48,7 @@ export const OpenNoteDialog = () => {
           border: 'none',
           margin: '4px 0',
           boxShadow: '0 0 0 1px var(--mantine-color-gray-5)',
+          tabSize: 4,
         }}
       />
       <Flex gap='xs'>

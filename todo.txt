@@ -21,8 +21,9 @@ DONE:
   shortcuts
   delete server notes
   back button
-FIRST:
   start into empty note
+  handle tab key in textarea
+FIRST:
 TODO:
   überschrift
 LATER:
