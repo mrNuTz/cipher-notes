@@ -7,6 +7,7 @@ import {IconArrowForwardUp} from './icons/IconArrowForwardUp'
 import {useUndoRedo} from '../util/undoHook'
 import {IconTrash} from './icons/IconTrash'
 import {IconX} from './icons/IconX'
+import {useEffect} from 'react'
 
 export const OpenNoteDialog = () => {
   const note = useSelector((s) => s.notes.openNote)
@@ -16,9 +17,19 @@ export const OpenNoteDialog = () => {
     500,
     note?.id ?? null
   )
+  const open = !!note
+  useEffect(() => {
+    if (open) {
+      window.history.pushState(null, '', window.location.href)
+      window.addEventListener('popstate', closeNote)
+    }
+    return () => {
+      window.removeEventListener('popstate', closeNote)
+    }
+  }, [open])
   return (
     <Drawer
-      opened={!!note}
+      opened={open}
       position='bottom'
       size='100%'
       withCloseButton={false}

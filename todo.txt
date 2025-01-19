@@ -23,9 +23,11 @@ DONE:
   back button
   start into empty note
   handle tab key in textarea
+  close open note on back
 FIRST:
 TODO:
-  überschrift
+  todo list
+  note title
 LATER:
   change email
   change crypto key
