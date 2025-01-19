@@ -26,6 +26,7 @@ export const OpenNoteDialog = () => {
       }}
     >
       <textarea
+        data-autofocus
         value={note?.txt}
         onChange={(e) => openNoteChanged(e.target.value)}
         onKeyDown={(e) => {
@@ -39,6 +40,15 @@ export const OpenNoteDialog = () => {
               target.selectionStart = cursor + 1
               target.selectionEnd = cursor + 1
             })
+          }
+
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault()
+            if (e.shiftKey) {
+              redo()
+            } else {
+              undo()
+            }
           }
         }}
         style={{
