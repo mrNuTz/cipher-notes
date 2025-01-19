@@ -4,9 +4,16 @@ import {closeNote, openNoteChanged, deleteOpenNote} from '../state/notes'
 import {modals} from '@mantine/modals'
 import {IconArrowBackUp} from './icons/IconArrowBackUp'
 import {IconArrowForwardUp} from './icons/IconArrowForwardUp'
+import {useUndoRedo} from '../util/undoHook'
 
 export const OpenNoteDialog = () => {
   const note = useSelector((s) => s.notes.openNote)
+  const {undo, redo, canUndo, canRedo} = useUndoRedo(
+    note?.txt ?? '',
+    (txt) => openNoteChanged(txt),
+    500,
+    note?.id ?? null
+  )
   return (
     <Drawer
       opened={!!note}
@@ -45,10 +52,10 @@ export const OpenNoteDialog = () => {
           Delete note
         </Button>
         <div style={{flex: '1 1 0'}} />
-        <Button onClick={() => void document.execCommand('undo')}>
+        <Button onClick={undo} disabled={!canUndo}>
           <IconArrowBackUp />
         </Button>
-        <Button onClick={() => void document.execCommand('redo')}>
+        <Button onClick={redo} disabled={!canRedo}>
           <IconArrowForwardUp />
         </Button>
       </Flex>
