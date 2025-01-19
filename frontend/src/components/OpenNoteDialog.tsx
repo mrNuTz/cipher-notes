@@ -40,7 +40,6 @@ export const OpenNoteDialog = () => {
       }}
     >
       <textarea
-        data-autofocus
         value={note?.txt}
         onChange={(e) => openNoteChanged(e.target.value)}
         onKeyDown={(e) => {
