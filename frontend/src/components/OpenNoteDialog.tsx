@@ -5,6 +5,8 @@ import {modals} from '@mantine/modals'
 import {IconArrowBackUp} from './icons/IconArrowBackUp'
 import {IconArrowForwardUp} from './icons/IconArrowForwardUp'
 import {useUndoRedo} from '../util/undoHook'
+import {IconTrash} from './icons/IconTrash'
+import {IconX} from './icons/IconX'
 
 export const OpenNoteDialog = () => {
   const note = useSelector((s) => s.notes.openNote)
@@ -17,9 +19,10 @@ export const OpenNoteDialog = () => {
   return (
     <Drawer
       opened={!!note}
-      onClose={closeNote}
       position='bottom'
       size='100%'
+      withCloseButton={false}
+      onClose={closeNote}
       styles={{
         content: {height: '100dvh', display: 'flex', flexDirection: 'column'},
         body: {flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: '1rem'},
@@ -56,8 +59,9 @@ export const OpenNoteDialog = () => {
           resize: 'none',
           flex: '1 1 0',
           border: 'none',
+          outline: 'none',
+          backgroundColor: 'transparent',
           margin: '4px 0',
-          boxShadow: '0 0 0 1px var(--mantine-color-gray-5)',
           tabSize: 4,
         }}
       />
@@ -73,7 +77,7 @@ export const OpenNoteDialog = () => {
             })
           }
         >
-          Delete note
+          <IconTrash />
         </Button>
         <div style={{flex: '1 1 0'}} />
         <Button onClick={undo} disabled={!canUndo}>
@@ -81,6 +85,9 @@ export const OpenNoteDialog = () => {
         </Button>
         <Button onClick={redo} disabled={!canRedo}>
           <IconArrowForwardUp />
+        </Button>
+        <Button onClick={closeNote}>
+          <IconX />
         </Button>
       </Flex>
     </Drawer>
