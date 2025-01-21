@@ -33,7 +33,7 @@ export const OpenNoteDialog = () => {
       position='bottom'
       size='100%'
       withCloseButton={false}
-      onClose={closeNote}
+      onClose={() => window.history.back()}
       styles={{
         content: {height: '100dvh', display: 'flex', flexDirection: 'column'},
         body: {flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: '1rem'},
@@ -96,7 +96,7 @@ export const OpenNoteDialog = () => {
         <Button onClick={redo} disabled={!canRedo}>
           <IconArrowForwardUp />
         </Button>
-        <Button onClick={closeNote}>
+        <Button onClick={() => window.history.back()}>
           <IconX />
         </Button>
       </Flex>
