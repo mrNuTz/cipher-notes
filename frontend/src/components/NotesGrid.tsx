@@ -1,9 +1,11 @@
-import {Box, Paper} from '@mantine/core'
+import {Box, Flex, Paper} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {openNote} from '../state/notes'
 import {useLiveQuery} from 'dexie-react-hooks'
 import {db} from '../db'
 import {byProp} from '../util/misc'
+import {IconSquare} from './icons/IconSquare'
+import {IconCheckbox} from './icons/IconCheckbox'
 
 export const NotesGrid = () => {
   const query = useSelector((s) => s.notes.query)
@@ -11,7 +13,15 @@ export const NotesGrid = () => {
   const notes = useLiveQuery(async () => {
     const allNotes = await db.notes.where('deleted_at').equals(0).toArray()
     return allNotes
-      .filter((n) => !query || n.txt.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+      .filter(
+        (n) =>
+          !query ||
+          (n.type === 'note'
+            ? n.txt.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+            : n.todos.some((todo) =>
+                todo.txt.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+              ))
+      )
       .sort(byProp(sort.prop, sort.desc))
   }, [query, sort])
   return (
@@ -42,12 +52,30 @@ export const NotesGrid = () => {
             border: 'none',
             textAlign: 'left',
             color: 'var(--mantine-color-text)',
+            display: 'flex',
+            flexDirection: 'column',
           }}
           shadow='sm'
           onClick={() => openNote(note.id)}
           role='button'
         >
-          {truncate(note.txt)}
+          {note.type === 'note'
+            ? truncate(note.txt)
+            : note.todos.slice(0, 5).map((todo, i) => (
+                <Flex
+                  align='center'
+                  gap='xs'
+                  style={{textDecoration: todo.done ? 'line-through' : 'none'}}
+                  key={i}
+                >
+                  {todo.done ? (
+                    <IconCheckbox style={{flex: '0 0 auto'}} />
+                  ) : (
+                    <IconSquare style={{flex: '0 0 auto'}} />
+                  )}
+                  {todo.txt.substring(0, 50)}
+                </Flex>
+              ))}
         </Paper>
       ))}
     </Box>

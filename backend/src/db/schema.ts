@@ -1,4 +1,4 @@
-import {pgTable, varchar, text, integer, unique, bigint} from 'drizzle-orm/pg-core'
+import {pgTable, varchar, text, integer, unique, bigint, pgEnum} from 'drizzle-orm/pg-core'
 
 export const usersTbl = pgTable('users', {
   id: integer().generatedAlwaysAsIdentity().primaryKey(),
@@ -24,6 +24,8 @@ export const sessionsTbl = pgTable('sessions', {
   created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
 })
 
+export const noteTypeEnum = pgEnum('note_type', ['note', 'todo'])
+
 export const notesTbl = pgTable(
   'notes',
   {
@@ -32,6 +34,7 @@ export const notesTbl = pgTable(
       .references(() => usersTbl.id)
       .notNull(),
     clientside_id: varchar({length: 36}).notNull(),
+    type: noteTypeEnum('type').default('note').notNull(),
     cipher_text: text(),
     iv: varchar({length: 16}),
     version: integer().default(1).notNull(),

@@ -1,23 +1,24 @@
 import {useReducer, useEffect} from 'react'
+import {deepEquals} from './misc'
 
-type State = {
-  history: string[]
+type State<Data> = {
+  history: Data[]
   currentIndex: number
   lastChangeTime: number
   prevKey?: string | number | null
-  prevValue: string
+  prevValue: Data
 }
 
-type Action =
+type Action<Data> =
   | {
       type: 'RESET'
-      externalValue: string
+      externalValue: Data
       timestamp: number
       key?: string | number | null
     }
   | {
       type: 'SET_VALUE'
-      externalValue: string
+      externalValue: Data
       chunkThreshold: number
       timestamp: number
     }
@@ -26,7 +27,7 @@ type Action =
       index: number
     }
 
-function reducer(state: State, action: Action): State {
+function reducer<Data>(state: State<Data>, action: Action<Data>): State<Data> {
   switch (action.type) {
     case 'RESET':
       return {
@@ -38,8 +39,8 @@ function reducer(state: State, action: Action): State {
       }
     case 'SET_VALUE': {
       const timeSinceLast = action.timestamp - state.lastChangeTime
-      const currentText = state.history[state.currentIndex]
-      if (currentText === action.externalValue) return state
+      const currVal = state.history[state.currentIndex]
+      if (deepEquals(currVal, action.externalValue)) return state
       if (timeSinceLast < action.chunkThreshold) {
         const newHistory = [...state.history]
         newHistory[state.currentIndex] = action.externalValue
@@ -78,13 +79,13 @@ interface UseUndoRedoReturn {
   redo: () => void
 }
 
-export function useUndoRedo(
-  externalValue: string,
-  onUndoRedo: (historyValue: string) => void,
+export function useUndoRedo<Data>(
+  externalValue: Data,
+  onUndoRedo: (historyValue: Data) => void,
   chunkThreshold = 500,
   key?: string | number | null
 ): UseUndoRedoReturn {
-  const [state, dispatch] = useReducer(reducer, {
+  const [state, dispatch] = useReducer(reducer<Data>, {
     history: [externalValue],
     currentIndex: 0,
     lastChangeTime: Date.now(),
@@ -100,7 +101,7 @@ export function useUndoRedo(
         timestamp: Date.now(),
         key,
       })
-    } else if (externalValue !== state.prevValue) {
+    } else if (!deepEquals(externalValue, state.prevValue)) {
       dispatch({
         type: 'SET_VALUE',
         externalValue,

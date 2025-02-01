@@ -8,3 +8,16 @@ export const db = new Dexie('DexieDB') as Dexie & {
 db.version(1).stores({
   notes: 'id, txt, created_at, updated_at, version, state, deleted_at',
 })
+
+db.version(2)
+  .stores({
+    notes: 'id, created_at, updated_at, version, state, deleted_at, type',
+  })
+  .upgrade((tx) =>
+    tx
+      .table('notes')
+      .toCollection()
+      .modify((note) => {
+        note.type = 'note'
+      })
+  )

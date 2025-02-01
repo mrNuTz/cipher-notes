@@ -7,8 +7,10 @@ import createHttpError from 'http-errors'
 import {bisectBy} from '../util/misc'
 import {Overwrite} from '../util/type'
 
+const noteTypeSchema = z.enum(['note', 'todo'])
 const upsertSchema = z.object({
   id: z.string().uuid(),
+  type: noteTypeSchema,
   created_at: z.number().int().positive(),
   updated_at: z.number().int().positive(),
   cipher_text: z.string(),
@@ -18,6 +20,7 @@ const upsertSchema = z.object({
 })
 const deleteSchema = z.object({
   id: z.string().uuid(),
+  type: noteTypeSchema,
   created_at: z.number().int().positive(),
   updated_at: z.number().int().positive(),
   cipher_text: z.null(),
@@ -83,6 +86,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
         } else {
           conflicts.push({
             id: existing.clientside_id,
+            type: existing.type,
             created_at: existing.clientside_created_at,
             updated_at: existing.clientside_updated_at,
             cipher_text: existing.cipher_text,
@@ -98,6 +102,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
       if (values.length > 0) {
         await tx.insert(notesTbl).values(
           values.map((c): typeof notesTbl.$inferInsert => ({
+            type: c.type,
             user_id: user.id,
             clientside_id: c.id,
             cipher_text: c.cipher_text,
@@ -113,6 +118,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
         await tx
           .update(notesTbl)
           .set({
+            type: u.type,
             cipher_text: u.cipher_text,
             iv: u.iv,
             clientside_created_at: u.created_at,
@@ -138,6 +144,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
       const pullPuts = dbPuts.map(
         (n): IndeterminatePut => ({
           id: n.clientside_id,
+          type: n.type,
           created_at: n.clientside_created_at,
           updated_at: n.clientside_updated_at,
           cipher_text: n.cipher_text,
