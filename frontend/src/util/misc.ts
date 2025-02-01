@@ -195,3 +195,40 @@ export const uuidV4WithoutCrypto = () => {
   }
   return uuid
 }
+
+export const safeJsonParse = (str: string): unknown => {
+  try {
+    return JSON.parse(str)
+  } catch (err) {
+    return undefined
+  }
+}
+
+/**
+ * Value types are compared with ===.
+ * For Objects and Arrays the properties are compared with ===.
+ * deepEquals({ 0: 'a', 1: 'b' }, [ 'a', 'b' ]) returns true
+ */
+export const deepEquals = (
+  a: unknown,
+  b: unknown,
+  ignoreProps: string[] = [],
+  prop: string | null = null
+): boolean => {
+  if (prop !== null && ignoreProps.includes(prop)) return true
+  if (typeof a !== typeof b) return false
+  if (
+    a === undefined ||
+    b === undefined ||
+    a === null ||
+    b === null ||
+    typeof a !== 'object' ||
+    typeof b !== 'object'
+  ) {
+    return a === b
+  }
+  const ak = Object.keys(a)
+  const bk = Object.keys(b)
+  if (ak.length !== bk.length) return false
+  return ak.every((k) => deepEquals((a as any)[k], (b as any)[k], ignoreProps, k))
+}

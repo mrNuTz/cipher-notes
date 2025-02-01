@@ -1,6 +1,16 @@
 import {Button, Drawer, Flex} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {closeNote, openNoteChanged, deleteOpenNote} from '../state/notes'
+import {
+  closeNote,
+  openNoteChanged,
+  deleteOpenNote,
+  openNoteRestored,
+  deleteTodo,
+  insertTodo,
+  todoChanged,
+  todoChecked,
+  openNoteTypeToggled,
+} from '../state/notes'
 import {modals} from '@mantine/modals'
 import {IconArrowBackUp} from './icons/IconArrowBackUp'
 import {IconArrowForwardUp} from './icons/IconArrowForwardUp'
@@ -8,16 +18,28 @@ import {useUndoRedo} from '../util/undoHook'
 import {IconTrash} from './icons/IconTrash'
 import {IconX} from './icons/IconX'
 import {useEffect} from 'react'
+import {NoteHistoryItem, OpenNote} from '../business/models'
+import {XTextarea} from './XTextarea'
+import {TodoControl} from './TodoControl'
+import {IconCheckbox} from './icons/IconCheckbox'
+
+const selectHistoryItem = (openNote: OpenNote | null): NoteHistoryItem | null => {
+  if (openNote === null) return null
+  return openNote.type === 'note'
+    ? {type: 'note', txt: openNote.txt}
+    : {type: 'todo', todos: openNote.todos}
+}
 
 export const OpenNoteDialog = () => {
-  const note = useSelector((s) => s.notes.openNote)
-  const {undo, redo, canUndo, canRedo} = useUndoRedo(
-    note?.txt ?? '',
-    (txt) => openNoteChanged(txt),
+  const openNote = useSelector((s) => s.notes.openNote)
+  const historyItem = selectHistoryItem(openNote)
+  const {undo, redo, canUndo, canRedo} = useUndoRedo<NoteHistoryItem | null>(
+    historyItem,
+    (historyItem) => historyItem && openNoteRestored(historyItem),
     500,
-    note?.id ?? null
+    openNote?.id ?? null
   )
-  const open = !!note
+  const open = !!openNote
   useEffect(() => {
     if (open) {
       window.history.pushState(null, '', window.location.href)
@@ -36,45 +58,33 @@ export const OpenNoteDialog = () => {
       onClose={() => window.history.back()}
       styles={{
         content: {height: '100dvh', display: 'flex', flexDirection: 'column'},
-        body: {flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: '1rem'},
+        body: {
+          flex: '0 0 100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+        },
       }}
     >
-      <textarea
-        value={note?.txt}
-        onChange={(e) => openNoteChanged(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey) {
-            e.preventDefault()
-            const target = e.currentTarget
-            const cursor = target.selectionStart
-            const value = target.value
-            openNoteChanged(value.slice(0, cursor) + '\t' + value.slice(cursor))
-            Promise.resolve().then(() => {
-              target.selectionStart = cursor + 1
-              target.selectionEnd = cursor + 1
-            })
-          }
-
-          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-            e.preventDefault()
-            if (e.shiftKey) {
-              redo()
-            } else {
-              undo()
-            }
-          }
-        }}
-        style={{
-          fontFamily: "Monaco, 'Cascadia Code', Consolas, monospace",
-          resize: 'none',
-          flex: '1 1 0',
-          border: 'none',
-          outline: 'none',
-          backgroundColor: 'transparent',
-          margin: '4px 0',
-          tabSize: 4,
-        }}
-      />
+      {openNote?.type === 'note' ? (
+        <XTextarea
+          value={openNote?.txt ?? ''}
+          onChange={openNoteChanged}
+          onUndo={undo}
+          onRedo={redo}
+        />
+      ) : openNote?.type === 'todo' ? (
+        <TodoControl
+          todos={openNote.todos}
+          onTodoChecked={todoChecked}
+          onTodoChanged={todoChanged}
+          onInsertTodo={insertTodo}
+          onTodoDeleted={deleteTodo}
+          onUndo={undo}
+          onRedo={redo}
+        />
+      ) : null}
       <Flex gap='xs'>
         <Button
           onClick={() =>
@@ -90,6 +100,9 @@ export const OpenNoteDialog = () => {
           <IconTrash />
         </Button>
         <div style={{flex: '1 1 0'}} />
+        <Button onClick={openNoteTypeToggled}>
+          <IconCheckbox />
+        </Button>
         <Button onClick={undo} disabled={!canUndo}>
           <IconArrowBackUp />
         </Button>

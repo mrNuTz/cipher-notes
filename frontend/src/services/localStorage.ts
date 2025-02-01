@@ -1,3 +1,4 @@
+import {AnyOpenNote, anyOpenNoteSchema} from '../business/models'
 import {NotesState} from '../state/notes'
 import {SettingsState} from '../state/settings'
 import {UserState} from '../state/user'
@@ -21,10 +22,11 @@ export const storeOpenNote = (note: NotesState['openNote']): Promise<void> =>
 export const storeOpenNoteSync = (note: NotesState['openNote']): void =>
   localStorage.setItem('openNote', JSON.stringify(note))
 
-export const loadOpenNote = (): Promise<NotesState['openNote']> =>
+export const loadOpenNote = (): Promise<AnyOpenNote | null> =>
   Promise.resolve().then(() => {
-    const openNoteStr = localStorage.getItem('openNote')
-    return openNoteStr ? JSON.parse(openNoteStr) : null
+    const openNoteStr = localStorage.getItem('openNote') ?? 'null'
+    if (openNoteStr === 'null') return null
+    return anyOpenNoteSchema.parse(JSON.parse(openNoteStr))
   })
 
 export const storeSettings = (settings: SettingsState['settings']): Promise<void> =>

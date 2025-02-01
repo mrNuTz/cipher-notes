@@ -1,16 +1,17 @@
-import {Note, NoteSortProp} from '../business/models'
+import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {debounce, delay, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
+import {debounce, deepEquals, delay, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db} from '../db'
 import {loadOpenNote, storeOpenNote, storeOpenNoteSync} from '../services/localStorage'
+import {putToNote, textToTodos, todosToText} from '../business/misc'
 
 export type NotesState = {
   query: string
-  openNote: {id: string; txt: string} | null
+  openNote: OpenNote | null
   sort: {prop: NoteSortProp; desc: boolean}
   importDialog: {
     open: boolean
@@ -28,11 +29,23 @@ export const notesInit: NotesState = {
 
 // init
 loadOpenNote()
-  .then((openNote) => {
-    setState((s) => {
-      s.notes.openNote = openNote
-    })
-  })
+  .then(
+    (openNote) =>
+      setState((s) => {
+        if (openNote === null) {
+          s.notes.openNote = null
+        } else if (openNote.type) {
+          s.notes.openNote = openNote
+        } else {
+          s.notes.openNote = {type: 'note', id: openNote.id, txt: openNote.txt}
+        }
+      }),
+    (err) =>
+      showMessage({
+        title: 'Restore Open Note Failed',
+        text: err instanceof Error ? err.message : 'Unknown error',
+      })
+  )
   .then(() => delay(50))
   .then(() => {
     const state = getState()
@@ -63,7 +76,11 @@ export const openNote = async (id: string) => {
   const note = await db.notes.get(id)
   if (!note || note.txt === null) return
   setState((s) => {
-    s.notes.openNote = {id, txt: note.txt ?? ''}
+    if (note.type === 'todo') {
+      s.notes.openNote = {type: 'todo', id, todos: note.todos}
+    } else {
+      s.notes.openNote = {type: 'note', id, txt: note.txt}
+    }
   })
 }
 export const closeNote = async () => {
@@ -71,14 +88,25 @@ export const closeNote = async () => {
   const openNote = state.notes.openNote
   if (!openNote) return
 
-  if (openNote.txt === '') {
+  if (
+    (openNote.type === 'todo' &&
+      (openNote.todos.length === 0 ||
+        (openNote.todos.length === 1 && openNote.todos[0]!.txt === ''))) ||
+    (openNote.type === 'note' && openNote.txt === '')
+  ) {
     return await deleteOpenNote()
   }
 
   const note = await db.notes.get(openNote.id)
-  if (note && note.txt !== openNote.txt) {
+  if (
+    note &&
+    ((note.type === 'note' && note.txt !== openNote.txt) ||
+      (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
+  ) {
     await db.notes.update(openNote.id, {
-      txt: openNote.txt,
+      type: openNote.type,
+      txt: openNote.type === 'note' ? openNote.txt : undefined,
+      todos: openNote.type === 'todo' ? openNote.todos : undefined,
       updated_at: Date.now(),
       state: 'dirty',
       version: note.state === 'dirty' ? note.version : note.version + 1,
@@ -100,16 +128,67 @@ export const addNote = async () => {
     created_at: now,
     updated_at: now,
     deleted_at: 0,
+    type: 'note',
   }
   await db.notes.add(note)
   setState((s) => {
-    s.notes.openNote = {id, txt: ''}
+    s.notes.openNote = {type: 'note', id, txt: ''}
   })
 }
 export const openNoteChanged = (txt: string) =>
   setState((s) => {
     if (!s.notes.openNote) return
     s.notes.openNote.txt = txt
+  })
+export const openNoteTypeToggled = () =>
+  setState((s) => {
+    if (!s.notes.openNote) return
+    if (s.notes.openNote.type === 'note') {
+      s.notes.openNote = {
+        type: 'todo',
+        id: s.notes.openNote.id,
+        todos: textToTodos(s.notes.openNote.txt),
+      }
+    } else {
+      s.notes.openNote = {
+        type: 'note',
+        id: s.notes.openNote.id,
+        txt: todosToText(s.notes.openNote.todos),
+      }
+    }
+  })
+export const todoChecked = (index: number, checked: boolean) =>
+  setState((s) => {
+    if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
+      return
+    s.notes.openNote.todos[index].done = checked
+  })
+export const todoChanged = (index: number, txt: string) =>
+  setState((s) => {
+    if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
+      return
+    s.notes.openNote.todos[index].txt = txt
+  })
+export const insertTodo = (bellow: number) =>
+  setState((s) => {
+    if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
+    s.notes.openNote.todos.splice(bellow + 1, 0, {txt: '', done: false})
+  })
+export const deleteTodo = (index: number) =>
+  setState((s) => {
+    if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
+    s.notes.openNote.todos.splice(index, 1)
+  })
+export const openNoteRestored = (historyItem: NoteHistoryItem) =>
+  setState((s) => {
+    if (!s.notes.openNote) return
+    if (historyItem.type === 'note') {
+      s.notes.openNote.type = 'note'
+      s.notes.openNote.txt = historyItem.txt
+    } else {
+      s.notes.openNote.type = 'todo'
+      s.notes.openNote.todos = historyItem.todos
+    }
   })
 export const sortChanged = (prop: NoteSortProp) =>
   setState((s) => {
@@ -160,6 +239,7 @@ export const exportNotes = async () => {
     txt: n.txt,
     created_at: n.created_at,
     updated_at: n.updated_at,
+    todos: n.todos,
   }))
   downloadJson(notesToExport, 'notes.json')
 }
@@ -175,23 +255,36 @@ export const importNotes = async (): Promise<void> => {
     for (const importNote of importNotes) {
       const now = Date.now()
       let {id} = importNote
-      if (id === undefined) id = crypto.randomUUID()
-      const {txt, updated_at = now} = importNote
+      if (id === undefined) {
+        id = crypto.randomUUID()
+      }
+      const {txt, updated_at = now, todos} = importNote
+      if (todos === undefined && txt === undefined) {
+        continue
+      }
+      const type = todos ? 'todo' : 'note'
       const existingNote = await db.notes.get(id)
       if (!existingNote || existingNote.deleted_at !== 0 || updated_at > existingNote.updated_at) {
-        res.push({
+        const indeterminate = {
           id,
           created_at: existingNote?.created_at ?? now,
           updated_at: Math.max(updated_at, existingNote?.updated_at ?? 0),
           txt,
           state: 'dirty',
+          type,
           version: !existingNote
             ? 1
             : existingNote.state === 'dirty'
             ? existingNote.version
             : existingNote.version + 1,
           deleted_at: 0,
-        })
+          todos: todos,
+        } as const
+        if (indeterminate.todos) {
+          res.push({...indeterminate, type: 'todo', todos: indeterminate.todos, txt: undefined})
+        } else if (indeterminate.txt) {
+          res.push({...indeterminate, type: 'note', txt: indeterminate.txt, todos: undefined})
+        }
       }
     }
     await db.notes.bulkPut(res)
@@ -220,10 +313,11 @@ export const syncNotes = async () => {
       .map((n) => ({
         id: n.id,
         created_at: n.created_at,
-        txt: n.deleted_at === 0 ? n.txt : null,
+        txt: n.deleted_at !== 0 ? null : n.type === 'todo' ? JSON.stringify(n.todos) : n.txt,
         updated_at: n.updated_at,
         version: n.version,
         deleted_at: n.deleted_at === 0 ? null : n.deleted_at,
+        type: n.type,
       }))
       .filter(
         (p): p is typeof p & ({deleted_at: number; txt: null} | {deleted_at: null; txt: string}) =>
@@ -247,17 +341,7 @@ export const syncNotes = async () => {
     const puts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
     const conflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
 
-    await db.notes.bulkPut(
-      puts.map((put) => ({
-        id: put.id,
-        created_at: put.created_at,
-        updated_at: put.updated_at,
-        txt: put.txt ?? '',
-        version: put.version,
-        state: 'synced',
-        deleted_at: put.deleted_at ? put.deleted_at : 0,
-      }))
-    )
+    await db.notes.bulkPut(puts.map(putToNote))
 
     const syncedDeletes = await db.notes
       .where('deleted_at')

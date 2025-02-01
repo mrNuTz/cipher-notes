@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "build": "NODE_ENV=production bun build src/index.ts --outdir dist --target bun --minify --sourcemap",
-    "start": "NODE_ENV=production bun dist/index.js"
+    "start": "NODE_ENV=production bun dist/index.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
