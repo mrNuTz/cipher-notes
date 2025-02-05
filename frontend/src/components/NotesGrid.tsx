@@ -59,6 +59,7 @@ export const NotesGrid = () => {
           onClick={() => openNote(note.id)}
           role='button'
         >
+          <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{note.title}</div>
           {note.type === 'note'
             ? truncate(note.txt)
             : note.todos.slice(0, 5).map((todo, i) => (

@@ -24,10 +24,11 @@ DONE:
   start into empty note
   handle tab key in textarea
   close open note on back
-FIRST:
-TODO:
   todo list
   note title
+FIRST:
+TODO:
+  captcha
 LATER:
   change email
   change crypto key

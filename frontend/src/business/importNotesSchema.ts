@@ -5,6 +5,7 @@ export const importNotesSchema = z.array(
   z
     .object({
       id: z.string().uuid().optional(),
+      title: z.string().optional(),
       txt: z.string().optional(),
       created_at: z.number().int().positive().optional(),
       updated_at: z.number().int().positive().optional(),
