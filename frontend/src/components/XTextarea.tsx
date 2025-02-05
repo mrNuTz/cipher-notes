@@ -3,13 +3,21 @@ export type XTextareaProps = {
   onChange: (value: string) => void
   onUndo: () => void
   onRedo: () => void
+  onUp: () => void
 }
-export const XTextarea = ({value, onChange, onUndo, onRedo}: XTextareaProps) => {
+export const XTextarea = ({value, onChange, onUndo, onRedo, onUp}: XTextareaProps) => {
   return (
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={(e) => {
+        if (
+          (e.key === 'Backspace' || e.key === 'ArrowUp') &&
+          e.currentTarget.selectionStart === 0
+        ) {
+          e.preventDefault()
+          onUp()
+        }
         if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey) {
           e.preventDefault()
           const target = e.currentTarget

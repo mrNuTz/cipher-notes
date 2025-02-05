@@ -9,6 +9,7 @@ export type TodoControlProps = {
   onTodoDeleted?: (index: number) => void
   onUndo?: () => void
   onRedo?: () => void
+  onUp?: () => void
 }
 export const TodoControl = ({
   todos,
@@ -18,6 +19,7 @@ export const TodoControl = ({
   onTodoDeleted,
   onUndo,
   onRedo,
+  onUp,
 }: TodoControlProps) => {
   return (
     <Stack flex={1} gap='xs' style={{overflowY: 'auto'}}>
@@ -42,6 +44,14 @@ export const TodoControl = ({
             readOnly={!onTodoChanged}
             onChange={(e) => onTodoChanged?.(i, e.target.value)}
             onKeyDown={(e) => {
+              if (
+                i === 0 &&
+                e.currentTarget.selectionStart === 0 &&
+                (e.key === 'Backspace' || e.key === 'ArrowUp')
+              ) {
+                e.preventDefault()
+                onUp?.()
+              }
               if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
                 e.preventDefault()
                 if (e.shiftKey) {

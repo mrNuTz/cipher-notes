@@ -1,7 +1,8 @@
-import {AnyOpenNote, anyOpenNoteSchema} from '../business/models'
+import {OpenNote, openNoteSchema} from '../business/models'
 import {NotesState} from '../state/notes'
 import {SettingsState} from '../state/settings'
 import {UserState} from '../state/user'
+import {zodParseString} from '../util/zod'
 
 export const storeUser = (user: UserState['user']): Promise<void> =>
   Promise.resolve().then(() => {
@@ -22,11 +23,11 @@ export const storeOpenNote = (note: NotesState['openNote']): Promise<void> =>
 export const storeOpenNoteSync = (note: NotesState['openNote']): void =>
   localStorage.setItem('openNote', JSON.stringify(note))
 
-export const loadOpenNote = (): Promise<AnyOpenNote | null> =>
+export const loadOpenNote = (): Promise<OpenNote | null> =>
   Promise.resolve().then(() => {
     const openNoteStr = localStorage.getItem('openNote') ?? 'null'
     if (openNoteStr === 'null') return null
-    return anyOpenNoteSchema.parse(JSON.parse(openNoteStr))
+    return zodParseString(openNoteSchema, openNoteStr) ?? null
   })
 
 export const storeSettings = (settings: SettingsState['settings']): Promise<void> =>

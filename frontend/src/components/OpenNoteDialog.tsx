@@ -1,15 +1,16 @@
 import {Button, Drawer, Flex} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
-  closeNote,
-  openNoteChanged,
+  openNoteClosed,
+  openNoteTxtChanged,
   deleteOpenNote,
-  openNoteRestored,
+  openNoteHistoryHandler,
   deleteTodo,
   insertTodo,
   todoChanged,
   todoChecked,
   openNoteTypeToggled,
+  openNoteTitleChanged,
 } from '../state/notes'
 import {modals} from '@mantine/modals'
 import {IconArrowBackUp} from './icons/IconArrowBackUp'
@@ -35,7 +36,7 @@ export const OpenNoteDialog = () => {
   const historyItem = selectHistoryItem(openNote)
   const {undo, redo, canUndo, canRedo} = useUndoRedo<NoteHistoryItem | null>(
     historyItem,
-    (historyItem) => historyItem && openNoteRestored(historyItem),
+    (historyItem) => historyItem && openNoteHistoryHandler(historyItem),
     500,
     openNote?.id ?? null
   )
@@ -43,10 +44,10 @@ export const OpenNoteDialog = () => {
   useEffect(() => {
     if (open) {
       window.history.pushState(null, '', window.location.href)
-      window.addEventListener('popstate', closeNote)
+      window.addEventListener('popstate', openNoteClosed)
     }
     return () => {
-      window.removeEventListener('popstate', closeNote)
+      window.removeEventListener('popstate', openNoteClosed)
     }
   }, [open])
   return (
@@ -67,12 +68,30 @@ export const OpenNoteDialog = () => {
         },
       }}
     >
+      <input
+        id='open-note-title'
+        style={{border: 'none', fontSize: '1.5rem', fontWeight: 'bold', outline: 'none'}}
+        type='text'
+        value={openNote?.title ?? ''}
+        onChange={(e) => openNoteTitleChanged(e.target.value)}
+        onKeyDown={(e) => {
+          if (
+            e.key === 'Enter' ||
+            (e.key === 'ArrowDown' && e.currentTarget.selectionEnd === openNote?.title.length)
+          ) {
+            e.preventDefault()
+            e.stopPropagation()
+            e.currentTarget.parentElement?.querySelector('textarea')?.focus()
+          }
+        }}
+      />
       {openNote?.type === 'note' ? (
         <XTextarea
           value={openNote?.txt ?? ''}
-          onChange={openNoteChanged}
+          onChange={openNoteTxtChanged}
           onUndo={undo}
           onRedo={redo}
+          onUp={focusTitleInput}
         />
       ) : openNote?.type === 'todo' ? (
         <TodoControl
@@ -83,6 +102,7 @@ export const OpenNoteDialog = () => {
           onTodoDeleted={deleteTodo}
           onUndo={undo}
           onRedo={redo}
+          onUp={focusTitleInput}
         />
       ) : null}
       <Flex gap='xs'>
@@ -115,4 +135,11 @@ export const OpenNoteDialog = () => {
       </Flex>
     </Drawer>
   )
+}
+
+const focusTitleInput = () => {
+  const input = document.getElementById('open-note-title') as HTMLInputElement | null
+  if (input) {
+    input.focus()
+  }
 }

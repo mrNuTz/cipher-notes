@@ -7,7 +7,7 @@ import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db} from '../db'
 import {loadOpenNote, storeOpenNote, storeOpenNoteSync} from '../services/localStorage'
-import {putToNote, textToTodos, todosToText} from '../business/misc'
+import {noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
 
 export type NotesState = {
   query: string
@@ -32,13 +32,7 @@ loadOpenNote()
   .then(
     (openNote) =>
       setState((s) => {
-        if (openNote === null) {
-          s.notes.openNote = null
-        } else if (openNote.type) {
-          s.notes.openNote = openNote
-        } else {
-          s.notes.openNote = {type: 'note', id: openNote.id, txt: openNote.txt}
-        }
+        s.notes.openNote = openNote
       }),
     (err) =>
       showMessage({
@@ -77,13 +71,13 @@ export const openNote = async (id: string) => {
   if (!note || note.txt === null) return
   setState((s) => {
     if (note.type === 'todo') {
-      s.notes.openNote = {type: 'todo', id, todos: note.todos}
+      s.notes.openNote = {type: 'todo', id, todos: note.todos, title: note.title}
     } else {
-      s.notes.openNote = {type: 'note', id, txt: note.txt}
+      s.notes.openNote = {type: 'note', id, txt: note.txt, title: note.title}
     }
   })
 }
-export const closeNote = async () => {
+export const openNoteClosed = async () => {
   const state = getState()
   const openNote = state.notes.openNote
   if (!openNote) return
@@ -100,11 +94,13 @@ export const closeNote = async () => {
   const note = await db.notes.get(openNote.id)
   if (
     note &&
-    ((note.type === 'note' && note.txt !== openNote.txt) ||
+    (note.title !== openNote.title ||
+      (note.type === 'note' && note.txt !== openNote.txt) ||
       (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
   ) {
     await db.notes.update(openNote.id, {
       type: openNote.type,
+      title: openNote.title,
       txt: openNote.type === 'note' ? openNote.txt : undefined,
       todos: openNote.type === 'todo' ? openNote.todos : undefined,
       updated_at: Date.now(),
@@ -129,13 +125,20 @@ export const addNote = async () => {
     updated_at: now,
     deleted_at: 0,
     type: 'note',
+    title: '',
   }
   await db.notes.add(note)
+
   setState((s) => {
-    s.notes.openNote = {type: 'note', id, txt: ''}
+    s.notes.openNote = {type: 'note', id, txt: '', title: ''}
   })
 }
-export const openNoteChanged = (txt: string) =>
+export const openNoteTitleChanged = (title: string) =>
+  setState((s) => {
+    if (!s.notes.openNote) return
+    s.notes.openNote.title = title
+  })
+export const openNoteTxtChanged = (txt: string) =>
   setState((s) => {
     if (!s.notes.openNote) return
     s.notes.openNote.txt = txt
@@ -148,15 +151,18 @@ export const openNoteTypeToggled = () =>
         type: 'todo',
         id: s.notes.openNote.id,
         todos: textToTodos(s.notes.openNote.txt),
+        title: s.notes.openNote.title,
       }
     } else {
       s.notes.openNote = {
         type: 'note',
         id: s.notes.openNote.id,
         txt: todosToText(s.notes.openNote.todos),
+        title: s.notes.openNote.title,
       }
     }
   })
+
 export const todoChecked = (index: number, checked: boolean) =>
   setState((s) => {
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
@@ -179,7 +185,7 @@ export const deleteTodo = (index: number) =>
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
     s.notes.openNote.todos.splice(index, 1)
   })
-export const openNoteRestored = (historyItem: NoteHistoryItem) =>
+export const openNoteHistoryHandler = (historyItem: NoteHistoryItem) =>
   setState((s) => {
     if (!s.notes.openNote) return
     if (historyItem.type === 'note') {
@@ -237,6 +243,7 @@ export const exportNotes = async () => {
   const notesToExport: ImportNote[] = notes.map((n) => ({
     id: n.id,
     txt: n.txt,
+    title: n.title,
     created_at: n.created_at,
     updated_at: n.updated_at,
     todos: n.todos,
@@ -258,7 +265,7 @@ export const importNotes = async (): Promise<void> => {
       if (id === undefined) {
         id = crypto.randomUUID()
       }
-      const {txt, updated_at = now, todos} = importNote
+      const {txt, updated_at = now, todos, title} = importNote
       if (todos === undefined && txt === undefined) {
         continue
       }
@@ -272,6 +279,7 @@ export const importNotes = async (): Promise<void> => {
           txt,
           state: 'dirty',
           type,
+          title: title ?? '',
           version: !existingNote
             ? 1
             : existingNote.state === 'dirty'
@@ -309,21 +317,7 @@ export const syncNotes = async () => {
   })
   try {
     const dirtyNotes = await db.notes.where('state').equals('dirty').toArray()
-    const clientPuts: Put[] = dirtyNotes
-      .map((n) => ({
-        id: n.id,
-        created_at: n.created_at,
-        txt: n.deleted_at !== 0 ? null : n.type === 'todo' ? JSON.stringify(n.todos) : n.txt,
-        updated_at: n.updated_at,
-        version: n.version,
-        deleted_at: n.deleted_at === 0 ? null : n.deleted_at,
-        type: n.type,
-      }))
-      .filter(
-        (p): p is typeof p & ({deleted_at: number; txt: null} | {deleted_at: null; txt: string}) =>
-          (typeof p.deleted_at === 'number' && p.txt === null) ||
-          (p.deleted_at === null && typeof p.txt === 'string')
-      )
+    const clientPuts: Put[] = dirtyNotes.map(noteToPut)
     const encClientSyncData = await encryptSyncData(keyTokenPair.cryptoKey, clientPuts)
 
     const res = await reqSyncNotes(session, lastSyncedTo, encClientSyncData, keyTokenPair.syncToken)
