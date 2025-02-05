@@ -70,7 +70,13 @@ export const OpenNoteDialog = () => {
     >
       <input
         id='open-note-title'
-        style={{border: 'none', fontSize: '1.5rem', fontWeight: 'bold', outline: 'none'}}
+        style={{
+          border: 'none',
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          outline: 'none',
+          background: 'transparent',
+        }}
         type='text'
         value={openNote?.title ?? ''}
         onChange={(e) => openNoteTitleChanged(e.target.value)}
