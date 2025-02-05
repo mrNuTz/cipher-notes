@@ -10,3 +10,6 @@ body {
 html[data-mantine-color-scheme='dark'] body {
   background-color: var(--mantine-color-dark-8);
 }
+.x-textarea textarea:focus {
+  outline: none;
+}
