@@ -11,16 +11,16 @@ export const NotesGrid = () => {
   const query = useSelector((s) => s.notes.query)
   const sort = useSelector((s) => s.notes.sort)
   const notes = useLiveQuery(async () => {
+    const queryLower = query.toLocaleLowerCase()
     const allNotes = await db.notes.where('deleted_at').equals(0).toArray()
     return allNotes
       .filter(
         (n) =>
           !query ||
+          n.title.toLocaleLowerCase().includes(queryLower) ||
           (n.type === 'note'
-            ? n.txt.toLocaleLowerCase().includes(query.toLocaleLowerCase())
-            : n.todos.some((todo) =>
-                todo.txt.toLocaleLowerCase().includes(query.toLocaleLowerCase())
-              ))
+            ? n.txt.toLocaleLowerCase().includes(queryLower)
+            : n.todos.some((todo) => todo.txt.toLocaleLowerCase().includes(queryLower)))
       )
       .sort(byProp(sort.prop, sort.desc))
   }, [query, sort])
