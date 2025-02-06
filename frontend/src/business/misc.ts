@@ -3,7 +3,11 @@ import {Note, TextPutTxt, textPutTxtSchema, TodoPutTxt, todoPutTxtSchema, Todos}
 import {Put} from './notesEncryption'
 
 export const textToTodos = (text: string): Todos =>
-  text.split('\n').map((line) => ({txt: line, done: false}))
+  text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({txt: line, done: false}))
 
 export const todosToText = (todos: Todos): string => todos.map((t) => t.txt).join('\n')
 
