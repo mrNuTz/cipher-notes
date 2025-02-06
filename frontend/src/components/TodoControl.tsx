@@ -35,7 +35,13 @@ export const TodoControl = ({
           <Textarea
             tabIndex={onTodoChanged ? undefined : -1}
             placeholder='To do...'
-            styles={{input: {border: 'none', backgroundColor: 'transparent'}}}
+            styles={{
+              input: {
+                border: 'none',
+                backgroundColor: 'transparent',
+                opacity: todo.done ? 0.5 : 1,
+              },
+            }}
             flex={1}
             autosize
             minRows={1}

@@ -229,7 +229,6 @@ const Editor = forwardRef(function Editor(
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log(e.key)
     if (onKeyDown) {
       onKeyDown(e)
 
