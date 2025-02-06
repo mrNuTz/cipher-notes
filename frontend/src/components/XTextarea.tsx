@@ -1,4 +1,4 @@
-import Editor from 'react-simple-code-editor'
+import Editor from './Editor'
 
 export type XTextareaProps = {
   value: string
@@ -15,7 +15,6 @@ export const XTextarea = ({value, onChange, onUndo, onRedo, onUp}: XTextareaProp
       insertSpaces={true}
       value={value}
       onValueChange={onChange}
-      highlight={(value) => <>{value}</>}
       onKeyDown={(e) => {
         if (
           e.currentTarget instanceof HTMLTextAreaElement &&
