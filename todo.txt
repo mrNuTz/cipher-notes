@@ -29,6 +29,9 @@ DONE:
 FIRST:
 TODO:
   captcha
+  dnd todos
+  notes grid paging
+  debounce notes search
 LATER:
   change email
   change crypto key

@@ -28,7 +28,8 @@ export const notesInit: NotesState = {
 }
 
 // init
-loadOpenNote()
+delay(0)
+  .then(loadOpenNote)
   .then(
     (openNote) =>
       setState((s) => {
@@ -184,6 +185,15 @@ export const deleteTodo = (index: number) =>
   setState((s) => {
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
     s.notes.openNote.todos.splice(index, 1)
+  })
+export const moveTodo = (source: number, target: number) =>
+  setState((s) => {
+    if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
+    const todos = s.notes.openNote.todos
+    const [todo] = todos.splice(source, 1)
+    if (todo) {
+      todos.splice(target, 0, todo)
+    }
   })
 export const openNoteHistoryHandler = (historyItem: NoteHistoryItem) =>
   setState((s) => {
