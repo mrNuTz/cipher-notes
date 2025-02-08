@@ -11,6 +11,7 @@ import {
   todoChecked,
   openNoteTypeToggled,
   openNoteTitleChanged,
+  moveTodo,
 } from '../state/notes'
 import {modals} from '@mantine/modals'
 import {IconArrowBackUp} from './icons/IconArrowBackUp'
@@ -106,6 +107,7 @@ export const OpenNoteDialog = () => {
           onTodoChanged={todoChanged}
           onInsertTodo={insertTodo}
           onTodoDeleted={deleteTodo}
+          onMoveTodo={moveTodo}
           onUndo={undo}
           onRedo={redo}
           onUp={focusTitleInput}
