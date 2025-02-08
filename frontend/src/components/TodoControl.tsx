@@ -1,7 +1,6 @@
 import {Checkbox, Divider, Flex, Stack, Textarea} from '@mantine/core'
 import {Todo, Todos} from '../business/models'
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {IconGripVertical} from './icons/IconGripVertical'
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import {
   attachClosestEdge,
@@ -9,6 +8,7 @@ import {
   extractClosestEdge,
 } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
 import {getReorderDestinationIndex} from '@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index'
+import {IconGridDots} from './icons/IconGridDots'
 
 export type TodoControlProps = {
   todos: Todos
@@ -144,8 +144,8 @@ const TodoItem = ({
       className='todo-list-item'
       pos='relative'
     >
-      <div ref={handleRef} style={{padding: '0 8px 0 0'}}>
-        <IconGripVertical style={{display: 'block', opacity: todo.done ? 0.2 : 0.5}} />
+      <div ref={handleRef} style={{padding: '0 12px 0 0'}}>
+        <IconGridDots style={{display: 'block', opacity: todo.done ? 0.2 : 0.5}} />
       </div>
       <Checkbox
         tabIndex={onTodoChecked ? undefined : -1}
