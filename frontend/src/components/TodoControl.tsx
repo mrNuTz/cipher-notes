@@ -32,7 +32,7 @@ export const TodoControl = ({
   onUp,
   onMoveTodo,
 }: TodoControlProps) => (
-  <Stack flex={1} gap='xs' style={{overflowY: 'auto'}}>
+  <Stack flex={1} style={{overflowY: 'auto'}} gap={0}>
     {todos.map((todo, i) =>
       todo.done ? null : (
         <TodoItem
@@ -50,7 +50,7 @@ export const TodoControl = ({
         />
       )
     )}
-    <Divider />
+    <Divider m='5px 0' />
     {todos.map((todo, i) =>
       todo.done ? <TodoItem key={i} todo={todo} i={i} onTodoChecked={onTodoChecked} /> : null
     )}
@@ -136,9 +136,16 @@ const TodoItem = ({
   }, [i, todo.done, data, onMoveTodo])
 
   return (
-    <Flex ref={containerRef} align='center' gap='xs' className='todo-list-item' pos='relative'>
+    <Flex
+      ref={containerRef}
+      align='center'
+      p='2px 0'
+      gap='xs'
+      className='todo-list-item'
+      pos='relative'
+    >
       <div ref={handleRef}>
-        <IconGripVertical style={{display: 'block'}} />
+        <IconGripVertical style={{display: 'block', opacity: todo.done ? 0.2 : 0.5}} />
       </div>
       <Checkbox
         tabIndex={onTodoChecked ? undefined : -1}
