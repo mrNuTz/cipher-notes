@@ -140,11 +140,11 @@ const TodoItem = ({
       ref={containerRef}
       align='center'
       p='2px 0'
-      gap='xs'
+      gap={0}
       className='todo-list-item'
       pos='relative'
     >
-      <div ref={handleRef}>
+      <div ref={handleRef} style={{padding: '0 8px 0 0'}}>
         <IconGripVertical style={{display: 'block', opacity: todo.done ? 0.2 : 0.5}} />
       </div>
       <Checkbox
@@ -153,6 +153,7 @@ const TodoItem = ({
         checked={todo.done}
         readOnly={!onTodoChecked}
         onChange={(e) => onTodoChecked?.(i, e.target.checked)}
+        style={{userSelect: 'none'}}
       />
       <Textarea
         tabIndex={onTodoChanged ? undefined : -1}
