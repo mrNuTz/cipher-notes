@@ -42,7 +42,7 @@ export const TodoControl = ({
           onTodoChecked={onTodoChecked}
           onTodoChanged={onTodoChanged}
           onInsertTodo={onInsertTodo}
-          onTodoDeleted={onTodoDeleted}
+          onTodoDeleted={todos.length === 1 ? undefined : onTodoDeleted}
           onUndo={onUndo}
           onRedo={onRedo}
           onUp={onUp}

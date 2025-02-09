@@ -2,12 +2,14 @@ import {zodParseString} from '../util/zod'
 import {Note, TextPutTxt, textPutTxtSchema, TodoPutTxt, todoPutTxtSchema, Todos} from './models'
 import {Put} from './notesEncryption'
 
-export const textToTodos = (text: string): Todos =>
-  text
+export const textToTodos = (text: string): Todos => {
+  const todos = text
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => ({txt: line, done: false}))
+  return todos.length === 0 ? [{txt: '', done: false}] : todos
+}
 
 export const todosToText = (todos: Todos): string => todos.map((t) => t.txt).join('\n')
 

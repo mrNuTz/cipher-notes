@@ -80,6 +80,7 @@ export const OpenNoteDialog = () => {
           outline: 'none',
           background: 'transparent',
         }}
+        placeholder='Title'
         type='text'
         value={openNote?.title ?? ''}
         onChange={(e) => openNoteTitleChanged(e.target.value)}
