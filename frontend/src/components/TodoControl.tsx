@@ -32,7 +32,7 @@ export const TodoControl = ({
   onUp,
   onMoveTodo,
 }: TodoControlProps) => (
-  <Stack flex={1} style={{overflowY: 'auto'}} gap={0}>
+  <Stack flex={1} style={{overflowY: 'auto', paddingTop: '1px'}} gap={0}>
     {todos.map((todo, i) =>
       todo.done ? null : (
         <TodoItem
@@ -244,6 +244,7 @@ const DropIndicator = ({edge}: {edge: Edge | null}) =>
         right: 0,
         bottom: edge === 'bottom' ? 0 : undefined,
         border: '2px solid var(--mantine-primary-color-filled)',
+        transform: edge === 'top' ? 'translateY(-1px)' : 'translateY(1px)',
       }}
     />
   )

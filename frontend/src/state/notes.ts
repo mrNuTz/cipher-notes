@@ -28,7 +28,11 @@ export const notesInit: NotesState = {
 }
 
 // init
-delay(0)
+new Promise((resolve) => {
+  window.addEventListener('DOMContentLoaded', resolve)
+})
+  .then(() => history.replaceState({dialogOpen: false}, '', location.href))
+  .then(() => delay(10))
   .then(loadOpenNote)
   .then(
     (openNote) =>
