@@ -6,10 +6,12 @@ export type XTextareaProps = {
   onUndo: () => void
   onRedo: () => void
   onUp: () => void
+  placeholder?: string
 }
-export const XTextarea = ({value, onChange, onUndo, onRedo, onUp}: XTextareaProps) => {
+export const XTextarea = ({value, onChange, onUndo, onRedo, onUp, placeholder}: XTextareaProps) => {
   return (
     <Editor
+      placeholder={placeholder}
       className='x-textarea'
       tabSize={2}
       insertSpaces={true}

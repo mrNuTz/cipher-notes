@@ -97,6 +97,7 @@ export const OpenNoteDialog = () => {
       />
       {openNote?.type === 'note' ? (
         <XTextarea
+          placeholder='Note text'
           value={openNote?.txt ?? ''}
           onChange={openNoteTxtChanged}
           onUndo={undo}
