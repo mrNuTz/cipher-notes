@@ -6,13 +6,18 @@ import {formatDateTime} from '../util/misc'
 import {pickLocalNote, pickServerNote} from '../state/conflicts'
 import {TodoControl} from './TodoControl'
 import {zodParseString} from '../util/zod'
-import {todosSchema} from '../business/models'
+import {textPutTxtSchema, todoPutTxtSchema} from '../business/models'
 
 export const ConflictDialog = () => {
   const conflicts = useSelector((s) => s.conflicts.conflicts)
   const serverPut = conflicts[0]
   const localNote = useLiveQuery(() => db.notes.get(serverPut?.id ?? ''), [serverPut?.id])
   if (!serverPut || !localNote) return null
+  const serverTxtTodo = zodParseString(todoPutTxtSchema, serverPut.txt ?? 'null')
+  const serverTxtText = zodParseString(textPutTxtSchema, serverPut.txt ?? 'null')
+  const serverTitle = serverTxtTodo?.title ?? serverTxtText?.title ?? ''
+  const serverTxt = serverTxtText?.txt ?? ''
+  const serverTodos = serverTxtTodo?.todos ?? []
   return (
     <Modal size='100%' opened={conflicts.length > 0} onClose={() => {}} title='Conflict Resolution'>
       <Flex gap='xs'>
@@ -28,11 +33,17 @@ export const ConflictDialog = () => {
               DELETED
             </Text>
           ) : localNote.type === 'todo' ? (
-            <TodoControl todos={localNote.todos} />
+            <>
+              <Text size='lg'>{localNote.title}</Text>
+              <TodoControl todos={localNote.todos} />
+            </>
           ) : (
-            <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
-              {localNote.txt}
-            </Text>
+            <>
+              <Text size='lg'>{localNote.title}</Text>
+              <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
+                {localNote.txt}
+              </Text>
+            </>
           )}
           <Button onClick={pickLocalNote}>Use Local</Button>
         </Stack>
@@ -48,13 +59,17 @@ export const ConflictDialog = () => {
               DELETED
             </Text>
           ) : serverPut.type === 'todo' ? (
-            <TodoControl
-              todos={serverPut.txt ? zodParseString(todosSchema, serverPut.txt) ?? [] : []}
-            />
+            <>
+              <Text size='lg'>{serverTitle}</Text>
+              <TodoControl todos={serverTodos} />
+            </>
           ) : (
-            <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
-              {serverPut.txt}
-            </Text>
+            <>
+              <Text size='lg'>{serverTitle}</Text>
+              <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
+                {serverTxt}
+              </Text>
+            </>
           )}
           <Button onClick={pickServerNote}>Use Server</Button>
         </Stack>
