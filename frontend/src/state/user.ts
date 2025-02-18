@@ -235,14 +235,14 @@ export const deleteServerNotes = async () => {
 }
 
 // effects
-export const registerEmail = async () => {
+export const registerEmail = async (captchaToken: string) => {
   const state = getState()
   const {email, loading} = state.user.registerDialog
   if (!email || loading) return
   setState((state) => {
     state.user.registerDialog.loading = true
   })
-  const res = await reqRegisterEmail(email)
+  const res = await reqRegisterEmail(email, captchaToken)
   setState((state) => {
     state.user.registerDialog.loading = false
   })

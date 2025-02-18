@@ -1,13 +1,27 @@
 import {Button, Checkbox, Modal, Stack, Text, TextInput} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {closeRegisterDialog, registerEmail, registerEmailChanged} from '../state/user'
-import {useState} from 'react'
+import {useRef, useState} from 'react'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
+import {hCaptchaSiteCode} from '../config'
 
 export const RegisterDialog = () => {
   const {open, email, loading} = useSelector((state) => state.user.registerDialog)
   const [agree, setAgree] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const hcaptchaRef = useRef<HCaptcha>(null)
   return (
-    <Modal opened={open} onClose={closeRegisterDialog} title='Register Email'>
+    <Modal
+      opened={open}
+      onClose={() => {
+        closeRegisterDialog()
+        if (captchaToken) {
+          hcaptchaRef.current?.resetCaptcha()
+          setCaptchaToken(null)
+        }
+      }}
+      title='Register Email'
+    >
       <Stack gap='md'>
         <TextInput
           label='Email'
@@ -48,7 +62,19 @@ export const RegisterDialog = () => {
           checked={agree}
           onChange={(e) => setAgree(e.target.checked)}
         />
-        <Button loading={loading} disabled={!email || !agree} onClick={registerEmail}>
+        <HCaptcha ref={hcaptchaRef} sitekey={hCaptchaSiteCode} onVerify={setCaptchaToken} />
+        <Button
+          loading={loading}
+          disabled={!email || !agree || !captchaToken}
+          onClick={async () => {
+            if (!captchaToken) return
+            await registerEmail(captchaToken)
+            if (captchaToken) {
+              hcaptchaRef.current?.resetCaptcha()
+              setCaptchaToken(null)
+            }
+          }}
+        >
           Register
         </Button>
       </Stack>

@@ -7,6 +7,8 @@ const keys = [
   'PORT',
   'ACCESS_CONTROL_ALLOW_ORIGIN',
   'SESSION_TTL_MIN',
+  'HCAPTCHA_SECRET',
+  'HCAPTCHA_SITE_KEY',
 ] as const
 type Key = (typeof keys)[number]
 
