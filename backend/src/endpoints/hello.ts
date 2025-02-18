@@ -1,12 +1,12 @@
-import {authEndpointsFactory} from '../endpointsFactory'
+import {endpointsFactory} from '../endpointsFactory'
 import {z} from 'zod'
 
-export const helloEndpoint = authEndpointsFactory.build({
+export const helloEndpoint = endpointsFactory.build({
   method: 'get',
   output: z.object({
-    email: z.string(),
+    message: z.string(),
   }),
-  handler: async ({options: {user}}) => {
-    return {email: user.email}
+  handler: async ({}) => {
+    return {message: 'Hello, world!'}
   },
 })
