@@ -1,5 +1,5 @@
 import {EndpointsFactory, ensureHttpError, ResultHandler} from 'express-zod-api'
-import {authMiddleware, rateLimitMiddleware} from './middleware'
+import {authMiddleware} from './middleware'
 import {z} from 'zod'
 
 const resultHandler = new ResultHandler({
@@ -22,8 +22,6 @@ const resultHandler = new ResultHandler({
   },
 })
 
-export const endpointsFactory = new EndpointsFactory(resultHandler).addMiddleware(
-  rateLimitMiddleware
-)
+export const endpointsFactory = new EndpointsFactory(resultHandler)
 
 export const authEndpointsFactory = endpointsFactory.addMiddleware(authMiddleware)
