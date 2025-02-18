@@ -43,10 +43,10 @@ export const request = async <D>(
   }
 }
 
-export const reqRegisterEmail = (email: string) =>
+export const reqRegisterEmail = (email: string, captchaToken: string) =>
   request<void>('/registerEmail', {
     method: 'POST',
-    body: {email},
+    body: {email, captcha_token: captchaToken},
   })
 
 export const reqSendLoginCode = (email: string) =>

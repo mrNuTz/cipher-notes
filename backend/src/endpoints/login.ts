@@ -6,14 +6,21 @@ import {eq} from 'drizzle-orm'
 import {generateLoginCode, generateSession} from '../business/misc'
 import {sendLoginCode} from '../services/mail'
 import createHttpError from 'http-errors'
+import {verify} from 'hcaptcha'
+import {env} from '../env'
 
 export const registerEmailEndpoint = endpointsFactory.build({
   method: 'post',
   input: z.object({
     email: z.string().email(),
+    captcha_token: z.string(),
   }),
   output: z.object({}),
-  handler: async ({input: {email}}) => {
+  handler: async ({input: {email, captcha_token}}) => {
+    const res = await verify(env.HCAPTCHA_SECRET, captcha_token, undefined, env.HCAPTCHA_SITE_KEY)
+    if (!res.success) {
+      throw createHttpError(400, 'Invalid captcha')
+    }
     const users = await db.select().from(usersTbl).where(eq(usersTbl.email, email))
     if (users.length === 1) {
       throw createHttpError(400, 'User already exists')
