@@ -3,7 +3,7 @@ import {useSelector} from '../state/store'
 import {openNote} from '../state/notes'
 import {useLiveQuery} from 'dexie-react-hooks'
 import {db} from '../db'
-import {byProp} from '../util/misc'
+import {byProp, compare} from '../util/misc'
 import {IconSquare} from './icons/IconSquare'
 import {IconCheckbox} from './icons/IconCheckbox'
 
@@ -62,21 +62,25 @@ export const NotesGrid = () => {
           <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{note.title}</div>
           {note.type === 'note'
             ? truncate(note.txt)
-            : note.todos.slice(0, 5).map((todo, i) => (
-                <Flex
-                  align='center'
-                  gap='xs'
-                  style={{textDecoration: todo.done ? 'line-through' : 'none'}}
-                  key={i}
-                >
-                  {todo.done ? (
-                    <IconCheckbox style={{flex: '0 0 auto'}} />
-                  ) : (
-                    <IconSquare style={{flex: '0 0 auto'}} />
-                  )}
-                  {todo.txt.substring(0, 50)}
-                </Flex>
-              ))}
+            : note.todos
+                .map((t, i) => [t.done, i, t] as const)
+                .sort(compare)
+                .slice(0, 5)
+                .map(([, i, todo]) => (
+                  <Flex
+                    align='center'
+                    gap='xs'
+                    style={{textDecoration: todo.done ? 'line-through' : 'none'}}
+                    key={i}
+                  >
+                    {todo.done ? (
+                      <IconCheckbox style={{flex: '0 0 auto'}} />
+                    ) : (
+                      <IconSquare style={{flex: '0 0 auto'}} />
+                    )}
+                    {todo.txt.substring(0, 50)}
+                  </Flex>
+                ))}
         </Paper>
       ))}
     </Box>
