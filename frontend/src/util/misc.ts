@@ -232,3 +232,20 @@ export const deepEquals = (
   if (ak.length !== bk.length) return false
   return ak.every((k) => deepEquals((a as any)[k], (b as any)[k], ignoreProps, k))
 }
+
+export const truncateWithEllipsis = (txt: string, maxLines = 5, maxChars = 200) => {
+  const lines = txt.split('\n')
+  let ellipsis: boolean = false
+  if (lines.length > maxLines) {
+    txt = lines.slice(0, maxLines).join('\n')
+    ellipsis = true
+  }
+  if (txt.length > maxChars) {
+    txt = txt.slice(0, maxChars)
+    ellipsis = true
+  }
+  if (ellipsis) {
+    txt += '...'
+  }
+  return txt
+}

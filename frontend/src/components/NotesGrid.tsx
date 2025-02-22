@@ -3,7 +3,7 @@ import {useSelector} from '../state/store'
 import {openNote} from '../state/notes'
 import {useLiveQuery} from 'dexie-react-hooks'
 import {db} from '../db'
-import {byProp, compare} from '../util/misc'
+import {byProp, compare, truncateWithEllipsis} from '../util/misc'
 import {IconSquare} from './icons/IconSquare'
 import {IconCheckbox} from './icons/IconCheckbox'
 
@@ -61,7 +61,7 @@ export const NotesGrid = () => {
         >
           <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{note.title}</div>
           {note.type === 'note'
-            ? truncate(note.txt)
+            ? truncateWithEllipsis(note.txt)
             : note.todos
                 .map((t, i) => [t.done, i, t] as const)
                 .sort(compare)
@@ -78,28 +78,11 @@ export const NotesGrid = () => {
                     ) : (
                       <IconSquare style={{flex: '0 0 auto'}} />
                     )}
-                    {todo.txt.substring(0, 50)}
+                    {truncateWithEllipsis(todo.txt, 1, 50)}
                   </Flex>
                 ))}
         </Paper>
       ))}
     </Box>
   )
-}
-
-const truncate = (txt: string) => {
-  const lines = txt.split('\n')
-  let ellipsis: boolean = false
-  if (lines.length > 5) {
-    txt = lines.slice(0, 5).join('\n')
-    ellipsis = true
-  }
-  if (txt.length > 200) {
-    txt = txt.slice(0, 200)
-    ellipsis = true
-  }
-  if (ellipsis) {
-    txt += '...'
-  }
-  return txt
 }
