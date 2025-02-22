@@ -19,11 +19,6 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
 
-      workbox: {
-        navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/],
-      },
-
       pwaAssets: {
         disabled: false,
         config: true,
