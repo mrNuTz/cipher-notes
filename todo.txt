@@ -26,13 +26,16 @@ DONE:
   close open note on back
   todo list
   note title
+  dnd todos
+  captcha
 FIRST:
 TODO:
-  captcha
-  dnd todos
-  notes grid paging
-  debounce notes search
+  auto sync
+  sync on close
+    prevent tab close when note is open
 LATER:
+  debounce notes search
+  notes grid paging
   change email
   change crypto key
   delete account
