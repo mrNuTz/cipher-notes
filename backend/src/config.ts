@@ -1,5 +1,6 @@
 import {createConfig} from 'express-zod-api'
 import {env} from './env'
+import cookieParser from 'cookie-parser'
 
 export const config = createConfig({
   http: {
@@ -10,4 +11,7 @@ export const config = createConfig({
     'Access-Control-Allow-Origin': env.ACCESS_CONTROL_ALLOW_ORIGIN,
     'Access-Control-Allow-Credentials': 'true',
   }),
+  beforeRouting: ({app}) => {
+    app.use(cookieParser(env.COOKIE_SECRET))
+  },
 })

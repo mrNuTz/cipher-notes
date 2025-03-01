@@ -1,6 +1,7 @@
 import {EndpointsFactory, ensureHttpError, ResultHandler} from 'express-zod-api'
 import {authMiddleware} from './middleware'
 import {z} from 'zod'
+import {env} from './env'
 
 const resultHandler = new ResultHandler({
   positive: (data) => ({
@@ -18,7 +19,23 @@ const resultHandler = new ResultHandler({
         statusCode,
       })
     }
-    response.status(200).json({success: true, data: output})
+    const {access_token, session_id, remove_session_cookie, ...rest} = output ?? {}
+    if (typeof access_token === 'string' && typeof session_id === 'number') {
+      response.cookie(
+        'session',
+        {access_token, session_id},
+        {
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          maxAge: 1000 * 60 * Number(env.SESSION_TTL_MIN),
+          sameSite: 'strict',
+          signed: true,
+        }
+      )
+    } else if (remove_session_cookie) {
+      response.clearCookie('session')
+    }
+    response.status(200).json({success: true, data: output == null ? null : rest})
   },
 })
 

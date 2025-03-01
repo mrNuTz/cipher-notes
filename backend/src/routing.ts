@@ -4,6 +4,7 @@ import {loginCodeEndpoint, sendLoginCodeEndpoint, registerEmailEndpoint} from '.
 import {syncNotesEndpoint} from './endpoints/syncNotes'
 import {deleteNotesEndpoint} from './endpoints/deleteNotes'
 import {sendConfirmCodeEndpoint} from './endpoints/sendConfirmCode'
+import {logoutEndpoint} from './endpoints/logout'
 
 export const routing: Routing = {
   hello: helloEndpoint,
@@ -13,4 +14,5 @@ export const routing: Routing = {
   syncNotes: syncNotesEndpoint,
   deleteNotes: deleteNotesEndpoint,
   sendConfirmCode: sendConfirmCodeEndpoint,
+  logout: logoutEndpoint,
 }

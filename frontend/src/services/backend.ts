@@ -53,7 +53,7 @@ export const reqSendLoginCode = (email: string) =>
   request<void>('/sendLoginCode', {method: 'POST', body: {email}})
 
 export const reqLoginCode = (email: string, code: string) =>
-  request<{session_id: number; access_token: string}>('/loginCode', {
+  request<void>('/loginCode', {
     method: 'POST',
     body: {email, login_code: code},
   })
@@ -82,28 +82,21 @@ export type EncPut =
 
 export type EncSyncRes = {puts: EncPut[]; synced_to: number; conflicts: EncPut[]}
 
-export const reqSyncNotes = (
-  session: {access_token: string; session_id: number},
-  lastSyncedTo: number,
-  puts: EncPut[],
-  syncToken: string
-) =>
+export const reqSyncNotes = (lastSyncedTo: number, puts: EncPut[], syncToken: string) =>
   request<EncSyncRes>('/syncNotes', {
     method: 'POST',
-    body: {session, last_synced_to: lastSyncedTo, sync_token: syncToken, puts},
+    body: {last_synced_to: lastSyncedTo, sync_token: syncToken, puts},
   })
 
-export const reqDeleteNotes = (
-  session: {access_token: string; session_id: number},
-  confirm: string
-) =>
+export const reqDeleteNotes = (confirm: string) =>
   request<void>('/deleteNotes', {
     method: 'POST',
-    body: {session, confirm},
+    body: {confirm},
   })
 
-export const reqSendConfirmCode = (session: {access_token: string; session_id: number}) =>
+export const reqSendConfirmCode = () =>
   request<void>('/sendConfirmCode', {
     method: 'POST',
-    body: {session},
   })
+
+export const reqLogout = () => request<void>('/logout', {method: 'POST'})

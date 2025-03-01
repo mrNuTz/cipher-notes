@@ -16,7 +16,7 @@ import {openSettingsDialog} from '../state/settings'
 
 export const CommandCenter = () => {
   const {toggleColorScheme} = useMantineColorScheme()
-  const session = useSelector((s) => s.user.user.session)
+  const loggedIn = useSelector((s) => s.user.user.loggedIn)
   const anyDialogOpen = useSelector(selectAnyDialogOpen)
 
   const commands: (SpotlightActionData & {shortcut?: string})[] = [
@@ -36,7 +36,7 @@ export const CommandCenter = () => {
       id: 'sync',
       label: 'Synchronize notes with server',
       onClick: openSyncDialogAndSync,
-      disabled: !session,
+      disabled: !loggedIn,
       shortcut: 'alt+shift+s',
     },
     {
@@ -53,13 +53,13 @@ export const CommandCenter = () => {
       id: 'register',
       label: 'Register',
       onClick: openRegisterDialog,
-      disabled: !!session,
+      disabled: loggedIn,
     },
     {
       id: 'login',
       label: 'Login',
       onClick: openLoginDialog,
-      disabled: !!session,
+      disabled: loggedIn,
       shortcut: 'alt+shift+l',
     },
     {
@@ -76,7 +76,7 @@ export const CommandCenter = () => {
       id: 'logout',
       label: 'Logout',
       onClick: logout,
-      disabled: !session,
+      disabled: !loggedIn,
       shortcut: 'alt+shift+o',
     },
     {
@@ -88,7 +88,7 @@ export const CommandCenter = () => {
       id: 'deleteServerNotes',
       label: 'Delete Server Notes',
       onClick: openDeleteServerNotesDialog,
-      disabled: !session,
+      disabled: !loggedIn,
     },
   ]
 
