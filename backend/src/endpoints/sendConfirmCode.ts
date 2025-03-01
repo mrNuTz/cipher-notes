@@ -9,7 +9,6 @@ import {eq} from 'drizzle-orm'
 
 export const sendConfirmCodeEndpoint = authEndpointsFactory.build({
   method: 'post',
-  input: z.object({}),
   output: z.object({}),
   handler: async ({options: {user}}) => {
     if (

@@ -4,6 +4,7 @@ import {
   reqRegisterEmail,
   reqDeleteNotes,
   reqSendConfirmCode,
+  reqLogout,
 } from '../services/backend'
 import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
@@ -16,7 +17,7 @@ import {db} from '../db'
 export type UserState = {
   user: {
     email: string
-    session: {access_token: string; session_id: number} | null
+    loggedIn: boolean
     lastSyncedTo: number
     keyTokenPair: {cryptoKey: string; syncToken: string} | null
   }
@@ -40,7 +41,7 @@ export type UserState = {
 }
 
 export const userInit: UserState = {
-  user: {email: '', session: null, lastSyncedTo: 0, keyTokenPair: null},
+  user: {email: '', loggedIn: false, lastSyncedTo: 0, keyTokenPair: null},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   syncDialog: {open: false, syncing: false},
@@ -161,19 +162,19 @@ export const saveEncryptionKey = async (keyTokenPair: string) => {
 
 export const openDeleteServerNotesDialog = async () => {
   const state = getState()
-  const session = state.user.user.session
-  if (!session) return
+  const loggedIn = state.user.user.loggedIn
+  if (!loggedIn) return
 
   setState((s) => {
     s.user.deleteServerNotesDialog = {open: true, code: '', codeLoading: true, deleteLoading: false}
   })
 
-  const res = await reqSendConfirmCode(session)
+  const res = await reqSendConfirmCode()
 
   setState((s) => {
     s.user.deleteServerNotesDialog.codeLoading = false
     if (!res.success && res.statusCode === 401) {
-      s.user.user.session = null
+      s.user.user.loggedIn = false
     }
   })
 
@@ -205,19 +206,19 @@ export const deleteServerNotesCodeChanged = (code: string) =>
 export const deleteServerNotes = async () => {
   const state = getState()
   const {code, deleteLoading} = state.user.deleteServerNotesDialog
-  const session = state.user.user.session
-  if (!code || deleteLoading || !session) return
+  const loggedIn = state.user.user.loggedIn
+  if (!code || deleteLoading || !loggedIn) return
 
   setState((s) => {
     s.user.deleteServerNotesDialog.deleteLoading = true
   })
 
-  const res = await reqDeleteNotes(session, code)
+  const res = await reqDeleteNotes(code)
 
   setState((s) => {
     s.user.deleteServerNotesDialog.deleteLoading = false
     if (!res.success && res.statusCode === 401) {
-      s.user.user.session = null
+      s.user.user.loggedIn = false
     }
     if (res.success) {
       s.user.deleteServerNotesDialog.open = false
@@ -306,7 +307,7 @@ export const loginCode = async () => {
     return
   }
   setState((state) => {
-    state.user.user.session = res.data
+    state.user.user.loggedIn = true
     state.user.user.email = email
   })
   showMessage({
@@ -322,10 +323,19 @@ export const toggleImpressum = () => {
   })
 }
 
-export const logout = () =>
+// TODO: invalidate session on the server
+export const logout = async () => {
+  const state = getState()
+  const loggedIn = state.user.user.loggedIn
+  if (!loggedIn) return
+  const res = await reqLogout()
+  if (!res.success) {
+    showMessage({title: 'Logout Failed', text: res.error})
+  }
   setState((state) => {
-    state.user.user.session = null
+    state.user.user.loggedIn = false
   })
+}
 
 // subscriptions
 export const registerUserSubscriptions = () => {

@@ -4,8 +4,7 @@ import {useLiveQuery} from 'dexie-react-hooks'
 import {db} from '../db'
 
 export const StatusBar = () => {
-  const {email, session} = useSelector((state) => state.user.user)
-  const loggedIn = !!session
+  const {email, loggedIn} = useSelector((state) => state.user.user)
   const registered = !!email
   const numDirtyNotes = useLiveQuery(() => db.notes.where('state').equals('dirty').count())
   if (!registered) return null

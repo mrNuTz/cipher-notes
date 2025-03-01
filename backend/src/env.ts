@@ -9,6 +9,7 @@ const keys = [
   'SESSION_TTL_MIN',
   'HCAPTCHA_SECRET',
   'HCAPTCHA_SITE_KEY',
+  'COOKIE_SECRET',
 ] as const
 type Key = (typeof keys)[number]
 

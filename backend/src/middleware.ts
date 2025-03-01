@@ -13,15 +13,18 @@ export const methodProviderMiddleware = new Middleware({
   }),
 })
 
+const sessionSchema = z.object({
+  access_token: z.string(),
+  session_id: z.number(),
+})
+
 export const authMiddleware = new Middleware({
-  input: z.object({
-    session: z.object({
-      access_token: z.string(),
-      session_id: z.number(),
-    }),
-  }),
-  handler: async ({input}) => {
-    const {access_token, session_id} = input.session
+  handler: async ({request}) => {
+    const cookieSession = request.signedCookies.session
+    if (!cookieSession) {
+      throw createHttpError(401, 'No session cookie')
+    }
+    const {access_token, session_id} = sessionSchema.parse(cookieSession)
     const sessions = await db
       .select()
       .from(sessionsTbl)
@@ -42,6 +45,6 @@ export const authMiddleware = new Middleware({
     if (users.length !== 1) {
       throw createHttpError(401, 'User not found')
     }
-    return {user: users[0]}
+    return {user: users[0], session_id}
   },
 })
