@@ -1,6 +1,7 @@
 import {createConfig} from 'express-zod-api'
 import {env} from './env'
 import cookieParser from 'cookie-parser'
+import rateLimit from 'express-rate-limit'
 
 export const config = createConfig({
   http: {
@@ -12,6 +13,19 @@ export const config = createConfig({
     'Access-Control-Allow-Credentials': 'true',
   }),
   beforeRouting: ({app}) => {
+    app.use(
+      rateLimit({
+        limit: Number(env.RATE_LIMIT),
+        windowMs: Number(env.RATE_WINDOW_SEC) * 1000,
+        handler: (_, res) => {
+          res.status(429).json({
+            success: false,
+            error: 'Too many requests',
+            statusCode: 429,
+          })
+        },
+      })
+    )
     app.use(cookieParser(env.COOKIE_SECRET))
   },
 })
