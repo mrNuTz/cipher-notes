@@ -25,8 +25,8 @@ export default defineConfig({
       },
 
       manifest: {
-        name: 'cipher-notes',
-        short_name: 'cipher-notes',
+        name: 'ciphernotes',
+        short_name: 'ciphernotes',
         description:
           'A local-first note-taking app with end-to-end encryption for your private thoughts and data',
         theme_color: '#1864ab',
