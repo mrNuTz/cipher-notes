@@ -18,6 +18,7 @@
     "cookie-parser": "^1.4.7",
     "drizzle-orm": "^0.37.0",
     "express": "^5.0.1",
+    "express-rate-limit": "^7.5.0",
     "express-zod-api": "^21.3.0",
     "hcaptcha": "^0.2.0",
     "http-errors": "^2.0.0",
