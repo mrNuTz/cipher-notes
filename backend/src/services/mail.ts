@@ -18,7 +18,7 @@ export const sendMail = async (to: string, subject: string, text: string, html?:
 export const sendLoginCode = async (to: string, code: string) => {
   return await sendMail(
     to,
-    'cipher-notes login code',
+    'ciphernotes login code',
     `Your login code is: ${code}\n\n${impressum}`,
     `<p>Your login code is: <b>${code}</b></p>
       <p></p>
@@ -29,7 +29,7 @@ export const sendLoginCode = async (to: string, code: string) => {
 export const sendConfirmCode = async (to: string, code: string) => {
   return await sendMail(
     to,
-    'cipher-notes confirm code',
+    'ciphernotes confirm code',
     `Your confirm code is: ${code}\n\n${impressum}`,
     `<p>Your confirm code is: <b>${code}</b></p>
       <p></p>

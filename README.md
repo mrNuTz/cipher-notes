@@ -1,3 +1,3 @@
-# cipher-notes
+# ciphernotes
 
-The project is live at https://cipher-notes.onrender.com/
+The project is live on https://ciphernotes.com
