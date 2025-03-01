@@ -153,7 +153,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
           deleted_at: n.clientside_deleted_at,
         })
       )
-      const maxPutAt = Math.max(...dbPuts.map((c) => c.serverside_created_at))
+      const maxPutAt = Math.max(...dbPuts.map((c) => c.serverside_updated_at))
 
       return {
         puts: putsSchema.parse(pullPuts),
