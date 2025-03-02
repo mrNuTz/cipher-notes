@@ -45,14 +45,15 @@ export const decryptSyncData = async (cryptoKey: string, puts: EncPut[]): Promis
 export const encryptSyncData = async (cryptoKey: string, puts: Put[]): Promise<EncPut[]> => {
   const key = await importKey(cryptoKey)
   return await Promise.all(
-    puts.map((p) =>
-      p.txt !== null && p.deleted_at === null
-        ? encryptData(key, p.txt).then(({cipher_text, iv}) => ({
+    puts.map(({txt, deleted_at, ...p}) =>
+      txt !== null && deleted_at === null
+        ? encryptData(key, txt).then(({cipher_text, iv}) => ({
             ...p,
             cipher_text,
             iv,
+            deleted_at: null,
           }))
-        : {...p, cipher_text: null, iv: null}
+        : {...p, cipher_text: null, iv: null, deleted_at}
     )
   )
 }
