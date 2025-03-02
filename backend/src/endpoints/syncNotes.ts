@@ -53,7 +53,12 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
     conflicts: putsSchema,
     synced_to: z.number().int().positive(),
   }),
-  handler: async ({input: {last_synced_to, puts: clientPuts, sync_token}, options: {user}}) => {
+  handler: async ({
+    input: {last_synced_to, puts: clientPuts, sync_token},
+    options: {user},
+    logger,
+  }) => {
+    logger.info('syncNotes', {last_synced_to, putsLength: clientPuts.length})
     if (!user.sync_token) {
       await db.update(usersTbl).set({sync_token}).where(eq(usersTbl.id, user.id))
     } else if (sync_token !== user.sync_token) {
