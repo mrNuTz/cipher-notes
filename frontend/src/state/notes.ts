@@ -86,10 +86,11 @@ export const openNoteClosed = async () => {
   if (!openNote) return
 
   if (
-    (openNote.type === 'todo' &&
-      (openNote.todos.length === 0 ||
-        (openNote.todos.length === 1 && openNote.todos[0]!.txt === ''))) ||
-    (openNote.type === 'note' && openNote.txt === '')
+    openNote.title === '' &&
+    (openNote.type === 'todo'
+      ? openNote.todos.length === 0 ||
+        (openNote.todos.length === 1 && openNote.todos[0]!.txt === '')
+      : openNote.txt === '')
   ) {
     return await deleteOpenNote()
   }
