@@ -2,6 +2,7 @@ import {createConfig} from 'express-zod-api'
 import {env} from './env'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
+import type {Application} from 'express'
 
 export const config = createConfig({
   http: {
@@ -13,6 +14,7 @@ export const config = createConfig({
     'Access-Control-Allow-Credentials': 'true',
   }),
   beforeRouting: ({app}) => {
+    ;(app as Application).set('trust proxy', 1) // number of proxies between user and server
     app.use(
       rateLimit({
         limit: Number(env.RATE_LIMIT),
@@ -27,5 +29,9 @@ export const config = createConfig({
       })
     )
     app.use(cookieParser(env.COOKIE_SECRET))
+    app.get('/ip', (req, res) => {
+      res.send(req.ip)
+    })
   },
+  startupLogo: false,
 })
