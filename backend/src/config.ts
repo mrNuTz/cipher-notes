@@ -14,7 +14,7 @@ export const config = createConfig({
     'Access-Control-Allow-Credentials': 'true',
   }),
   beforeRouting: ({app}) => {
-    ;(app as Application).set('trust proxy', 1) // number of proxies between user and server
+    ;(app as Application).set('trust proxy', 2) // number of proxies between user and server
     app.use(
       rateLimit({
         limit: Number(env.RATE_LIMIT),
