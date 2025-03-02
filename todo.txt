@@ -28,11 +28,17 @@ DONE:
   note title
   dnd todos
   captcha
+  empty note with title should not get deleted
 FIRST:
 TODO:
   auto sync
   sync on close
     prevent tab close when note is open
+  sync conflicts after timeout
+  store sort order in local-storage
+  use onChange instead of onClick on checkboxes
+  note size limit
+  note number limit
 LATER:
   debounce notes search
   notes grid paging
