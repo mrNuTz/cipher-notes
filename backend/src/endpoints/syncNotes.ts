@@ -88,7 +88,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
         const existing = existingMap.get(put.id)
         if (!existing || put.version > existing.version) {
           nonConflicts.push(put)
-        } else {
+        } else if (!putIsEqualToDbNote(put, existing)) {
           conflicts.push({
             id: existing.clientside_id,
             type: existing.type,
@@ -168,3 +168,16 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
     })
   },
 })
+
+function putIsEqualToDbNote(put: Put, dbNote: typeof notesTbl.$inferSelect) {
+  return (
+    put.id === dbNote.clientside_id &&
+    put.type === dbNote.type &&
+    put.created_at === dbNote.clientside_created_at &&
+    put.updated_at === dbNote.clientside_updated_at &&
+    put.cipher_text === dbNote.cipher_text &&
+    put.iv === dbNote.iv &&
+    put.version === dbNote.version &&
+    put.deleted_at === dbNote.clientside_deleted_at
+  )
+}
