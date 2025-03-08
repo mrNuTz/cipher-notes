@@ -64,6 +64,7 @@ const onFocus = debounce(() => {
   if (!selectAnyDialogOpen(state) && state.settings.settings.newNoteOnLaunch) {
     addNote()
   }
+  syncNotes()
 }, 10)
 
 window.addEventListener('beforeunload', () => {
