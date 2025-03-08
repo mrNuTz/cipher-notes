@@ -1,11 +1,10 @@
 import {Spotlight, SpotlightActionData} from '@mantine/spotlight'
-import {addNote, exportNotes, openImportDialog} from '../state/notes'
+import {addNote, exportNotes, openImportDialog, openSyncDialogAndSync} from '../state/notes'
 import {
   logout,
   openEncryptionKeyDialog,
   openLoginDialog,
   openRegisterDialog,
-  openSyncDialogAndSync,
   toggleImpressum,
   openDeleteServerNotesDialog,
 } from '../state/user'

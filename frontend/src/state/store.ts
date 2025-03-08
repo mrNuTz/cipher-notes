@@ -35,7 +35,7 @@ export const selectAnyDialogOpen = (s: RootState): boolean =>
   s.messages.messages.length > 0 ||
   s.notes.openNote !== null ||
   s.notes.importDialog.open ||
-  s.user.syncDialog.open ||
+  s.notes.sync.dialogOpen ||
   s.user.registerDialog.open ||
   s.user.loginDialog.open ||
   s.user.encryptionKeyDialog.open ||

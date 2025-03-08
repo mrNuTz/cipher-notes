@@ -1,4 +1,4 @@
-import Dexie, {EntityTable} from 'dexie'
+import Dexie, {EntityTable, liveQuery} from 'dexie'
 import {Note} from './business/models'
 
 export const db = new Dexie('DexieDB') as Dexie & {
@@ -34,3 +34,7 @@ db.version(3)
         note.title = ''
       })
   )
+
+export const dirtyNotesObservable = liveQuery(() =>
+  db.notes.where('state').equals('dirty').toArray()
+)

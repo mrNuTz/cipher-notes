@@ -29,12 +29,10 @@ DONE:
   dnd todos
   captcha
   empty note with title should not get deleted
+  fix sync conflicts after timeout
+  auto sync
 FIRST:
 TODO:
-  auto sync
-  sync on close
-    prevent tab close when note is open
-  sync conflicts after timeout
   store sort order in local-storage
   use onChange instead of onClick on checkboxes
   note size limit
@@ -46,3 +44,4 @@ LATER:
   change crypto key
   delete account
 MAYBE:
+  prevent tab close when note is open or sync is running

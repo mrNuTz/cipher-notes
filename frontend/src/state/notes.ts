@@ -5,7 +5,7 @@ import {debounce, deepEquals, delay, downloadJson, uuidV4WithoutCrypto} from '..
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
-import {db} from '../db'
+import {db, dirtyNotesObservable} from '../db'
 import {loadOpenNote, storeOpenNote, storeOpenNoteSync} from '../services/localStorage'
 import {noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
 
@@ -18,6 +18,11 @@ export type NotesState = {
     file: File | null
     error: string | null
   }
+  sync: {
+    dialogOpen: boolean
+    syncing: boolean
+    error: string | null
+  }
 }
 
 export const notesInit: NotesState = {
@@ -25,6 +30,7 @@ export const notesInit: NotesState = {
   openNote: null,
   sort: {prop: 'created_at', desc: true},
   importDialog: {open: false, file: null, error: null},
+  sync: {dialogOpen: false, syncing: false, error: null},
 }
 
 // init
@@ -80,6 +86,7 @@ export const openNote = async (id: string) => {
     }
   })
 }
+let modifiedWhileSyncingIds: string[] = []
 export const openNoteClosed = async () => {
   const state = getState()
   const openNote = state.notes.openNote
@@ -102,6 +109,9 @@ export const openNoteClosed = async () => {
       (note.type === 'note' && note.txt !== openNote.txt) ||
       (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
   ) {
+    if (getState().notes.sync.syncing) {
+      modifiedWhileSyncingIds.push(openNote.id)
+    }
     await db.notes.update(openNote.id, {
       type: openNote.type,
       title: openNote.title,
@@ -249,6 +259,18 @@ export const importFileChanged = (file: File | null) =>
     s.notes.importDialog.file = file
     s.notes.importDialog.error = null
   })
+export const openSyncDialogAndSync = () => {
+  const state = getState()
+  if (state.notes.sync.syncing || state.notes.sync.dialogOpen) return
+  setState((state) => {
+    state.notes.sync.dialogOpen = true
+  })
+  syncNotes()
+}
+export const closeSyncDialog = () =>
+  setState((state) => {
+    state.notes.sync.dialogOpen = false
+  })
 
 // effects
 export const exportNotes = async () => {
@@ -322,11 +344,11 @@ export const syncNotes = async () => {
   const lastSyncedTo = state.user.user.lastSyncedTo
   const keyTokenPair = state.user.user.keyTokenPair
   const loggedIn = state.user.user.loggedIn
-  if (!keyTokenPair || !loggedIn || state.user.syncDialog.syncing || !state.user.syncDialog.open) {
+  if (!keyTokenPair || !loggedIn || state.notes.sync.syncing) {
     return
   }
   setState((s) => {
-    s.user.syncDialog.syncing = true
+    s.notes.sync.syncing = true
   })
   try {
     const dirtyNotes = await db.notes.where('state').equals('dirty').toArray()
@@ -335,20 +357,23 @@ export const syncNotes = async () => {
 
     const res = await reqSyncNotes(lastSyncedTo, encClientSyncData, keyTokenPair.syncToken)
     if (!res.success) {
-      const loggedOut = res.statusCode === 401
-      showMessage({title: 'Failed to sync notes', text: res.error})
       setState((s) => {
-        s.user.syncDialog.syncing = false
-        if (loggedOut) {
+        s.notes.sync.error = res.error
+        if (res.statusCode === 401) {
           s.user.user.loggedIn = false
+        }
+        if (s.notes.sync.dialogOpen) {
+          s.messages.messages.push({title: 'Failed to sync notes', text: res.error})
         }
       })
       return
     }
-    const puts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
+    const pulls = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
     const conflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
-
-    await db.notes.bulkPut(puts.map(putToNote))
+    await db.notes.bulkPut(
+      pulls.map(putToNote).filter((n) => !modifiedWhileSyncingIds.includes(n.id))
+    )
+    modifiedWhileSyncingIds = []
 
     const syncedDeletes = await db.notes
       .where('deleted_at')
@@ -360,20 +385,27 @@ export const syncNotes = async () => {
     setState((s) => {
       s.conflicts.conflicts = conflicts
       s.user.user.lastSyncedTo = res.data.synced_to
-      s.user.syncDialog.syncing = false
-      s.user.syncDialog.open = false
-    })
-    showMessage({
-      title: 'Success',
-      text: `Notes synced with ${conflicts.length} conflicts`,
+      s.notes.sync.error = null
+      if (s.notes.sync.dialogOpen) {
+        s.messages.messages.push({
+          title: 'Success',
+          text: `Notes synced with ${conflicts.length} conflicts`,
+        })
+      }
     })
   } catch (e) {
     setState((s) => {
-      s.user.syncDialog.syncing = false
+      s.notes.sync.error = e instanceof Error ? e.message : 'Unknown error'
+      if (s.notes.sync.dialogOpen) {
+        s.messages.messages.push({
+          title: 'Failed to sync notes',
+          text: e instanceof Error ? e.message : 'Unknown error',
+        })
+      }
     })
-    showMessage({
-      title: 'Failed to sync notes',
-      text: e instanceof Error ? e.message : 'Unknown error',
+  } finally {
+    setState((s) => {
+      s.notes.sync.syncing = false
     })
   }
 }
@@ -382,4 +414,11 @@ export const syncNotes = async () => {
 export const registerNotesSubscriptions = () => {
   const openNoteSub = debounce(storeOpenNote, 100)
   subscribe((s) => s.notes.openNote, openNoteSub)
+
+  const syncNotesDebounced = debounce(syncNotes, 100)
+  dirtyNotesObservable.subscribe((dirty) => {
+    if (dirty.length > 0) {
+      syncNotesDebounced()
+    }
+  })
 }
