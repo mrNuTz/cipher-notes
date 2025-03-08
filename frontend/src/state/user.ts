@@ -10,7 +10,6 @@ import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
 import {getState, setState, subscribe} from './store'
 import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
-import {syncNotes} from './notes'
 import {generateKey, generateSalt} from '../util/encryption'
 import {db} from '../db'
 
@@ -29,7 +28,6 @@ export type UserState = {
     loading: boolean
     status: 'email' | 'code'
   }
-  syncDialog: {open: boolean; syncing: boolean}
   encryptionKeyDialog: {open: boolean; keyTokenPair: string; visible: boolean}
   deleteServerNotesDialog: {
     open: boolean
@@ -44,7 +42,6 @@ export const userInit: UserState = {
   user: {email: '', loggedIn: false, lastSyncedTo: 0, keyTokenPair: null},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
-  syncDialog: {open: false, syncing: false},
   encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false},
   deleteServerNotesDialog: {open: false, code: '', codeLoading: false, deleteLoading: false},
   impressumOpen: false,
@@ -106,19 +103,6 @@ export const switchLoginStatus = () => {
     state.user.loginDialog.status = state.user.loginDialog.status === 'email' ? 'code' : 'email'
   })
 }
-export const openSyncDialogAndSync = () => {
-  const state = getState()
-  if (state.user.syncDialog.syncing || state.user.syncDialog.open) return
-  setState((state) => {
-    state.user.syncDialog.open = true
-  })
-  syncNotes()
-}
-export const closeSyncDialog = () =>
-  setState((state) => {
-    if (!state.user.syncDialog.open || state.user.syncDialog.syncing) return
-    state.user.syncDialog.open = false
-  })
 
 export const openEncryptionKeyDialog = async () => {
   const state = getState()
