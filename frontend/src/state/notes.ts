@@ -49,13 +49,9 @@ new Promise((resolve) => window.addEventListener('DOMContentLoaded', resolve))
         text: err instanceof Error ? err.message : 'Unknown error',
       })
   )
-  .then(() => delay(50))
+  .then(() => delay(10))
   .then(() => {
-    const state = getState()
-    if (!state.notes.openNote && state.settings.settings.newNoteOnLaunch) {
-      addNote()
-    }
-
+    onFocus()
     window.addEventListener('focus', onFocus)
   })
 
