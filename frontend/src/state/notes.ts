@@ -7,7 +7,7 @@ import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
 import {loadOpenNote, storeOpenNote, storeOpenNoteSync} from '../services/localStorage'
-import {noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
+import {notesIsEmpty, noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
 
 export type NotesState = {
   query: string
@@ -348,7 +348,11 @@ export const syncNotes = async () => {
     s.notes.sync.syncing = true
   })
   try {
-    const dirtyNotes = await db.notes.where('state').equals('dirty').toArray()
+    const dirtyNotes = await db.notes
+      .where('state')
+      .equals('dirty')
+      .and((n) => !notesIsEmpty(n))
+      .toArray()
     const clientPuts: Put[] = dirtyNotes.map(noteToPut)
     const encClientSyncData = await encryptSyncData(keyTokenPair.cryptoKey, clientPuts)
 
@@ -414,7 +418,7 @@ export const registerNotesSubscriptions = () => {
 
   const syncNotesDebounced = debounce(syncNotes, 100)
   dirtyNotesObservable.subscribe((dirty) => {
-    if (dirty.length > 0) {
+    if (dirty.length > 0 && !dirty.every(notesIsEmpty)) {
       syncNotesDebounced()
     }
   })
