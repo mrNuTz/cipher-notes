@@ -2,7 +2,7 @@ import {createConfig} from 'express-zod-api'
 import {env} from './env'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
-import type {Application} from 'express'
+import express, {Application} from 'express'
 
 export const config = createConfig({
   http: {
@@ -13,6 +13,9 @@ export const config = createConfig({
     'Access-Control-Allow-Origin': env.ACCESS_CONTROL_ALLOW_ORIGIN,
     'Access-Control-Allow-Credentials': 'true',
   }),
+  jsonParser: express.json({limit: env.LIMIT_JSON}),
+  rawParser: express.raw({limit: env.LIMIT_RAW}),
+  upload: false,
   beforeRouting: ({app}) => {
     ;(app as Application).set('trust proxy', JSON.parse(env.TRUST_PROXY)) // number of proxies between user and server
     app.use(

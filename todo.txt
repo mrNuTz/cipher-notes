@@ -36,7 +36,6 @@ DONE:
 FIRST:
 TODO:
   store sort order in local-storage
-  use onChange instead of onClick on checkboxes
   note size limit
   note number limit
 LATER:
