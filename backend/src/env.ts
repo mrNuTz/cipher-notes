@@ -13,6 +13,7 @@ const keys = [
   'TRUST_PROXY',
   'LIMIT_JSON',
   'LIMIT_RAW',
+  'NOTES_STORAGE_LIMIT',
 ] as const
 type Key = (typeof keys)[number]
 
