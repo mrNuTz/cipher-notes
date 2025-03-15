@@ -110,3 +110,9 @@ export const noteToPut = (n: Note): Put => {
     throw new Error('Invalid note')
   }
 }
+
+export const notesIsEmpty = (note: Note): boolean =>
+  note.title === '' &&
+  (note.type === 'note'
+    ? note.txt === ''
+    : note.todos.length === 0 || (note.todos.length === 1 && note.todos[0]!.txt === ''))

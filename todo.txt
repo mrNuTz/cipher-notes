@@ -32,9 +32,9 @@ DONE:
   fix sync conflicts after timeout
   auto sync
   handel all notes checked
+  prevent empty note for being synched
 FIRST:
 TODO:
-  prevent empty note for being synched
   store sort order in local-storage
   use onChange instead of onClick on checkboxes
   note size limit
