@@ -91,7 +91,11 @@ export const OpenNoteDialog = () => {
           ) {
             e.preventDefault()
             e.stopPropagation()
-            e.currentTarget.parentElement?.querySelector('textarea')?.focus()
+            if (openNote?.type === 'todo' && openNote.todos.every((t) => t.done)) {
+              insertTodo(0)
+            }
+            const parent = e.currentTarget.parentElement
+            Promise.resolve().then(() => parent?.querySelector('textarea')?.focus())
           }
         }}
       />

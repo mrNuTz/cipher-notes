@@ -31,8 +31,10 @@ DONE:
   empty note with title should not get deleted
   fix sync conflicts after timeout
   auto sync
+  handel all notes checked
 FIRST:
 TODO:
+  prevent empty note for being synched
   store sort order in local-storage
   use onChange instead of onClick on checkboxes
   note size limit
