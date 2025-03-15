@@ -11,6 +11,8 @@ const keys = [
   'HCAPTCHA_SITE_KEY',
   'COOKIE_SECRET',
   'TRUST_PROXY',
+  'LIMIT_JSON',
+  'LIMIT_RAW',
 ] as const
 type Key = (typeof keys)[number]
 
