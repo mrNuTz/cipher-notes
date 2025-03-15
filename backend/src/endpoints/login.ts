@@ -98,6 +98,11 @@ export const loginCodeEndpoint = endpointsFactory.build({
       throw createHttpError(400, 'Invalid login code')
     }
 
+    await db
+      .update(usersTbl)
+      .set({login_code: null, login_code_created_at: null, login_tries_left: 0})
+      .where(eq(usersTbl.id, user.id))
+
     const {accessToken, salt, hash} = generateSession()
     const [{session_id}] = await db
       .insert(sessionsTbl)
