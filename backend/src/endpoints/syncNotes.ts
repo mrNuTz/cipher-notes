@@ -1,4 +1,4 @@
-import {and, eq, gt, inArray, notInArray} from 'drizzle-orm'
+import {and, eq, gt, inArray, notInArray, sql} from 'drizzle-orm'
 import {db} from '../db'
 import {notesTbl, usersTbl} from '../db/schema'
 import {authEndpointsFactory} from '../endpointsFactory'
@@ -6,6 +6,7 @@ import {z} from 'zod'
 import createHttpError from 'http-errors'
 import {bisectBy} from '../util/misc'
 import {Overwrite} from '../util/type'
+import {env} from '../env'
 
 const noteTypeSchema = z.enum(['note', 'todo'])
 const upsertSchema = z.object({
@@ -63,6 +64,14 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
       await db.update(usersTbl).set({sync_token}).where(eq(usersTbl.id, user.id))
     } else if (sync_token !== user.sync_token) {
       throw createHttpError(400, 'Invalid sync token')
+    }
+
+    const cipherTextLength = await db
+      .select({sum: sql<number>`sum(length(${notesTbl.cipher_text}))`})
+      .from(notesTbl)
+      .where(eq(notesTbl.user_id, user.id))
+    if (cipherTextLength[0].sum > Number(env.NOTES_STORAGE_LIMIT)) {
+      throw createHttpError(400, 'notes storage limit exceeded')
     }
 
     return await db.transaction(async (tx) => {
