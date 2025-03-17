@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {threeWayMerge} from './merge'
+import {longestCommonSubsequence, threeWayMerge, twoWayMerge} from './merge'
 
 describe('threeWayMerge', () => {
   it('should merge notes text', () => {
@@ -57,5 +57,60 @@ line3.2
 >>>>>>> SERVER
 line4
 line5`)
+  })
+})
+
+describe('twoWayMerge', () => {
+  it('should merge notes text', () => {
+    const localText = 'line1\nline2\nline3\nline4\nline5'
+    const serverText = 'line1\nline2\nline3\nline4\nline5'
+    const mergedText = twoWayMerge(serverText, localText)
+    expect(mergedText).toBe(localText)
+  })
+  it('should merge notes text with insertions', () => {
+    const localText = 'line1\nline2\nline4\nline5'
+    const serverText = 'line1\nline2\nline3\nline4\nline5'
+    const mergedText = twoWayMerge(serverText, localText)
+    expect(mergedText).toBe(serverText)
+  })
+  it('should merge notes text with insertions', () => {
+    const localText = 'line1\nline2\nline4\nline5'
+    const serverText = 'line2\nline3\nline4\nline5'
+    const mergedText = twoWayMerge(serverText, localText)
+    expect(mergedText).toBe('line1\nline2\nline3\nline4\nline5')
+  })
+  it('should merge notes text with conflict', () => {
+    const localText = 'line1\nline2\nline3\nline4\nline5'
+    const serverText = 'line1\nline2\nline3.1\nline4\nline5'
+    const mergedText = twoWayMerge(serverText, localText)
+    expect(mergedText).toBe(`line1
+line2\n<<<<<<< LOCAL
+line3
+=======
+line3.1
+>>>>>>> SERVER
+line4
+line5`)
+  })
+})
+
+describe('longestCommonSubsequence', () => {
+  it('should return the longest common subsequence', () => {
+    const a = ['line1', 'line2', 'line3', 'line4', 'line5']
+    const b = ['line1', 'line2', 'line3', 'line4', 'line5']
+    const lcs = longestCommonSubsequence(a, b)
+    expect(lcs).toStrictEqual(['line1', 'line2', 'line3', 'line4', 'line5'])
+  })
+  it('should return the longest common subsequence 2', () => {
+    const a = ['line2', 'line3', 'line4', 'line5']
+    const b = ['line1', 'line2', 'line3', 'line4']
+    const lcs = longestCommonSubsequence(a, b)
+    expect(lcs).toStrictEqual(['line2', 'line3', 'line4'])
+  })
+  it('should return the longest common subsequence 3', () => {
+    const a = ['line1', 'line2', 'line3', 'line4', 'line5']
+    const b = ['line1', 'line2', 'line4', 'line5']
+    const lcs = longestCommonSubsequence(a, b)
+    expect(lcs).toStrictEqual(['line1', 'line2', 'line4', 'line5'])
   })
 })
