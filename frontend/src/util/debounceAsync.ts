@@ -22,19 +22,20 @@ export function debounceAsync<Fn extends (...args: any[]) => Promise<any>>(
     }
   }
 
-  function debounced(...args: Parameters<Fn>): void {
+  function timeoutHandler(): void {
+    timerId = null
+    if (!running) {
+      execute()
+    } else {
+      pending = true
+    }
+  }
+
+  return function debounced(...args: Parameters<Fn>): void {
     lastArgs = args
     if (timerId !== null) {
       clearTimeout(timerId)
     }
-    timerId = setTimeout(() => {
-      timerId = null
-      if (!running) {
-        execute()
-      } else {
-        pending = true
-      }
-    }, timeout)
+    timerId = setTimeout(timeoutHandler, timeout)
   }
-  return debounced
 }
