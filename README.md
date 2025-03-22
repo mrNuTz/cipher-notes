@@ -76,7 +76,7 @@ The project is live on https://ciphernotes.com
    ```
 3. Start the frontend development server:
    ```bash
-   yarn dev:http
+   yarn dev:https
    ```
 
 ### Development URLs
