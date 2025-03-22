@@ -40,7 +40,7 @@ export const ConflictDialog = () => {
           ) : (
             <>
               <Text size='lg'>{localNote.title}</Text>
-              <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
+              <Text style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word'}} ff='monospace'>
                 {localNote.txt}
               </Text>
             </>

@@ -6,8 +6,9 @@ import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
-import {loadOpenNote, storeOpenNote, storeOpenNoteSync} from '../services/localStorage'
 import {notesIsEmpty, noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
+import {debounceAsync} from '../util/debounceAsync'
+import socket from '../socket'
 
 export type NotesState = {
   query: string
@@ -22,6 +23,7 @@ export type NotesState = {
     dialogOpen: boolean
     syncing: boolean
     error: string | null
+    storing: boolean
   }
 }
 
@@ -30,25 +32,12 @@ export const notesInit: NotesState = {
   openNote: null,
   sort: {prop: 'created_at', desc: true},
   importDialog: {open: false, file: null, error: null},
-  sync: {dialogOpen: false, syncing: false, error: null},
+  sync: {dialogOpen: false, syncing: false, error: null, storing: false},
 }
 
 // init
 new Promise((resolve) => window.addEventListener('DOMContentLoaded', resolve))
   .then(() => history.replaceState({dialogOpen: false}, '', location.href))
-  .then(() => delay(10))
-  .then(loadOpenNote)
-  .then(
-    (openNote) =>
-      setState((s) => {
-        s.notes.openNote = openNote
-      }),
-    (err) =>
-      showMessage({
-        title: 'Restore Open Note Failed',
-        text: err instanceof Error ? err.message : 'Unknown error',
-      })
-  )
   .then(() => delay(10))
   .then(() => {
     onFocus()
@@ -63,10 +52,6 @@ const onFocus = debounce(() => {
   syncNotes()
 }, 10)
 
-window.addEventListener('beforeunload', () => {
-  storeOpenNoteSync(getState().notes.openNote)
-})
-
 // actions
 export const noteQueryChanged = (query: string) =>
   setState((s) => {
@@ -74,7 +59,7 @@ export const noteQueryChanged = (query: string) =>
   })
 export const openNote = async (id: string) => {
   const note = await db.notes.get(id)
-  if (!note || note.txt === null) return
+  if (!note) return
   setState((s) => {
     if (note.type === 'todo') {
       s.notes.openNote = {type: 'todo', id, todos: note.todos, title: note.title}
@@ -83,7 +68,6 @@ export const openNote = async (id: string) => {
     }
   })
 }
-let modifiedWhileSyncingIds: string[] = []
 export const openNoteClosed = async () => {
   const state = getState()
   const openNote = state.notes.openNote
@@ -99,26 +83,6 @@ export const openNoteClosed = async () => {
     return await deleteOpenNote()
   }
 
-  const note = await db.notes.get(openNote.id)
-  if (
-    note &&
-    (note.title !== openNote.title ||
-      (note.type === 'note' && note.txt !== openNote.txt) ||
-      (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
-  ) {
-    if (getState().notes.sync.syncing) {
-      modifiedWhileSyncingIds.push(openNote.id)
-    }
-    await db.notes.update(openNote.id, {
-      type: openNote.type,
-      title: openNote.title,
-      txt: openNote.type === 'note' ? openNote.txt : undefined,
-      todos: openNote.type === 'todo' ? openNote.todos : undefined,
-      updated_at: Date.now(),
-      state: 'dirty',
-      version: note.state === 'dirty' ? note.version : note.version + 1,
-    })
-  }
   setState((s) => {
     s.notes.openNote = null
   })
@@ -336,7 +300,10 @@ export const importNotes = async (): Promise<void> => {
     })
   }
 }
-export const syncNotes = async () => {
+
+let modifiedWhileSyncingIds: string[] = []
+
+export const syncNotes = debounceAsync(async () => {
   const state = getState()
   const lastSyncedTo = state.user.user.lastSyncedTo
   const keyTokenPair = state.user.user.keyTokenPair
@@ -371,17 +338,20 @@ export const syncNotes = async () => {
     }
     const pulls = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
     const conflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
-    await db.notes.bulkPut(
-      pulls.map(putToNote).filter((n) => !modifiedWhileSyncingIds.includes(n.id))
-    )
+    const synchedNotes = pulls.filter((p) => !modifiedWhileSyncingIds.includes(p.id)).map(putToNote)
+    await db.notes.bulkPut(synchedNotes)
+
     modifiedWhileSyncingIds = []
+
+    setOpenNote(synchedNotes)
 
     const syncedDeletes = await db.notes
       .where('deleted_at')
       .notEqual(0)
       .and((n) => n.state === 'synced')
       .toArray()
-    await db.notes.bulkDelete(syncedDeletes.map((d) => d.id))
+    const syncedDeleteIds = syncedDeletes.map((d) => d.id)
+    await db.notes.bulkDelete(syncedDeleteIds)
 
     setState((s) => {
       s.conflicts.conflicts = conflicts
@@ -409,17 +379,73 @@ export const syncNotes = async () => {
       s.notes.sync.syncing = false
     })
   }
+}, 0)
+
+const setOpenNote = (syncedNotes: Note[]) => {
+  const openNote = getState().notes.openNote
+  if (!openNote) {
+    return
+  }
+  const note = syncedNotes.find((n) => n.id === openNote.id)
+  if (!note) {
+    return
+  }
+  setState((s) => {
+    s.notes.openNote =
+      note.type === 'note'
+        ? {type: note.type, id: note.id, title: note.title, txt: note.txt, todos: undefined}
+        : {type: note.type, id: note.id, title: note.title, txt: undefined, todos: note.todos}
+  })
 }
+
+const storeOpenNote = debounceAsync(async () => {
+  const openNote = getState().notes.openNote
+  if (!openNote) return
+
+  const note = await db.notes.get(openNote.id)
+
+  if (
+    note &&
+    (note.title !== openNote.title ||
+      (note.type === 'note' && note.txt !== openNote.txt) ||
+      (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
+  ) {
+    if (getState().notes.sync.syncing) {
+      modifiedWhileSyncingIds.push(openNote.id)
+    }
+    await db.notes.update(openNote.id, {
+      type: openNote.type,
+      title: openNote.title,
+      txt: openNote.type === 'note' ? openNote.txt : undefined,
+      todos: openNote.type === 'todo' ? openNote.todos : undefined,
+      updated_at: Date.now(),
+      state: 'dirty',
+      version: note.state === 'dirty' ? note.version : note.version + 1,
+    })
+  }
+}, 0)
 
 // subscriptions
 export const registerNotesSubscriptions = () => {
-  const openNoteSub = debounce(storeOpenNote, 100)
-  subscribe((s) => s.notes.openNote, openNoteSub)
+  subscribe((s) => s.notes.openNote, storeOpenNote)
+  subscribe(
+    (s) => s.conflicts.conflicts.length !== 0,
+    (hasConflicts) => {
+      if (hasConflicts) {
+        openNoteClosed()
+      }
+    }
+  )
 
-  const syncNotesDebounced = debounce(syncNotes, 100)
+  const syncNotesDebounced = debounce(syncNotes, 5000)
+
   dirtyNotesObservable.subscribe((dirty) => {
     if (dirty.length > 0 && !dirty.every(notesIsEmpty)) {
       syncNotesDebounced()
     }
   })
 }
+
+socket.on('notesPushed', () => {
+  syncNotes()
+})

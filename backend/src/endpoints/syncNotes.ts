@@ -7,6 +7,7 @@ import createHttpError from 'http-errors'
 import {bisectBy} from '../util/misc'
 import {Overwrite} from '../util/type'
 import {env} from '../env'
+import {userToSessionToSocket} from '../socket'
 
 const noteTypeSchema = z.enum(['note', 'todo'])
 const upsertSchema = z.object({
@@ -56,7 +57,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
   }),
   handler: async ({
     input: {last_synced_to, puts: clientPuts, sync_token},
-    options: {user},
+    options: {user, session_id},
     logger,
   }) => {
     logger.info('syncNotes', {last_synced_to, putsLength: clientPuts.length})
@@ -66,15 +67,15 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
       throw createHttpError(400, 'Invalid sync token')
     }
 
-    const cipherTextLength = await db
+    const [{sum: cipherTextLength = 0} = {}] = await db
       .select({sum: sql<number>`sum(length(${notesTbl.cipher_text}))`})
       .from(notesTbl)
       .where(eq(notesTbl.user_id, user.id))
-    if (cipherTextLength[0].sum > Number(env.NOTES_STORAGE_LIMIT)) {
+    if (cipherTextLength > Number(env.NOTES_STORAGE_LIMIT)) {
       throw createHttpError(400, 'notes storage limit exceeded')
     }
 
-    return await db.transaction(async (tx) => {
+    const res = await db.transaction(async (tx) => {
       const conflicts: IndeterminatePut[] = []
       const nonConflicts: Put[] = []
 
@@ -173,20 +174,26 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
         puts: putsSchema.parse(pullPuts),
         synced_to: Math.max(last_synced_to, maxPutAt),
         conflicts: putsSchema.parse(conflicts),
+        pushedIds: nonConflicts.map((u) => u.id),
       }
     })
+
+    const sessionToSocket = userToSessionToSocket.get(user.id)
+    if (sessionToSocket && res.pushedIds.length > 0) {
+      sessionToSocket
+        .entries()
+        .filter(([sId]) => sId !== session_id)
+        .forEach(([, socket]) => socket.emit('notesPushed', res.pushedIds))
+    }
+
+    return res
   },
 })
 
-function putIsEqualToDbNote(put: Put, dbNote: typeof notesTbl.$inferSelect) {
-  return (
-    put.id === dbNote.clientside_id &&
-    put.type === dbNote.type &&
-    put.created_at === dbNote.clientside_created_at &&
-    put.updated_at === dbNote.clientside_updated_at &&
-    put.cipher_text === dbNote.cipher_text &&
-    put.iv === dbNote.iv &&
-    put.version === dbNote.version &&
-    put.deleted_at === dbNote.clientside_deleted_at
-  )
-}
+const putIsEqualToDbNote = (put: Put, dbNote: typeof notesTbl.$inferSelect) =>
+  put.id === dbNote.clientside_id &&
+  put.type === dbNote.type &&
+  put.created_at === dbNote.clientside_created_at &&
+  put.updated_at === dbNote.clientside_updated_at &&
+  put.version === dbNote.version &&
+  put.deleted_at === dbNote.clientside_deleted_at

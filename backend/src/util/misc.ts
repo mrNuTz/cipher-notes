@@ -10,3 +10,19 @@ export const bisectBy = <T>(arr: T[], pred: (x: T) => boolean): readonly [T[], T
   }
   return [ts, fs]
 }
+
+export const parseCookieHeader = (
+  cookieHeader: string | undefined | null
+): Record<string, string> => {
+  if (!cookieHeader) {
+    return {}
+  }
+  return cookieHeader.split('; ').reduce((acc, row) => {
+    const [key, value] = row.split('=')
+    if (!key || !value) {
+      return acc
+    }
+    acc[decodeURIComponent(key)] = decodeURIComponent(value)
+    return acc
+  }, {} as Record<string, string>)
+}

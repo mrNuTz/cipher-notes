@@ -27,7 +27,13 @@ export default defineConfig(({mode}) => {
           target: 'http://localhost:5100',
           rewrite: (path) => path.replace(/^\/api/, ''),
           changeOrigin: true,
-          secure: false,
+          secure: mode === 'https',
+        },
+        '/socket.io': {
+          target: 'http://localhost:5100',
+          changeOrigin: true,
+          secure: mode === 'https',
+          ws: true,
         },
       },
     },
@@ -53,7 +59,7 @@ export default defineConfig(({mode}) => {
           name: 'ciphernotes',
           short_name: 'ciphernotes',
           description:
-            'A local-first note-taking app with end-to-end encryption for your private thoughts and data',
+            'A local-first note-taking app with end-to-end encryption for your private thoughts and data.',
           theme_color: '#1864ab',
           background_color: '#000000',
           icons: [
