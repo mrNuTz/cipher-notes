@@ -37,11 +37,10 @@ export const sendLoginCodeEndpoint = endpointsFactory.build({
   }),
   output: z.object({}),
   handler: async ({input: {email}}) => {
-    const users = await db.select().from(usersTbl).where(eq(usersTbl.email, email))
-    if (users.length !== 1) {
+    const [user] = await db.select().from(usersTbl).where(eq(usersTbl.email, email))
+    if (!user) {
       throw createHttpError(400, 'User not found')
     }
-    const user = users[0]
 
     const lastCodeSent = user.login_code_created_at
     if (lastCodeSent && Date.now() - lastCodeSent < 10 * 60 * 1000) {
@@ -72,11 +71,10 @@ export const loginCodeEndpoint = endpointsFactory.build({
   }),
   output: z.object({access_token: z.string(), session_id: z.number()}),
   handler: async ({input}) => {
-    const users = await db.select().from(usersTbl).where(eq(usersTbl.email, input.email))
-    if (users.length !== 1) {
+    const [user] = await db.select().from(usersTbl).where(eq(usersTbl.email, input.email))
+    if (!user) {
       throw createHttpError(400, 'User not found')
     }
-    const user = users[0]
 
     if (!user.login_code || !user.login_code_created_at) {
       throw createHttpError(400, 'No login code set')
@@ -104,7 +102,7 @@ export const loginCodeEndpoint = endpointsFactory.build({
       .where(eq(usersTbl.id, user.id))
 
     const {accessToken, salt, hash} = generateSession()
-    const [{session_id}] = await db
+    const [{session_id} = {}] = await db
       .insert(sessionsTbl)
       .values({
         user_id: user.id,
@@ -113,6 +111,6 @@ export const loginCodeEndpoint = endpointsFactory.build({
       })
       .returning({session_id: sessionsTbl.id})
 
-    return {access_token: accessToken, session_id}
+    return {access_token: accessToken, session_id: session_id!}
   },
 })

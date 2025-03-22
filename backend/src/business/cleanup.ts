@@ -19,5 +19,5 @@ export const cleanupDb = async () => {
       )
     )
 
-  console.log('Cleaned up DB')
+  console.info('Cleaned up DB')
 }

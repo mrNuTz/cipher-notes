@@ -12,6 +12,7 @@ import {getState, setState, subscribe} from './store'
 import {calcChecksum, isValidKeyTokenPair} from '../business/notesEncryption'
 import {generateKey, generateSalt} from '../util/encryption'
 import {db} from '../db'
+import socket from '../socket'
 
 export type UserState = {
   user: {
@@ -53,6 +54,9 @@ loadUser().then(async (user) => {
     setState((s) => {
       s.user.user = user
     })
+  }
+  if (user?.loggedIn && !socket.connected) {
+    socket.connect()
   }
 })
 
@@ -307,7 +311,6 @@ export const toggleImpressum = () => {
   })
 }
 
-// TODO: invalidate session on the server
 export const logout = async () => {
   const state = getState()
   const loggedIn = state.user.user.loggedIn
@@ -327,5 +330,15 @@ export const registerUserSubscriptions = () => {
     (s) => s.user.user,
     (user) =>
       storeUser(user).catch((e) => showMessage({title: 'Store User Failed', text: e.message}))
+  )
+  subscribe(
+    (s) => s.user.user.loggedIn,
+    (loggedIn) => {
+      if (loggedIn && !socket.connected) {
+        socket.connect()
+      } else if (!loggedIn && socket.connected) {
+        socket.disconnect()
+      }
+    }
   )
 }

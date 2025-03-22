@@ -35,6 +35,17 @@ db.version(3)
       })
   )
 
+/*
+db.version(4)
+  .stores({
+    notes_base_version: 'id',
+  })
+  .upgrade(async (tx) => {
+    const notes = await tx.table('notes').where('state').equals('synched').toArray()
+    await tx.table('notes_base_version').bulkAdd(notes)
+  })
+*/
+
 export const dirtyNotesObservable = liveQuery(() =>
   db.notes.where('state').equals('dirty').toArray()
 )
