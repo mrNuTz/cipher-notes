@@ -36,7 +36,7 @@ export const splitWords = (text: string): string[] => text.split(wordSplitter)
 export const last = <T>(array: T[]): T | undefined => array[array.length - 1]
 
 export const debounce = <Args extends unknown[]>(fn: (...args: Args) => unknown, delay: number) => {
-  let id: number | undefined = undefined
+  let id: ReturnType<typeof setTimeout> | undefined = undefined
   return (...args: Args): void => {
     if (id) clearTimeout(id)
     id = setTimeout(() => fn(...args), delay)
@@ -55,7 +55,7 @@ export const setTimeoutPromise = <Fn extends (...args: any[]) => any, AbortValue
   ...args: Parameters<Fn>
 ): PromiseCancelable<Awaited<ReturnType<Fn>>> => {
   type Ret = Awaited<ReturnType<Fn>>
-  let timeoutId: number | undefined = undefined
+  let timeoutId: ReturnType<typeof setTimeout> | undefined = undefined
   let cancel = () => {}
   const promise = new Promise<Ret>((resolve, reject) => {
     cancel = () => {
