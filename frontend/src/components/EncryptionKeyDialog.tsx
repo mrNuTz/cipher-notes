@@ -9,7 +9,7 @@ import {
 } from '../state/user'
 import {isValidKeyTokenPair} from '../business/notesEncryption'
 import {QRCodeSVG} from 'qrcode.react'
-import {Scanner} from '@yudiel/react-qr-scanner'
+import {QRScanner} from './QRScanner'
 
 export const EncryptionKeyDialog = () => {
   const {open, keyTokenPair, visible, qrMode} = useSelector((s) => s.user.encryptionKeyDialog)
@@ -47,14 +47,11 @@ export const EncryptionKeyDialog = () => {
         <QRCodeSVG style={{width: '100%', height: 'auto'}} value={keyTokenPair} />
       )}
       {qrMode === 'scan' && (
-        <Scanner
-          onError={(error) => {
-            console.error('QR scan error', error)
-          }}
-          onScan={(result) => {
-            const {rawValue} = result[0]!
-            if (isValidKeyTokenPair(rawValue)) {
-              saveEncryptionKey(rawValue)
+        <QRScanner
+          style={{width: '100%', height: 'auto'}}
+          onScan={(text) => {
+            if (isValidKeyTokenPair(text)) {
+              saveEncryptionKey(text)
               closeEncryptionKeyDialog()
             }
           }}

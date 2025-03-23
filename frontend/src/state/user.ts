@@ -141,7 +141,7 @@ export const qrModeChanged = (qrMode: 'hide' | 'show' | 'scan') => {
 }
 export const closeEncryptionKeyDialog = () => {
   setState((state) => {
-    state.user.encryptionKeyDialog.open = false
+    state.user.encryptionKeyDialog = userInit.encryptionKeyDialog
   })
 }
 export const keyTokenPairChanged = (keyTokenPair: string) => {
