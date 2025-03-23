@@ -36,6 +36,15 @@ export function debounceAsync<Fn extends (...args: any[]) => Promise<any>>(
     if (timerId !== null) {
       clearTimeout(timerId)
     }
-    timerId = setTimeout(timeoutHandler, timeout)
+    timerId = xTimeout(timeoutHandler, timeout)
+  }
+}
+
+const xTimeout = (fn: () => void, timeout: number) => {
+  if (timeout === 0) {
+    Promise.resolve().then(fn)
+    return null
+  } else {
+    return setTimeout(fn, timeout)
   }
 }
