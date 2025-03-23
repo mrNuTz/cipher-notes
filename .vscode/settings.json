@@ -37,6 +37,7 @@
     "postgresql",
     "precache",
     "precaching",
+    "qrcode",
     "Qwant",
     "Searchalot",
     "sendgrid",
@@ -45,7 +46,8 @@
     "Sohlstraße",
     "stackexchange",
     "Swisscows",
-    "tabler"
+    "tabler",
+    "yudiel"
   ],
   "cSpell.ignorePaths": [
     "**/yarn.lock",

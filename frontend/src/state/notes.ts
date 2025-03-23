@@ -443,7 +443,7 @@ export const registerNotesSubscriptions = () => {
     }
   )
 
-  const syncNotesDebounced = debounce(syncNotes, 5000)
+  const syncNotesDebounced = debounce(syncNotes, 1000)
 
   dirtyNotesObservable.subscribe((dirty) => {
     if (dirty.length > 0 && !dirty.every(notesIsEmpty)) {

@@ -47,4 +47,3 @@ LATER:
   change crypto key
   delete account
 MAYBE:
-  prevent tab close when note is open or sync is running
