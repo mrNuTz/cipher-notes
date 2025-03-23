@@ -17,6 +17,7 @@ export const LoginDialog = () => {
         <Stack gap='md'>
           <TextInput
             label='Email'
+            type='email'
             value={email}
             onChange={(e) => loginEmailChanged(e.target.value)}
           />
@@ -35,6 +36,7 @@ export const LoginDialog = () => {
         <Stack gap='md'>
           <TextInput
             label='Email'
+            type='email'
             value={email}
             onChange={(e) => loginEmailChanged(e.target.value)}
           />

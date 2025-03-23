@@ -29,7 +29,12 @@ export type UserState = {
     loading: boolean
     status: 'email' | 'code'
   }
-  encryptionKeyDialog: {open: boolean; keyTokenPair: string; visible: boolean}
+  encryptionKeyDialog: {
+    open: boolean
+    keyTokenPair: string
+    visible: boolean
+    qrMode: 'hide' | 'show' | 'scan'
+  }
   deleteServerNotesDialog: {
     open: boolean
     code: string
@@ -43,7 +48,7 @@ export const userInit: UserState = {
   user: {email: '', loggedIn: false, lastSyncedTo: 0, keyTokenPair: null},
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
-  encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false},
+  encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false, qrMode: 'hide'},
   deleteServerNotesDialog: {open: false, code: '', codeLoading: false, deleteLoading: false},
   impressumOpen: false,
 }
@@ -120,12 +125,18 @@ export const openEncryptionKeyDialog = async () => {
       open: true,
       keyTokenPair: `${keyTokenPair.cryptoKey}:${keyTokenPair.syncToken}:${checksum}`,
       visible: false,
+      qrMode: 'hide',
     }
   })
 }
 export const toggleEncryptionKeyDialogVisibility = () => {
   setState((state) => {
     state.user.encryptionKeyDialog.visible = !state.user.encryptionKeyDialog.visible
+  })
+}
+export const qrModeChanged = (qrMode: 'hide' | 'show' | 'scan') => {
+  setState((state) => {
+    state.user.encryptionKeyDialog.qrMode = qrMode
   })
 }
 export const closeEncryptionKeyDialog = () => {
