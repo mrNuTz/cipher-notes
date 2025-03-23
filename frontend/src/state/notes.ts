@@ -52,6 +52,12 @@ const onFocus = debounce(() => {
   syncNotes()
 }, 10)
 
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    syncNotes()
+  }
+})
+
 // actions
 export const noteQueryChanged = (query: string) =>
   setState((s) => {
