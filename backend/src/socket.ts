@@ -66,7 +66,11 @@ export const createSocketServer = (server: Server) => {
 
     socket.on('disconnect', () => {
       console.info(`socket disconnected: session ${sessionId} with socket id ${socket.id}`)
-      userToSessionToSocket.get(userId)!.delete(sessionId)
+      const map = userToSessionToSocket.get(userId)!
+      const sock = map.get(sessionId)
+      if (sock && !sock.connected) {
+        map.delete(sessionId)
+      }
     })
   })
 }
