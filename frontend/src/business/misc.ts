@@ -112,6 +112,7 @@ export const noteToPut = (n: Note): Put => {
 }
 
 export const notesIsEmpty = (note: Note): boolean =>
+  note.deleted_at === 0 &&
   note.title === '' &&
   (note.type === 'note'
     ? note.txt === ''
