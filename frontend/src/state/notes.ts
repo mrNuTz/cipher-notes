@@ -453,5 +453,6 @@ export const registerNotesSubscriptions = () => {
 }
 
 socket.on('notesPushed', () => {
+  console.log('notesPushed received')
   syncNotes()
 })

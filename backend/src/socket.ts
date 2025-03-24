@@ -40,10 +40,10 @@ export const createSocketServer = (server: Server) => {
     }
     const {access_token_hash: storedHash, access_token_salt, created_at} = session
     if (!verifyToken(sessionHandle.access_token, storedHash, access_token_salt)) {
-      throw new Error('Invalid access token')
+      return next(new Error('Invalid access token'))
     }
     if (Date.now() - created_at > 1000 * 60 * Number(env.SESSION_TTL_MIN)) {
-      throw new Error('Session expired')
+      return next(new Error('Session expired'))
     }
 
     socket.data.sessionId = session.id
@@ -55,7 +55,7 @@ export const createSocketServer = (server: Server) => {
     const sessionId = socket.data.sessionId as number
     const userId = socket.data.userId as number
 
-    console.info('connected', sessionId)
+    console.info(`socket connected: session ${sessionId} with socket id ${socket.id}`)
 
     const map = userToSessionToSocket.get(userId)
     if (!map) {
@@ -65,7 +65,7 @@ export const createSocketServer = (server: Server) => {
     }
 
     socket.on('disconnect', () => {
-      console.info('disconnected', sessionId)
+      console.info(`socket disconnected: session ${sessionId} with socket id ${socket.id}`)
       userToSessionToSocket.get(userId)!.delete(sessionId)
     })
   })
