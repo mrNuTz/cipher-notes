@@ -55,8 +55,6 @@ export const createSocketServer = (server: Server) => {
     const sessionId = socket.data.sessionId as number
     const userId = socket.data.userId as number
 
-    console.info(`socket connected: session ${sessionId} with socket id ${socket.id}`)
-
     const map = userToSessionToSocket.get(userId)
     if (!map) {
       userToSessionToSocket.set(userId, new Map([[sessionId, socket]]))
@@ -65,7 +63,6 @@ export const createSocketServer = (server: Server) => {
     }
 
     socket.on('disconnect', () => {
-      console.info(`socket disconnected: session ${sessionId} with socket id ${socket.id}`)
       const map = userToSessionToSocket.get(userId)!
       const sock = map.get(sessionId)
       if (sock && !sock.connected) {

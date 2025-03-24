@@ -183,10 +183,7 @@ export const syncNotesEndpoint = authEndpointsFactory.build({
       sessionToSocket
         .entries()
         .filter(([sId]) => sId !== session_id)
-        .forEach(([sId, socket]) => {
-          console.info(`emitting notesPushed to session ${sId} with socket id ${socket.id}`)
-          socket.emit('notesPushed', res.pushedIds)
-        })
+        .forEach(([, socket]) => socket.emit('notesPushed', res.pushedIds))
     }
 
     return res
