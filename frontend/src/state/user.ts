@@ -21,6 +21,7 @@ export type UserState = {
     lastSyncedTo: number
     keyTokenPair: {cryptoKey: string; syncToken: string} | null
   }
+  connected: boolean
   registerDialog: {open: boolean; email: string; loading: boolean}
   loginDialog: {
     open: boolean
@@ -46,6 +47,7 @@ export type UserState = {
 
 export const userInit: UserState = {
   user: {email: '', loggedIn: false, lastSyncedTo: 0, keyTokenPair: null},
+  connected: false,
   registerDialog: {open: false, email: '', loading: false},
   loginDialog: {open: false, email: '', code: '', loading: false, status: 'email'},
   encryptionKeyDialog: {open: false, keyTokenPair: '', visible: false, qrMode: 'hide'},
@@ -63,6 +65,11 @@ loadUser().then(async (user) => {
   if (user?.loggedIn && !socket.connected) {
     socket.connect()
   }
+})
+window.addEventListener('focus', () => {
+  setState((s) => {
+    s.user.connected = socket.connected
+  })
 })
 
 // actions
