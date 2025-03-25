@@ -1,3 +1,4 @@
+import {NotesState} from '../state/notes'
 import {SettingsState} from '../state/settings'
 import {UserState} from '../state/user'
 
@@ -21,4 +22,15 @@ export const loadSettings = (): Promise<Partial<SettingsState['settings']> | nul
   Promise.resolve().then(() => {
     const settingsStr = localStorage.getItem('settings')
     return settingsStr ? JSON.parse(settingsStr) : null
+  })
+
+export const storeNotesSortOrder = (sort: NotesState['sort']): Promise<void> =>
+  Promise.resolve().then(() => {
+    localStorage.setItem('notesSortOrder', JSON.stringify(sort))
+  })
+
+export const loadNotesSortOrder = (): Promise<NotesState['sort'] | null> =>
+  Promise.resolve().then(() => {
+    const sortStr = localStorage.getItem('notesSortOrder')
+    return sortStr ? JSON.parse(sortStr) : null
   })

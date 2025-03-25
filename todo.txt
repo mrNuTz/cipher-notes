@@ -34,11 +34,13 @@ DONE:
   handel all notes checked
   prevent empty note for being synched
   change crypto key
-FIRST:
-TODO:
-LATER:
   cleanup deleted notes on the server
   store sort order in local-storage
+FIRST:
+TODO:
+  fix debounceAsync with zero delay
+LATER:
+  sync from the same devices can cause conflicts
   auto merge
   todo delete button
   todo add button
@@ -47,3 +49,4 @@ LATER:
   change email
   delete account
 MAYBE:
+  password protected notes
