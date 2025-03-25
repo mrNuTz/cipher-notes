@@ -16,22 +16,22 @@
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
     "cookie-parser": "^1.4.7",
-    "drizzle-orm": "^0.37.0",
+    "drizzle-orm": "^0.41.0",
     "express": "^5.0.1",
     "express-rate-limit": "^7.5.0",
-    "express-zod-api": "^21.3.0",
+    "express-zod-api": "^22.11.2",
     "hcaptcha": "^0.2.0",
     "http-errors": "^2.0.0",
-    "pg": "^8.13.1",
+    "pg": "^8.14.1",
     "socket.io": "^4.8.1",
-    "zod": "^3.23.8"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.8",
-    "@types/express": "^5.0.0",
+    "@types/express": "^5.0.1",
     "@types/http-errors": "^2.0.4",
-    "@types/pg": "^8.11.10",
-    "bun-types": "1.1.38",
-    "drizzle-kit": "^0.29.1"
+    "@types/pg": "^8.11.11",
+    "bun-types": "1.2.6",
+    "drizzle-kit": "^0.30.5"
   }
 }
