@@ -2,7 +2,7 @@ import {Button, Group, Modal, Stack, TextInput} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
   closeDeleteServerNotesDialog,
-  deleteServerNotes,
+  deleteServerNotesAndGenerateNewKey,
   deleteServerNotesCodeChanged,
   openDeleteServerNotesDialog,
 } from '../state/user'
@@ -22,8 +22,12 @@ export const DeleteServerNotesDialog = () => {
           disabled={codeLoading || deleteLoading}
         />
         <Group>
-          <Button loading={deleteLoading} onClick={deleteServerNotes} disabled={code.length !== 6}>
-            Delete Server Notes
+          <Button
+            loading={deleteLoading}
+            onClick={deleteServerNotesAndGenerateNewKey}
+            disabled={code.length !== 6}
+          >
+            Delete Server Notes and generate new crypto key
           </Button>
           <Button variant='light' disabled={codeLoading} onClick={openDeleteServerNotesDialog}>
             Resend Code

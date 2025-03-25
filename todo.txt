@@ -33,6 +33,7 @@ DONE:
   auto sync
   handel all notes checked
   prevent empty note for being synched
+  change crypto key
 FIRST:
 TODO:
 LATER:
@@ -44,6 +45,5 @@ LATER:
   debounce notes search
   notes grid paging
   change email
-  change crypto key
   delete account
 MAYBE:
