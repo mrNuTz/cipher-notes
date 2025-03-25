@@ -249,3 +249,28 @@ export const truncateWithEllipsis = (txt: string, maxLines = 5, maxChars = 200) 
   }
   return txt
 }
+
+export const nonConcurrent = (fn: () => Promise<void>): (() => void) => {
+  let running = false
+  let pending = false
+
+  async function execute() {
+    if (running) {
+      pending = true
+      return
+    }
+    running = true
+    try {
+      await fn()
+    } finally {
+      running = false
+    }
+    if (pending) {
+      pending = false
+      execute()
+    }
+  }
+  return () => {
+    execute()
+  }
+}
