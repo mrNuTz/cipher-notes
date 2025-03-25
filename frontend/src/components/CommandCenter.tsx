@@ -102,6 +102,8 @@ export const CommandCenter = () => {
   return (
     <Spotlight
       shortcut={['mod + k']}
+      scrollable
+      maxHeight='100%'
       disabled={anyDialogOpen}
       actions={commands.filter((a) => !a.disabled).map((a) => ({...a, rightSection: a.shortcut}))}
     />
