@@ -25,4 +25,6 @@ declare global {
     store: typeof useSelector
   }
 }
-window.store = useSelector
+if (import.meta.env.DEV) {
+  window.store = useSelector
+}

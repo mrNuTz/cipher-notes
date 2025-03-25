@@ -1,7 +1,7 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {debounce, deepEquals, delay, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
+import {debounce, deepEquals, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
@@ -9,6 +9,7 @@ import {db, dirtyNotesObservable} from '../db'
 import {notesIsEmpty, noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
 import {debounceAsync} from '../util/debounceAsync'
 import socket from '../socket'
+import {loadNotesSortOrder, storeNotesSortOrder} from '../services/localStorage'
 
 export type NotesState = {
   query: string
@@ -36,13 +37,18 @@ export const notesInit: NotesState = {
 }
 
 // init
-new Promise((resolve) => window.addEventListener('DOMContentLoaded', resolve))
-  .then(() => history.replaceState({dialogOpen: false}, '', location.href))
-  .then(() => delay(10))
-  .then(() => {
-    onFocus()
-    window.addEventListener('focus', onFocus)
-  })
+loadNotesSortOrder().then((sort) => {
+  if (sort) {
+    setState((s) => {
+      s.notes.sort = sort
+    })
+  }
+})
+
+new Promise((resolve) => window.addEventListener('DOMContentLoaded', resolve)).then(() => {
+  onFocus()
+  window.addEventListener('focus', onFocus)
+})
 
 const onFocus = debounce(() => {
   const state = getState()
@@ -439,6 +445,7 @@ const storeOpenNote = debounceAsync(async () => {
 
 // subscriptions
 export const registerNotesSubscriptions = () => {
+  subscribe((s) => s.notes.sort, storeNotesSortOrder)
   subscribe((s) => s.notes.openNote, storeOpenNote)
   subscribe(
     (s) => s.conflicts.conflicts.length !== 0,

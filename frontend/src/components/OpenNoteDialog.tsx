@@ -44,9 +44,7 @@ export const OpenNoteDialog = () => {
   const open = !!openNote
   useEffect(() => {
     if (open) {
-      const url = new URL(window.location.href)
-      url.hash = 'dialog'
-      window.history.pushState({dialogOpen: true}, '', url)
+      window.history.pushState({dialogOpen: true}, '', location.href)
       window.addEventListener('popstate', openNoteClosed)
     }
     return () => {
