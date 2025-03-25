@@ -2,7 +2,6 @@
 import {VitePWA} from 'vite-plugin-pwa'
 import {defineConfig} from 'vite'
 import react from '@vitejs/plugin-react'
-import {comlink} from 'vite-plugin-comlink'
 import fs from 'fs'
 import path from 'path'
 
@@ -42,7 +41,6 @@ export default defineConfig(({mode}) => {
     },
     plugins: [
       react(),
-      comlink(),
       VitePWA({
         strategies: 'injectManifest',
         srcDir: 'src',
@@ -90,8 +88,5 @@ export default defineConfig(({mode}) => {
         },
       }),
     ],
-    worker: {
-      plugins: () => [comlink()],
-    },
   }
 })
