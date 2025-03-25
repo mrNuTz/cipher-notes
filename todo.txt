@@ -36,9 +36,9 @@ DONE:
   change crypto key
   cleanup deleted notes on the server
   store sort order in local-storage
+  fix debounceAsync with zero delay
 FIRST:
 TODO:
-  fix debounceAsync with zero delay
 LATER:
   sync from the same devices can cause conflicts
   auto merge

@@ -1,13 +1,12 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {debounce, deepEquals, downloadJson, uuidV4WithoutCrypto} from '../util/misc'
+import {debounce, deepEquals, downloadJson, nonConcurrent, uuidV4WithoutCrypto} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
 import {notesIsEmpty, noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
-import {debounceAsync} from '../util/debounceAsync'
 import socket from '../socket'
 import {loadNotesSortOrder, storeNotesSortOrder} from '../services/localStorage'
 
@@ -315,7 +314,7 @@ export const importNotes = async (): Promise<void> => {
 
 let modifiedWhileSyncingIds: string[] = []
 
-export const syncNotes = debounceAsync(async () => {
+export const syncNotes = nonConcurrent(async () => {
   const state = getState()
   const lastSyncedTo = state.user.user.lastSyncedTo
   const keyTokenPair = state.user.user.keyTokenPair
@@ -392,7 +391,7 @@ export const syncNotes = debounceAsync(async () => {
       s.notes.sync.syncing = false
     })
   }
-}, 0)
+})
 
 const setOpenNote = (syncedNotes: Note[]) => {
   const openNote = getState().notes.openNote
@@ -416,7 +415,7 @@ const setOpenNote = (syncedNotes: Note[]) => {
   })
 }
 
-const storeOpenNote = debounceAsync(async () => {
+const storeOpenNote = nonConcurrent(async () => {
   const openNote = getState().notes.openNote
   if (!openNote) return
 
@@ -441,7 +440,7 @@ const storeOpenNote = debounceAsync(async () => {
       version: note.state === 'dirty' ? note.version : note.version + 1,
     })
   }
-}, 0)
+})
 
 // subscriptions
 export const registerNotesSubscriptions = () => {
