@@ -372,11 +372,12 @@ export const syncNotes = debounceAsync(async () => {
     })
   } catch (e) {
     setState((s) => {
-      s.notes.sync.error = e instanceof Error ? e.message : 'Unknown error'
+      const message = e instanceof Error ? e.message : 'Unknown error'
+      s.notes.sync.error = message
       if (s.notes.sync.dialogOpen) {
         s.messages.messages.push({
           title: 'Failed to sync notes',
-          text: e instanceof Error ? e.message : 'Unknown error',
+          text: message,
         })
       }
     })
@@ -395,6 +396,11 @@ const setOpenNote = (syncedNotes: Note[]) => {
   const note = syncedNotes.find((n) => n.id === openNote.id)
   if (!note) {
     return
+  }
+  if (note.deleted_at !== 0) {
+    return setState((s) => {
+      s.notes.openNote = null
+    })
   }
   setState((s) => {
     s.notes.openNote =
@@ -450,8 +456,8 @@ export const registerNotesSubscriptions = () => {
       syncNotesDebounced()
     }
   })
-}
 
-socket.on('notesPushed', () => {
-  syncNotes()
-})
+  socket.on('notesPushed', () => {
+    syncNotes()
+  })
+}
