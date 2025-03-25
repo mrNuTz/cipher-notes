@@ -2,6 +2,13 @@
 
 The project is live on https://ciphernotes.com
 
+## Disclaimer
+
+The notes are encrypted before being sent to the server,
+but the encryption key is stored in the browser's local storage.
+This way no password is needed to access the notes and they key can easily be shared between devices.
+You can share the key via a QR code directly from app to app.
+
 ## Development Setup
 
 ### Prerequisites
