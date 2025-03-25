@@ -160,7 +160,20 @@ export const saveEncryptionKey = async (keyTokenPair: string) => {
   if (!isValidKeyTokenPair(keyTokenPair)) return
   const [cryptoKey, syncToken] = keyTokenPair.split(':')
   if (!cryptoKey || !syncToken) return
+
+  const oldKeyTokenPair = getState().user.user.keyTokenPair
+  const isNewKey =
+    oldKeyTokenPair?.cryptoKey !== cryptoKey || oldKeyTokenPair?.syncToken !== syncToken
+  if (isNewKey) {
+    const deletedNotes = await db.notes.where('deleted_at').notEqual(0).toArray()
+    await db.notes.bulkDelete(deletedNotes.map((note) => note.id))
+
+    const keys = await db.notes.toCollection().primaryKeys()
+    await db.notes.bulkUpdate(keys.map((key) => ({key, changes: {state: 'dirty'}})))
+  }
+
   setState((state) => {
+    state.user.user.lastSyncedTo = 0
     state.user.user.keyTokenPair = {cryptoKey, syncToken}
     state.user.encryptionKeyDialog.open = false
   })
@@ -209,7 +222,7 @@ export const deleteServerNotesCodeChanged = (code: string) =>
     s.user.deleteServerNotesDialog.code = code
   })
 
-export const deleteServerNotes = async () => {
+export const deleteServerNotesAndGenerateNewKey = async () => {
   const state = getState()
   const {code, deleteLoading} = state.user.deleteServerNotesDialog
   const loggedIn = state.user.user.loggedIn
@@ -221,23 +234,35 @@ export const deleteServerNotes = async () => {
 
   const res = await reqDeleteNotes(code)
 
-  setState((s) => {
-    s.user.deleteServerNotesDialog.deleteLoading = false
-    if (!res.success && res.statusCode === 401) {
-      s.user.user.loggedIn = false
-    }
-    if (res.success) {
-      s.user.deleteServerNotesDialog.open = false
-      s.user.user.lastSyncedTo = 0
-    }
-  })
+  if (!res.success) {
+    return setState((s) => {
+      s.user.deleteServerNotesDialog.deleteLoading = false
+      if (res.statusCode === 401) {
+        s.user.user.loggedIn = false
+      }
+      s.messages.messages.push({
+        title: 'Failed to delete notes',
+        text: res.error,
+      })
+    })
+  }
+
+  const deletedNotes = await db.notes.where('deleted_at').notEqual(0).toArray()
+  await db.notes.bulkDelete(deletedNotes.map((note) => note.id))
 
   const keys = await db.notes.toCollection().primaryKeys()
   await db.notes.bulkUpdate(keys.map((key) => ({key, changes: {state: 'dirty'}})))
 
-  showMessage({
-    title: res.success ? 'Success' : 'Failed to delete notes',
-    text: res.success ? 'Server notes deleted' : res.error,
+  const cryptoKey = await generateKey()
+  setState((s) => {
+    s.user.deleteServerNotesDialog.deleteLoading = false
+    s.user.deleteServerNotesDialog.open = false
+    s.user.user.lastSyncedTo = 0
+    s.user.user.keyTokenPair = {cryptoKey, syncToken: generateSalt(16)}
+    s.messages.messages.push({
+      title: 'Success',
+      text: 'Server notes deleted and new crypto key generated',
+    })
   })
 }
 

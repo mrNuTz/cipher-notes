@@ -34,6 +34,10 @@ export const deleteNotesEndpoint = authEndpointsFactory.build({
     await db.transaction(async (tx) => {
       await tx.delete(notesTbl).where(eq(notesTbl.user_id, user.id))
       await tx.update(usersTbl).set({sync_token: null}).where(eq(usersTbl.id, user.id))
+      await tx
+        .update(usersTbl)
+        .set({confirm_code: null, confirm_code_tries_left: 0, confirm_code_created_at: null})
+        .where(eq(usersTbl.id, user.id))
     })
     return {}
   },

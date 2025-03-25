@@ -85,7 +85,7 @@ export const CommandCenter = () => {
     },
     {
       id: 'deleteServerNotes',
-      label: 'Delete Server Notes',
+      label: 'Delete Server Notes and generate new crypto key',
       onClick: openDeleteServerNotesDialog,
       disabled: !loggedIn,
     },
