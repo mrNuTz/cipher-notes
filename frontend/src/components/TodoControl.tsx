@@ -1,4 +1,4 @@
-import {Checkbox, Divider, Flex, Stack, Textarea} from '@mantine/core'
+import {Checkbox, Divider, Flex, Stack, Textarea, UnstyledButton} from '@mantine/core'
 import {Todo, Todos} from '../business/models'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
@@ -9,6 +9,7 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
 import {getReorderDestinationIndex} from '@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index'
 import {IconGridDots} from './icons/IconGridDots'
+import {IconTrash} from './icons/IconTrash'
 
 export type TodoControlProps = {
   todos: Todos
@@ -52,7 +53,15 @@ export const TodoControl = ({
     )}
     <Divider m='5px 0' />
     {todos.map((todo, i) =>
-      todo.done ? <TodoItem key={i} todo={todo} i={i} onTodoChecked={onTodoChecked} /> : null
+      todo.done ? (
+        <TodoItem
+          key={i}
+          todo={todo}
+          i={i}
+          onTodoChecked={onTodoChecked}
+          onTodoDeleted={onTodoDeleted}
+        />
+      ) : null
     )}
   </Stack>
 )
@@ -228,6 +237,9 @@ const TodoItem = ({
           }
         }}
       />
+      <UnstyledButton onClick={() => onTodoDeleted?.(i)}>
+        <IconTrash />
+      </UnstyledButton>
       <DropIndicator edge={highlightedEdge} />
     </Flex>
   )

@@ -37,7 +37,7 @@ export const OpenNoteDialog = () => {
   const historyItem = selectHistoryItem(openNote)
   const {undo, redo, canUndo, canRedo} = useUndoRedo<NoteHistoryItem | null>(
     historyItem,
-    (historyItem) => historyItem && openNoteHistoryHandler(historyItem),
+    openNoteHistoryHandler,
     500,
     openNote?.id ?? null
   )

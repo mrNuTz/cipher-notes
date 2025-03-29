@@ -180,7 +180,10 @@ export const moveTodo = (source: number, target: number) =>
       todos.splice(target, 0, todo)
     }
   })
-export const openNoteHistoryHandler = (historyItem: NoteHistoryItem) =>
+export const openNoteHistoryHandler = (historyItem: NoteHistoryItem | null) => {
+  if (!historyItem) {
+    return
+  }
   setState((s) => {
     if (!s.notes.openNote) return
     if (historyItem.type === 'note') {
@@ -191,6 +194,7 @@ export const openNoteHistoryHandler = (historyItem: NoteHistoryItem) =>
       s.notes.openNote.todos = historyItem.todos
     }
   })
+}
 export const sortChanged = (prop: NoteSortProp) =>
   setState((s) => {
     s.notes.sort.prop = prop
