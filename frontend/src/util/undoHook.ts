@@ -1,4 +1,4 @@
-import {useReducer, useEffect} from 'react'
+import {useReducer, useEffect, useCallback, useRef} from 'react'
 import {deepEquals} from './misc'
 
 type State<Data> = {
@@ -93,6 +93,18 @@ export function useUndoRedo<Data>(
     prevValue: externalValue,
   })
 
+  // Refs to store the latest state and callback
+  const stateRef = useRef(state)
+  const onUndoRedoRef = useRef(onUndoRedo)
+
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
+
+  useEffect(() => {
+    onUndoRedoRef.current = onUndoRedo
+  }, [onUndoRedo])
+
   useEffect(() => {
     if (state.prevKey !== key) {
       dispatch({
@@ -111,23 +123,33 @@ export function useUndoRedo<Data>(
     }
   }, [key, externalValue, state.prevKey, state.prevValue, chunkThreshold])
 
-  function undo() {
-    if (state.currentIndex <= 0) return
-    const newIndex = state.currentIndex - 1
-    if (state.history[newIndex] !== undefined) {
-      onUndoRedo(state.history[newIndex])
-      dispatch({type: 'UPDATE_INDEX', index: newIndex})
-    }
-  }
+  const undo = useCallback(
+    function undo() {
+      // Access state and callback via refs
+      const currentState = stateRef.current
+      if (currentState.currentIndex <= 0) return
+      const newIndex = currentState.currentIndex - 1
+      if (currentState.history[newIndex] !== undefined) {
+        onUndoRedoRef.current(currentState.history[newIndex])
+        dispatch({type: 'UPDATE_INDEX', index: newIndex})
+      }
+    },
+    [] // Empty dependency array makes the function stable
+  )
 
-  function redo() {
-    if (state.currentIndex >= state.history.length - 1) return
-    const newIndex = state.currentIndex + 1
-    if (state.history[newIndex] !== undefined) {
-      onUndoRedo(state.history[newIndex])
-      dispatch({type: 'UPDATE_INDEX', index: newIndex})
-    }
-  }
+  const redo = useCallback(
+    function redo() {
+      // Access state and callback via refs
+      const currentState = stateRef.current
+      if (currentState.currentIndex >= currentState.history.length - 1) return
+      const newIndex = currentState.currentIndex + 1
+      if (currentState.history[newIndex] !== undefined) {
+        onUndoRedoRef.current(currentState.history[newIndex])
+        dispatch({type: 'UPDATE_INDEX', index: newIndex})
+      }
+    },
+    [] // Empty dependency array makes the function stable
+  )
 
   const canUndo = state.currentIndex > 0
   const canRedo = state.currentIndex < state.history.length - 1
