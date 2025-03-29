@@ -38,9 +38,9 @@ DONE:
   store sort order in local-storage
   fix debounceAsync with zero delay
   sync from the same devices can cause conflicts
-FIRST:
   todo delete button
   todo add button
+FIRST:
 TODO:
 LATER:
   auto merge

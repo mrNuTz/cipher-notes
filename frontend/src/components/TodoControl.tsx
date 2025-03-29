@@ -10,6 +10,7 @@ import {
 import {getReorderDestinationIndex} from '@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index'
 import {IconGridDots} from './icons/IconGridDots'
 import {IconTrash} from './icons/IconTrash'
+import {IconPlus} from './icons/IconPlus'
 
 export type TodoControlProps = {
   todos: Todos
@@ -50,6 +51,13 @@ export const TodoControl = ({
           onMoveTodo={onMoveTodo}
         />
       )
+    )}
+    {!!onInsertTodo && (
+      <Flex justify='end'>
+        <UnstyledButton onClick={() => onInsertTodo(todos.length - 1)}>
+          <IconPlus />
+        </UnstyledButton>
+      </Flex>
     )}
     <Divider m='5px 0' />
     {todos.map((todo, i) =>
@@ -237,9 +245,11 @@ const TodoItem = ({
           }
         }}
       />
-      <UnstyledButton onClick={() => onTodoDeleted?.(i)}>
-        <IconTrash />
-      </UnstyledButton>
+      {!!onTodoDeleted && (
+        <UnstyledButton onClick={() => onTodoDeleted(i)}>
+          <IconTrash />
+        </UnstyledButton>
+      )}
       <DropIndicator edge={highlightedEdge} />
     </Flex>
   )
