@@ -37,13 +37,13 @@ DONE:
   cleanup deleted notes on the server
   store sort order in local-storage
   fix debounceAsync with zero delay
-FIRST:
-TODO:
-LATER:
   sync from the same devices can cause conflicts
-  auto merge
+FIRST:
   todo delete button
   todo add button
+TODO:
+LATER:
+  auto merge
   debounce notes search
   notes grid paging
   change email
