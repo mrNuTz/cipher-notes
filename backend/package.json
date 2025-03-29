@@ -31,7 +31,7 @@
     "@types/express": "^5.0.1",
     "@types/http-errors": "^2.0.4",
     "@types/pg": "^8.11.11",
-    "bun-types": "1.2.6",
-    "drizzle-kit": "^0.30.5"
+    "bun-types": "1.2.7",
+    "drizzle-kit": "^0.30.6"
   }
 }
