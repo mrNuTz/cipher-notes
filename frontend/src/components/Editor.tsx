@@ -463,7 +463,7 @@ const Editor = forwardRef(function Editor(
   return (
     <div {...rest} style={{...styles.container, ...style}}>
       <textarea
-        ref={(c) => (inputRef.current = c)}
+        ref={inputRef}
         style={{
           ...styles.textarea,
           ...contentStyle,
