@@ -305,7 +305,7 @@ export const importNotes = async (): Promise<void> => {
     await db.notes.bulkPut(res)
     closeImportDialog()
     showMessage({title: 'Success', text: 'Notes imported'})
-  } catch (e) {
+  } catch {
     setState((s) => {
       s.notes.importDialog.error = 'Invalid file format'
     })

@@ -1,4 +1,6 @@
-export const IconGripVertical = (props: React.SVGProps<SVGSVGElement>) => (
+import {SVGProps} from 'react'
+
+export const IconGripVertical = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
     width='24'

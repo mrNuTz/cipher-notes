@@ -1,14 +1,29 @@
-import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react'
+import {
+  ChangeEvent,
+  CSSProperties,
+  FocusEventHandler,
+  forwardRef,
+  HTMLAttributes,
+  KeyboardEvent,
+  KeyboardEventHandler,
+  MouseEventHandler,
+  Ref,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 
 type Padding<T> = T | {top?: T; right?: T; bottom?: T; left?: T}
 
-type Props = React.HTMLAttributes<HTMLDivElement> & {
+type Props = HTMLAttributes<HTMLDivElement> & {
   // Props for the component
   ignoreTabKey?: boolean
   insertSpaces?: boolean
   onValueChange: (value: string) => void
   padding?: Padding<number | string>
-  style?: React.CSSProperties
+  style?: CSSProperties
   tabSize?: number
   value: string
 
@@ -19,11 +34,11 @@ type Props = React.HTMLAttributes<HTMLDivElement> & {
   maxLength?: number
   minLength?: number
   name?: string
-  onBlur?: React.FocusEventHandler<HTMLTextAreaElement>
-  onClick?: React.MouseEventHandler<HTMLTextAreaElement>
-  onFocus?: React.FocusEventHandler<HTMLTextAreaElement>
-  onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>
-  onKeyUp?: React.KeyboardEventHandler<HTMLTextAreaElement>
+  onBlur?: FocusEventHandler<HTMLTextAreaElement>
+  onClick?: MouseEventHandler<HTMLTextAreaElement>
+  onFocus?: FocusEventHandler<HTMLTextAreaElement>
+  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>
+  onKeyUp?: KeyboardEventHandler<HTMLTextAreaElement>
   placeholder?: string
   readOnly?: boolean
   required?: boolean
@@ -59,7 +74,7 @@ const className = 'npm__react-simple-code-editor__textarea'
 
 const Editor = forwardRef(function Editor(
   props: Props,
-  ref: React.Ref<null | {session: {history: History}}>
+  ref: Ref<null | {session: {history: History}}>
 ) {
   const {
     autoFocus,
@@ -228,7 +243,7 @@ const Editor = forwardRef(function Editor(
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (onKeyDown) {
       onKeyDown(e)
 
@@ -424,7 +439,7 @@ const Editor = forwardRef(function Editor(
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const {value, selectionStart, selectionEnd} = e.currentTarget
 
     recordChange(

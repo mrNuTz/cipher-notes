@@ -199,7 +199,7 @@ export const uuidV4WithoutCrypto = () => {
 export const safeJsonParse = (str: string): unknown => {
   try {
     return JSON.parse(str)
-  } catch (err) {
+  } catch {
     return undefined
   }
 }
