@@ -40,7 +40,11 @@ export default defineConfig(({mode}) => {
       outDir: 'dist',
     },
     plugins: [
-      react(),
+      react({
+        babel: {
+          plugins: [['babel-plugin-react-compiler', {}]],
+        },
+      }),
       VitePWA({
         strategies: 'injectManifest',
         srcDir: 'src',
