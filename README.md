@@ -12,8 +12,8 @@ You can share the key via a QR code directly from app to app.
 ## Development Setup
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- Docker and Docker Compose (for database only)
+- nvm (node version manager)
+- Docker (for development database)
 - Bun (for backend)
 - Yarn (for frontend)
 - mkcert (for generating development certificates)
@@ -77,11 +77,16 @@ You can share the key via a QR code directly from app to app.
    ```bash
    cd frontend
    ```
-2. Install dependencies:
+2. Install node
+   ```bash
+   nvm install
+   nvm use
+   ```
+3. Install dependencies:
    ```bash
    yarn install
    ```
-3. Start the frontend development server:
+4. Start the frontend development server:
    ```bash
    yarn dev:https
    ```
@@ -94,6 +99,7 @@ You can share the key via a QR code directly from app to app.
 ### Tech Stack
 - Frontend: React + TypeScript + Vite
 - Backend: Bun + TypeScript
+- Server: express-zod-api
 - Database: PostgreSQL 16
 - ORM: Drizzle
 
@@ -105,7 +111,7 @@ You can share the key via a QR code directly from app to app.
    ```
 2. Generate new certificates including your IP:
    ```bash
-   mkcert -key-file key.pem -cert-file cert.pem localhost 127.0.0.1 ::1 192.168.x.x
+   mkcert -key-file key.pem -cert-file cert.pem localhost 127.0.0.1 ::1 <your-ip>
    ```
 3. Start the frontend with host flag:
    ```bash
@@ -116,4 +122,4 @@ You can share the key via a QR code directly from app to app.
    mkcert -CAROOT
    ```
    This shows the folder containing `rootCA.pem`
-5. Access https://192.168.x.x:5173 on your mobile device
+5. Access `https://<your-ip>:5173` on your mobile device
