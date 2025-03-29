@@ -31,26 +31,24 @@ export type Todo = z.infer<typeof todoSchema>
 export const todosSchema = z.array(todoSchema)
 export type Todos = z.infer<typeof todosSchema>
 
-export const textOpenNoteSchema = z.object({
-  type: z.literal('note'),
-  id: z.string(),
-  title: z.string(),
-  txt: z.string(),
-  todos: z.literal(undefined),
-})
-export type TextOpenNote = z.infer<typeof textOpenNoteSchema>
-
-export const todoOpenNoteSchema = z.object({
-  type: z.literal('todo'),
-  id: z.string(),
-  title: z.string(),
-  todos: todosSchema,
-  txt: z.literal(undefined),
-})
-export type TodoOpenNote = z.infer<typeof todoOpenNoteSchema>
-
-export const openNoteSchema = z.discriminatedUnion('type', [textOpenNoteSchema, todoOpenNoteSchema])
-export type OpenNote = z.infer<typeof openNoteSchema>
+export type TextOpenNote = {
+  type: 'note'
+  id: string
+  title: string
+  txt: string
+  updatedAt: number
+}
+export type TodoOpenNote = {
+  type: 'todo'
+  id: string
+  title: string
+  todos: {
+    done: boolean
+    txt: string
+  }[]
+  updatedAt: number
+}
+export type OpenNote = XOR<TextOpenNote, TodoOpenNote>
 
 export type NoteHistoryItem = {type: 'note'; txt: string} | {type: 'todo'; todos: Todos}
 

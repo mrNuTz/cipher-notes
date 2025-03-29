@@ -73,9 +73,21 @@ export const openNote = async (id: string) => {
   if (!note) return
   setState((s) => {
     if (note.type === 'todo') {
-      s.notes.openNote = {type: 'todo', id, todos: note.todos, title: note.title}
+      s.notes.openNote = {
+        type: 'todo',
+        id,
+        todos: note.todos,
+        title: note.title,
+        updatedAt: note.updated_at,
+      }
     } else {
-      s.notes.openNote = {type: 'note', id, txt: note.txt, title: note.title}
+      s.notes.openNote = {
+        type: 'note',
+        id,
+        txt: note.txt,
+        title: note.title,
+        updatedAt: note.updated_at,
+      }
     }
   })
 }
@@ -116,18 +128,20 @@ export const addNote = async () => {
   await db.notes.add(note)
 
   setState((s) => {
-    s.notes.openNote = {type: 'note', id, txt: '', title: ''}
+    s.notes.openNote = {type: 'note', id, txt: '', title: '', updatedAt: now}
   })
 }
 export const openNoteTitleChanged = (title: string) =>
   setState((s) => {
     if (!s.notes.openNote) return
     s.notes.openNote.title = title
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const openNoteTxtChanged = (txt: string) =>
   setState((s) => {
     if (!s.notes.openNote) return
     s.notes.openNote.txt = txt
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const openNoteTypeToggled = () =>
   setState((s) => {
@@ -138,6 +152,7 @@ export const openNoteTypeToggled = () =>
         id: s.notes.openNote.id,
         todos: textToTodos(s.notes.openNote.txt),
         title: s.notes.openNote.title,
+        updatedAt: Date.now(),
       }
     } else {
       s.notes.openNote = {
@@ -145,6 +160,7 @@ export const openNoteTypeToggled = () =>
         id: s.notes.openNote.id,
         txt: todosToText(s.notes.openNote.todos),
         title: s.notes.openNote.title,
+        updatedAt: Date.now(),
       }
     }
   })
@@ -154,22 +170,26 @@ export const todoChecked = (index: number, checked: boolean) =>
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
       return
     s.notes.openNote.todos[index].done = checked
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const todoChanged = (index: number, txt: string) =>
   setState((s) => {
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
       return
     s.notes.openNote.todos[index].txt = txt
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const insertTodo = (bellow: number) =>
   setState((s) => {
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
     s.notes.openNote.todos.splice(bellow + 1, 0, {txt: '', done: false})
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const deleteTodo = (index: number) =>
   setState((s) => {
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
     s.notes.openNote.todos.splice(index, 1)
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const moveTodo = (source: number, target: number) =>
   setState((s) => {
@@ -179,6 +199,7 @@ export const moveTodo = (source: number, target: number) =>
     if (todo) {
       todos.splice(target, 0, todo)
     }
+    s.notes.openNote.updatedAt = Date.now()
   })
 export const openNoteHistoryHandler = (historyItem: NoteHistoryItem | null) => {
   if (!historyItem) {
@@ -193,6 +214,7 @@ export const openNoteHistoryHandler = (historyItem: NoteHistoryItem | null) => {
       s.notes.openNote.type = 'todo'
       s.notes.openNote.todos = historyItem.todos
     }
+    s.notes.openNote.updatedAt = Date.now()
   })
 }
 export const sortChanged = (prop: NoteSortProp) =>
@@ -425,12 +447,29 @@ const setOpenNote = (syncedNotes: Note[]) => {
       s.notes.openNote = null
     })
   }
-  setState((s) => {
-    s.notes.openNote =
-      note.type === 'note'
-        ? {type: note.type, id: note.id, title: note.title, txt: note.txt, todos: undefined}
-        : {type: note.type, id: note.id, title: note.title, txt: undefined, todos: note.todos}
-  })
+  // TODO: handle clock differences between clients
+  if (note.updated_at > openNote.updatedAt) {
+    setState((s) => {
+      s.notes.openNote =
+        note.type === 'note'
+          ? {
+              type: note.type,
+              id: note.id,
+              title: note.title,
+              txt: note.txt,
+              todos: undefined,
+              updatedAt: note.updated_at,
+            }
+          : {
+              type: note.type,
+              id: note.id,
+              title: note.title,
+              txt: undefined,
+              todos: note.todos,
+              updatedAt: note.updated_at,
+            }
+    })
+  }
 }
 
 const storeOpenNote = nonConcurrent(async () => {
@@ -453,7 +492,7 @@ const storeOpenNote = nonConcurrent(async () => {
       title: openNote.title,
       txt: openNote.type === 'note' ? openNote.txt : undefined,
       todos: openNote.type === 'todo' ? openNote.todos : undefined,
-      updated_at: Date.now(),
+      updated_at: openNote.updatedAt,
       state: 'dirty',
       version: note.state === 'dirty' ? note.version : note.version + 1,
     })
@@ -462,8 +501,10 @@ const storeOpenNote = nonConcurrent(async () => {
 
 // subscriptions
 export const registerNotesSubscriptions = () => {
+  const storeOpenNoteDebounced = debounce(storeOpenNote, 1000)
+
   subscribe((s) => s.notes.sort, storeNotesSortOrder)
-  subscribe((s) => s.notes.openNote, storeOpenNote)
+  subscribe((s) => s.notes.openNote, storeOpenNoteDebounced)
   subscribe(
     (s) => s.conflicts.conflicts.length !== 0,
     (hasConflicts) => {
