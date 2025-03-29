@@ -312,7 +312,8 @@ export const importNotes = async (): Promise<void> => {
   }
 }
 
-let modifiedWhileSyncingIds: string[] = []
+let modifiedWhileBetween: string[] = []
+let betweenLoadAndStore = false
 
 export const syncNotes = nonConcurrent(async () => {
   const state = getState()
@@ -326,6 +327,7 @@ export const syncNotes = nonConcurrent(async () => {
     s.notes.sync.syncing = true
   })
   try {
+    betweenLoadAndStore = true
     const dirtyNotes = await db.notes
       .where('state')
       .equals('dirty')
@@ -349,10 +351,20 @@ export const syncNotes = nonConcurrent(async () => {
     }
     const pulls = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
     const conflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
-    const synchedNotes = pulls.filter((p) => !modifiedWhileSyncingIds.includes(p.id)).map(putToNote)
-    await db.notes.bulkPut(synchedNotes)
 
-    modifiedWhileSyncingIds = []
+    const synchedNotes = pulls.filter((p) => !modifiedWhileBetween.includes(p.id)).map(putToNote)
+    const modifiedTwice = modifiedWhileBetween.filter((id) => dirtyNotes.some((n) => n.id === id))
+    betweenLoadAndStore = false
+    modifiedWhileBetween = []
+    await db.transaction('rw', db.notes, async () => {
+      await db.notes.bulkPut(synchedNotes)
+      await db.notes
+        .where('id')
+        .anyOf(modifiedTwice)
+        .modify((n) => {
+          n.version = n.version + 1
+        })
+    })
 
     setOpenNote(synchedNotes)
 
@@ -390,6 +402,8 @@ export const syncNotes = nonConcurrent(async () => {
     setState((s) => {
       s.notes.sync.syncing = false
     })
+    betweenLoadAndStore = false
+    modifiedWhileBetween = []
   }
 })
 
@@ -427,8 +441,8 @@ const storeOpenNote = nonConcurrent(async () => {
       (note.type === 'note' && note.txt !== openNote.txt) ||
       (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
   ) {
-    if (getState().notes.sync.syncing) {
-      modifiedWhileSyncingIds.push(openNote.id)
+    if (betweenLoadAndStore) {
+      modifiedWhileBetween.push(openNote.id)
     }
     await db.notes.update(openNote.id, {
       type: openNote.type,
