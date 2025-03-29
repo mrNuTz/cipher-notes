@@ -88,12 +88,12 @@ You can share the key via a QR code directly from app to app.
    ```
 4. Start the frontend development server:
    ```bash
-   yarn dev:https
+   yarn dev
    ```
 
 ### Development URLs
 - Frontend: https://localhost:5173
-- Backend API: http://localhost:(env.PORT)
+- Backend API: http://localhost:5100
 - PostgreSQL: localhost:5432
 
 ### Tech Stack
@@ -113,9 +113,9 @@ You can share the key via a QR code directly from app to app.
    ```bash
    mkcert -key-file key.pem -cert-file cert.pem localhost 127.0.0.1 ::1 <your-ip>
    ```
-3. Start the frontend with host flag:
+3. Start the frontend:
    ```bash
-   yarn dev:https --host
+   yarn dev
    ```
 4. Find and install the root CA certificate on your mobile device:
    ```bash
