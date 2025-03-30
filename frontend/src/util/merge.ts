@@ -66,3 +66,14 @@ export function threeWayMerge(
     )
     .join('\n')
 }
+
+export function threeWayMergeArrays(
+  baseArray: string[],
+  localArray: string[],
+  serverArray: string[]
+): string[] {
+  const diff = diff3Merge(localArray, baseArray, serverArray)
+  return diff.flatMap((block) =>
+    block.ok ? block.ok : block.conflict ? [...block.conflict.a, ...block.conflict.b] : []
+  )
+}

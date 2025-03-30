@@ -23,7 +23,10 @@ export const noteSortOptions = noteSortProps.map((prop) => ({
 
 export type NoteSortProp = (typeof noteSortProps)[number]
 
+// TODO: make id mandatory except for imports
 export const todoSchema = z.object({
+  id: z.string().optional(),
+  updated_at: z.number().optional(),
   done: z.boolean(),
   txt: z.string(),
 })
@@ -42,10 +45,7 @@ export type TodoOpenNote = {
   type: 'todo'
   id: string
   title: string
-  todos: {
-    done: boolean
-    txt: string
-  }[]
+  todos: Todos
   updatedAt: number
 }
 export type OpenNote = XOR<TextOpenNote, TodoOpenNote>

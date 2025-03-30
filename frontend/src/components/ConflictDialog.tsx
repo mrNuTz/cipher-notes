@@ -5,19 +5,12 @@ import {db} from '../db'
 import {formatDateTime} from '../util/misc'
 import {pickLocalNote, pickServerNote} from '../state/conflicts'
 import {TodoControl} from './TodoControl'
-import {zodParseString} from '../util/zod'
-import {textPutTxtSchema, todoPutTxtSchema} from '../business/models'
 
 export const ConflictDialog = () => {
   const conflicts = useSelector((s) => s.conflicts.conflicts)
-  const serverPut = conflicts[0]
-  const localNote = useLiveQuery(() => db.notes.get(serverPut?.id ?? ''), [serverPut?.id])
-  if (!serverPut || !localNote) return null
-  const serverTxtTodo = zodParseString(todoPutTxtSchema, serverPut.txt ?? 'null')
-  const serverTxtText = zodParseString(textPutTxtSchema, serverPut.txt ?? 'null')
-  const serverTitle = serverTxtTodo?.title ?? serverTxtText?.title ?? ''
-  const serverTxt = serverTxtText?.txt ?? ''
-  const serverTodos = serverTxtTodo?.todos ?? []
+  const serverNote = conflicts[0]
+  const localNote = useLiveQuery(() => db.notes.get(serverNote?.id ?? ''), [serverNote?.id])
+  if (!serverNote || !localNote) return null
   return (
     <Modal size='100%' opened={conflicts.length > 0} onClose={() => {}} title='Conflict Resolution'>
       <Flex gap='xs'>
@@ -50,24 +43,24 @@ export const ConflictDialog = () => {
         <Stack flex='1 1 0' gap='xs'>
           <Text size='xl'>Server Note</Text>
           <Text c='dimmed'>
-            {serverPut.deleted_at
-              ? formatDateTime(serverPut.deleted_at)
-              : formatDateTime(serverPut.updated_at)}
+            {serverNote.deleted_at
+              ? formatDateTime(serverNote.deleted_at)
+              : formatDateTime(serverNote.updated_at)}
           </Text>
-          {serverPut.deleted_at ? (
+          {serverNote.deleted_at ? (
             <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
               DELETED
             </Text>
-          ) : serverPut.type === 'todo' ? (
+          ) : serverNote.type === 'todo' ? (
             <>
-              <Text size='lg'>{serverTitle}</Text>
-              <TodoControl todos={serverTodos} />
+              <Text size='lg'>{serverNote.title}</Text>
+              <TodoControl todos={serverNote.todos} />
             </>
           ) : (
             <>
-              <Text size='lg'>{serverTitle}</Text>
+              <Text size='lg'>{serverNote.title}</Text>
               <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
-                {serverTxt}
+                {serverNote.txt}
               </Text>
             </>
           )}

@@ -1,11 +1,9 @@
-import {Put} from '../business/notesEncryption'
 import {db} from '../db'
 import {getState, setState} from './store'
 import {Note} from '../business/models'
-import {putToNote} from '../business/misc'
 
 export type ConflictsState = {
-  conflicts: Put[]
+  conflicts: Note[]
 }
 
 export const conflictsInit: ConflictsState = {
@@ -33,11 +31,10 @@ export const pickLocalNote = async () => {
 export const pickServerNote = async () => {
   const state = getState()
   const conflicts = state.conflicts.conflicts
-  const serverPut = conflicts[0]
-  if (!serverPut) return
+  const serveNote = conflicts[0]
+  if (!serveNote) return
 
-  const note: Note = putToNote(serverPut)
-  await db.notes.put(note)
+  await db.notes.put(serveNote)
 
   setState((s) => {
     s.conflicts.conflicts = s.conflicts.conflicts.slice(1)

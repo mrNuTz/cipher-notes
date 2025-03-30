@@ -1,12 +1,20 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {showMessage} from './messages'
-import {debounce, deepEquals, downloadJson, nonConcurrent, uuidV4WithoutCrypto} from '../util/misc'
+import {debounce, deepEquals, downloadJson, nonConcurrent} from '../util/misc'
 import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
-import {notesIsEmpty, noteToPut, putToNote, textToTodos, todosToText} from '../business/misc'
+import {
+  mergeConflicts,
+  notesIsEmpty,
+  noteToPut,
+  putToNote,
+  textToTodos,
+  todosHaveIdsAndUpdatedAt,
+  todosToText,
+} from '../business/misc'
 import socket from '../socket'
 import {loadNotesSortOrder, storeNotesSortOrder} from '../services/localStorage'
 
@@ -70,7 +78,7 @@ export const noteQueryChanged = (query: string) =>
   })
 export const openNote = async (id: string) => {
   const note = await db.notes.get(id)
-  if (!note) return
+  if (!note || note.deleted_at !== 0) return
   setState((s) => {
     if (note.type === 'todo') {
       s.notes.openNote = {
@@ -90,6 +98,17 @@ export const openNote = async (id: string) => {
       }
     }
   })
+  // TODO: remove this; second set state triggers storeOpenNote which triggers a sync
+  if (note.type === 'todo' && !todosHaveIdsAndUpdatedAt(note.todos)) {
+    setState((s) => {
+      if (!s.notes.openNote) return
+      s.notes.openNote.todos = note.todos.map(({id, updated_at, ...t}) => ({
+        ...t,
+        id: id ?? crypto.randomUUID(),
+        updated_at: updated_at ?? Date.now(),
+      }))
+    })
+  }
 }
 export const openNoteClosed = async () => {
   const state = getState()
@@ -113,7 +132,7 @@ export const openNoteClosed = async () => {
 export const addNote = async () => {
   const now = Date.now()
 
-  const id = import.meta.env.DEV ? uuidV4WithoutCrypto() : crypto.randomUUID()
+  const id = crypto.randomUUID()
   const note: Note = {
     id,
     txt: '',
@@ -170,6 +189,7 @@ export const todoChecked = (index: number, checked: boolean) =>
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
       return
     s.notes.openNote.todos[index].done = checked
+    s.notes.openNote.todos[index].updated_at = Date.now()
     s.notes.openNote.updatedAt = Date.now()
   })
 export const todoChanged = (index: number, txt: string) =>
@@ -177,12 +197,18 @@ export const todoChanged = (index: number, txt: string) =>
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
       return
     s.notes.openNote.todos[index].txt = txt
+    s.notes.openNote.todos[index].updated_at = Date.now()
     s.notes.openNote.updatedAt = Date.now()
   })
 export const insertTodo = (bellow: number) =>
   setState((s) => {
     if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
-    s.notes.openNote.todos.splice(bellow + 1, 0, {txt: '', done: false})
+    s.notes.openNote.todos.splice(bellow + 1, 0, {
+      txt: '',
+      done: false,
+      id: crypto.randomUUID(),
+      updated_at: Date.now(),
+    })
     s.notes.openNote.updatedAt = Date.now()
   })
 export const deleteTodo = (index: number) =>
@@ -319,7 +345,11 @@ export const importNotes = async (): Promise<void> => {
             ? existingNote.version
             : existingNote.version + 1,
           deleted_at: 0,
-          todos: todos,
+          todos: todos?.map((t) => ({
+            ...t,
+            id: t.id ?? crypto.randomUUID(),
+            updated_at: t.updated_at ?? Date.now(),
+          })),
         } as const
         if (indeterminate.todos) {
           res.push({...indeterminate, type: 'todo', todos: indeterminate.todos, txt: undefined})
@@ -376,14 +406,28 @@ export const syncNotes = nonConcurrent(async () => {
       return
     }
     const pulls = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
-    const conflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
+    const serverConflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
 
-    const synchedNotes = pulls.filter((p) => !modifiedWhileBetween.includes(p.id)).map(putToNote)
+    const baseVersions = await db.note_base_versions
+      .where('id')
+      .anyOf(serverConflicts.map((n) => n.id))
+      .toArray()
+    const {merged, conflicts} = mergeConflicts(
+      baseVersions,
+      dirtyNotes,
+      serverConflicts.map(putToNote)
+    )
+
+    const toStore = pulls
+      .map(putToNote)
+      .concat(merged)
+      .filter((p) => !modifiedWhileBetween.includes(p.id))
     const modifiedTwice = modifiedWhileBetween.filter((id) => dirtyNotes.some((n) => n.id === id))
     betweenLoadAndStore = false
     modifiedWhileBetween = []
-    await db.transaction('rw', db.notes, async () => {
-      await db.notes.bulkPut(synchedNotes)
+    await db.transaction('rw', db.notes, db.note_base_versions, async () => {
+      await db.notes.bulkPut(toStore)
+      await db.note_base_versions.bulkPut(toStore.filter((n) => n.state === 'synced'))
       await db.notes
         .where('id')
         .anyOf(modifiedTwice)
@@ -392,7 +436,7 @@ export const syncNotes = nonConcurrent(async () => {
         })
     })
 
-    setOpenNote(synchedNotes)
+    setOpenNote(toStore)
 
     const syncedDeletes = await db.notes
       .where('deleted_at')
@@ -401,6 +445,7 @@ export const syncNotes = nonConcurrent(async () => {
       .toArray()
     const syncedDeleteIds = syncedDeletes.map((d) => d.id)
     await db.notes.bulkDelete(syncedDeleteIds)
+    await db.note_base_versions.bulkDelete(syncedDeleteIds)
 
     setState((s) => {
       s.conflicts.conflicts = conflicts
@@ -409,7 +454,7 @@ export const syncNotes = nonConcurrent(async () => {
       if (s.notes.sync.dialogOpen) {
         s.messages.messages.push({
           title: 'Success',
-          text: `Notes synced with ${conflicts.length} conflicts`,
+          text: `Notes synced with ${serverConflicts.length} conflicts`,
         })
       }
     })
@@ -457,14 +502,12 @@ const setOpenNote = (syncedNotes: Note[]) => {
               id: note.id,
               title: note.title,
               txt: note.txt,
-              todos: undefined,
               updatedAt: note.updated_at,
             }
           : {
               type: note.type,
               id: note.id,
               title: note.title,
-              txt: undefined,
               todos: note.todos,
               updatedAt: note.updated_at,
             }
@@ -504,7 +547,10 @@ export const registerNotesSubscriptions = () => {
   const storeOpenNoteDebounced = debounce(storeOpenNote, 1000)
 
   subscribe((s) => s.notes.sort, storeNotesSortOrder)
-  subscribe((s) => s.notes.openNote, storeOpenNoteDebounced)
+  subscribe(
+    (s) => s.notes.openNote,
+    (curr, prev) => curr && prev && storeOpenNoteDebounced()
+  )
   subscribe(
     (s) => s.conflicts.conflicts.length !== 0,
     (hasConflicts) => {

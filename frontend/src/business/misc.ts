@@ -1,5 +1,14 @@
+import {threeWayMerge, threeWayMergeArrays} from '../util/merge'
 import {zodParseString} from '../util/zod'
-import {Note, TextPutTxt, textPutTxtSchema, TodoPutTxt, todoPutTxtSchema, Todos} from './models'
+import {
+  Note,
+  TextPutTxt,
+  textPutTxtSchema,
+  Todo,
+  TodoPutTxt,
+  todoPutTxtSchema,
+  Todos,
+} from './models'
 import {Put} from './notesEncryption'
 
 export const textToTodos = (text: string): Todos => {
@@ -117,3 +126,124 @@ export const notesIsEmpty = (note: Note): boolean =>
   (note.type === 'note'
     ? note.txt === ''
     : note.todos.length === 0 || (note.todos.length === 1 && note.todos[0]!.txt === ''))
+
+export const mergeConflicts = (
+  baseVersions: Note[],
+  dirtyNotes: Note[],
+  serverConflicts: Note[]
+): {merged: Note[]; conflicts: Note[]} => {
+  const merged: Note[] = []
+  const conflicts: Note[] = []
+  for (const serverConflict of serverConflicts) {
+    const baseVersion = baseVersions.find((n) => n.id === serverConflict.id)
+    const dirtyNote = dirtyNotes.find((n) => n.id === serverConflict.id)
+    if (
+      !baseVersion ||
+      !dirtyNote ||
+      dirtyNote.type !== serverConflict.type ||
+      dirtyNote.deleted_at !== 0 ||
+      serverConflict.deleted_at !== 0
+    ) {
+      conflicts.push(serverConflict)
+    } else {
+      const merge = mergeConflict(baseVersion, dirtyNote, serverConflict)
+      if (merge) {
+        merged.push(merge)
+      } else {
+        conflicts.push(serverConflict)
+      }
+    }
+  }
+  return {merged, conflicts}
+}
+
+export const mergeConflict = (
+  baseVersion: Note,
+  dirtyNote: Note,
+  serverConflict: Note
+): Note | null => {
+  if (dirtyNote.type === 'todo') {
+    return mergeTodoConflict(baseVersion, dirtyNote, serverConflict)
+  } else if (dirtyNote.type === 'note') {
+    return mergeNoteConflict(baseVersion, dirtyNote, serverConflict)
+  } else {
+    return null
+  }
+}
+
+export const todoHasIdAndUpdatedAt = (todo: Todo): boolean =>
+  todo.id !== undefined && todo.updated_at !== undefined
+export const todosHaveIdsAndUpdatedAt = (todos: Todos): boolean =>
+  todos.every(todoHasIdAndUpdatedAt)
+
+export const mergeTodoConflict = (
+  baseVersion: Note,
+  dirtyNote: Note,
+  serverConflict: Note
+): Note | null => {
+  if (
+    baseVersion.todos === undefined ||
+    dirtyNote.todos === undefined ||
+    serverConflict.todos === undefined ||
+    !todosHaveIdsAndUpdatedAt(baseVersion.todos) ||
+    !todosHaveIdsAndUpdatedAt(dirtyNote.todos) ||
+    !todosHaveIdsAndUpdatedAt(serverConflict.todos)
+  ) {
+    return null
+  }
+  const baseIds = baseVersion.todos.map((t) => t.id!)
+  const dirtyIds = dirtyNote.todos.map((t) => t.id!)
+  const serverIds = serverConflict.todos.map((t) => t.id!)
+  const mergedIds = threeWayMergeArrays(baseIds, dirtyIds, serverIds)
+  return {
+    type: 'todo',
+    id: baseVersion.id,
+    created_at: baseVersion.created_at,
+    updated_at: Date.now(),
+    deleted_at: 0,
+    version: Math.max(dirtyNote.version, serverConflict.version) + 1,
+    state: 'dirty',
+    title:
+      dirtyNote.updated_at > serverConflict.updated_at ? dirtyNote.title : serverConflict.title,
+    todos: mergedIds.map((id) => {
+      const dirtyTodo = dirtyNote.todos.find((t) => t.id === id)
+      const serverTodo = serverConflict.todos.find((t) => t.id === id)
+      if (!dirtyTodo && serverTodo) {
+        return serverTodo
+      } else if (!serverTodo && dirtyTodo) {
+        return dirtyTodo
+      } else if (dirtyTodo && serverTodo) {
+        return dirtyTodo.updated_at! > serverTodo.updated_at! ? dirtyTodo : serverTodo
+      } else {
+        throw new Error('threeWayMergeArrays failed')
+      }
+    }),
+  }
+}
+
+export const mergeNoteConflict = (
+  baseVersion: Note,
+  dirtyNote: Note,
+  serverConflict: Note
+): Note | null => {
+  if (
+    baseVersion.txt === undefined ||
+    dirtyNote.txt === undefined ||
+    serverConflict.txt === undefined
+  ) {
+    return null
+  }
+  const txt = threeWayMerge(baseVersion.txt, dirtyNote.txt, serverConflict.txt)
+  return {
+    type: 'note',
+    id: baseVersion.id,
+    created_at: baseVersion.created_at,
+    updated_at: Date.now(),
+    txt,
+    title:
+      dirtyNote.updated_at > serverConflict.updated_at ? dirtyNote.title : serverConflict.title,
+    version: Math.max(dirtyNote.version, serverConflict.version) + 1,
+    state: 'dirty',
+    deleted_at: 0,
+  }
+}

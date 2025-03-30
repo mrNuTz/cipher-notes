@@ -3,6 +3,7 @@ import {Note} from './business/models'
 
 export const db = new Dexie('DexieDB') as Dexie & {
   notes: EntityTable<Note, 'id'>
+  note_base_versions: EntityTable<Note, 'id'>
 }
 
 db.version(1).stores({
@@ -35,16 +36,14 @@ db.version(3)
       })
   )
 
-/*
 db.version(4)
   .stores({
-    notes_base_version: 'id',
+    note_base_versions: 'id',
   })
   .upgrade(async (tx) => {
-    const notes = await tx.table('notes').where('state').equals('synched').toArray()
-    await tx.table('notes_base_version').bulkAdd(notes)
+    const notes = await tx.table('notes').where('state').equals('synced').toArray()
+    await tx.table('note_base_versions').bulkAdd(notes)
   })
-*/
 
 export const dirtyNotesObservable = liveQuery(() =>
   db.notes.where('state').equals('dirty').toArray()

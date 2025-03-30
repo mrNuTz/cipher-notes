@@ -40,10 +40,10 @@ DONE:
   sync from the same devices can cause conflicts
   todo delete button
   todo add button
+  auto merge
 FIRST:
 TODO:
 LATER:
-  auto merge
   debounce notes search
   notes grid paging
   change email
