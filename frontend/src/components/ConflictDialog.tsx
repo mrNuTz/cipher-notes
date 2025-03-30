@@ -59,7 +59,7 @@ export const ConflictDialog = () => {
           ) : (
             <>
               <Text size='lg'>{serverNote.title}</Text>
-              <Text style={{whiteSpace: 'pre-wrap'}} ff='monospace'>
+              <Text style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word'}} ff='monospace'>
                 {serverNote.txt}
               </Text>
             </>

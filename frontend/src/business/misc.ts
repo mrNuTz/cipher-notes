@@ -1,4 +1,5 @@
 import {threeWayMerge, threeWayMergeArrays} from '../util/merge'
+import {deepEquals} from '../util/misc'
 import {zodParseString} from '../util/zod'
 import {
   Note,
@@ -16,8 +17,10 @@ export const textToTodos = (text: string): Todos => {
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => ({txt: line, done: false}))
-  return todos.length === 0 ? [{txt: '', done: false}] : todos
+    .map((line) => ({txt: line, done: false, id: crypto.randomUUID(), updated_at: Date.now()}))
+  return todos.length === 0
+    ? [{txt: '', done: false, id: crypto.randomUUID(), updated_at: Date.now()}]
+    : todos
 }
 
 export const todosToText = (todos: Todos): string => todos.map((t) => t.txt).join('\n')
@@ -182,30 +185,24 @@ export const mergeTodoConflict = (
   serverConflict: Note
 ): Note | null => {
   if (
-    baseVersion.todos === undefined ||
     dirtyNote.todos === undefined ||
     serverConflict.todos === undefined ||
-    !todosHaveIdsAndUpdatedAt(baseVersion.todos) ||
     !todosHaveIdsAndUpdatedAt(dirtyNote.todos) ||
     !todosHaveIdsAndUpdatedAt(serverConflict.todos)
   ) {
     return null
   }
-  const baseIds = baseVersion.todos.map((t) => t.id!)
-  const dirtyIds = dirtyNote.todos.map((t) => t.id!)
-  const serverIds = serverConflict.todos.map((t) => t.id!)
-  const mergedIds = threeWayMergeArrays(baseIds, dirtyIds, serverIds)
-  return {
-    type: 'todo',
-    id: baseVersion.id,
-    created_at: baseVersion.created_at,
-    updated_at: Date.now(),
-    deleted_at: 0,
-    version: Math.max(dirtyNote.version, serverConflict.version) + 1,
-    state: 'dirty',
-    title:
-      dirtyNote.updated_at > serverConflict.updated_at ? dirtyNote.title : serverConflict.title,
-    todos: mergedIds.map((id) => {
+  let todos: Todos
+  if (deepEquals(dirtyNote.todos, serverConflict.todos, ['id', 'updated_at'])) {
+    todos = dirtyNote.todos
+  } else if (baseVersion.todos === undefined || !todosHaveIdsAndUpdatedAt(baseVersion.todos)) {
+    return null
+  } else {
+    const baseIds = baseVersion.todos.map((t) => t.id!)
+    const dirtyIds = dirtyNote.todos.map((t) => t.id!)
+    const serverIds = serverConflict.todos.map((t) => t.id!)
+    const mergedIds = threeWayMergeArrays(baseIds, dirtyIds, serverIds)
+    todos = mergedIds.map((id) => {
       const dirtyTodo = dirtyNote.todos.find((t) => t.id === id)
       const serverTodo = serverConflict.todos.find((t) => t.id === id)
       if (!dirtyTodo && serverTodo) {
@@ -217,7 +214,19 @@ export const mergeTodoConflict = (
       } else {
         throw new Error('threeWayMergeArrays failed')
       }
-    }),
+    })
+  }
+  return {
+    type: 'todo',
+    id: baseVersion.id,
+    created_at: baseVersion.created_at,
+    updated_at: Date.now(),
+    deleted_at: 0,
+    version: Math.max(dirtyNote.version, serverConflict.version) + 1,
+    state: 'dirty',
+    title:
+      dirtyNote.updated_at > serverConflict.updated_at ? dirtyNote.title : serverConflict.title,
+    todos,
   }
 }
 
@@ -226,14 +235,17 @@ export const mergeNoteConflict = (
   dirtyNote: Note,
   serverConflict: Note
 ): Note | null => {
-  if (
-    baseVersion.txt === undefined ||
-    dirtyNote.txt === undefined ||
-    serverConflict.txt === undefined
-  ) {
+  if (dirtyNote.txt === undefined || serverConflict.txt === undefined) {
     return null
   }
-  const txt = threeWayMerge(baseVersion.txt, dirtyNote.txt, serverConflict.txt)
+  let txt: string
+  if (dirtyNote.txt === serverConflict.txt) {
+    txt = dirtyNote.txt
+  } else if (baseVersion.txt === undefined) {
+    return null
+  } else {
+    txt = threeWayMerge(baseVersion.txt, dirtyNote.txt, serverConflict.txt)
+  }
   return {
     type: 'note',
     id: baseVersion.id,
