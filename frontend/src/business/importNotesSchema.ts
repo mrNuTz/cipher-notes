@@ -13,5 +13,32 @@ export const importNotesSchema = z.array(
     })
     .strip()
 )
-
 export type ImportNote = z.infer<typeof importNotesSchema>[number]
+
+export const keepNoteCommon = z
+  .object({
+    title: z.string(),
+    userEditedTimestampUsec: z.number(),
+    createdTimestampUsec: z.number(),
+    labels: z.array(z.object({name: z.string()}).strip()).optional(),
+    isTrashed: z.boolean(),
+    isPinned: z.boolean(),
+    isArchived: z.boolean(),
+    color: z.string(),
+  })
+  .strip()
+export const keepTextNote = keepNoteCommon.extend({
+  textContent: z.string(),
+})
+export const keepTodoNote = keepNoteCommon.extend({
+  listContent: z.array(
+    z
+      .object({
+        text: z.string(),
+        isChecked: z.boolean(),
+      })
+      .strip()
+  ),
+})
+export const keepNoteSchema = z.union([keepTextNote, keepTodoNote] as const)
+export type KeepNote = z.infer<typeof keepNoteSchema>

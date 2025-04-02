@@ -1,9 +1,9 @@
 import {Button, FileInput, Group, Modal} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {closeImportDialog, importFileChanged, importNotes} from '../state/notes'
+import {closeImportDialog, importFileChanged, importNotes} from '../state/import'
 
 export const ImportNotesDialog = () => {
-  const {open, file, error} = useSelector((s) => s.notes.importDialog)
+  const {open, file, error} = useSelector((s) => s.import.importDialog)
   return (
     <Modal opened={open} onClose={closeImportDialog} title='Import notes'>
       <FileInput

@@ -1,11 +1,5 @@
 import {spotlight, Spotlight, SpotlightActionData} from '@mantine/spotlight'
-import {
-  addNote,
-  exportNotes,
-  openImportDialog,
-  openNote,
-  openSyncDialogAndSync,
-} from '../state/notes'
+import {addNote, openNote, openSyncDialogAndSync} from '../state/notes'
 import {
   logout,
   openEncryptionKeyDialog,
@@ -22,6 +16,7 @@ import {db} from '../db'
 import {useLiveQuery} from 'dexie-react-hooks'
 import {useCallback, useMemo} from 'react'
 import {Note} from '../business/models'
+import {exportNotes, openImportDialog, openKeepImportDialog} from '../state/import'
 
 export const CommandCenter = () => {
   const {toggleColorScheme} = useMantineColorScheme()
@@ -59,6 +54,11 @@ export const CommandCenter = () => {
         id: 'importNotes',
         label: 'Import notes',
         onClick: openImportDialog,
+      },
+      {
+        id: 'keepImportNotes',
+        label: 'Import notes from Keep',
+        onClick: openKeepImportDialog,
       },
       {
         id: 'register',

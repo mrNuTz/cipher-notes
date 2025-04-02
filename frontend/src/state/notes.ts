@@ -1,8 +1,6 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
-import {showMessage} from './messages'
-import {debounce, deepEquals, downloadJson, nonConcurrent} from '../util/misc'
-import {ImportNote, importNotesSchema} from '../business/importNotesSchema'
+import {debounce, deepEquals, nonConcurrent} from '../util/misc'
 import {reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
@@ -22,11 +20,6 @@ export type NotesState = {
   query: string
   openNote: OpenNote | null
   sort: {prop: NoteSortProp; desc: boolean}
-  importDialog: {
-    open: boolean
-    file: File | null
-    error: string | null
-  }
   sync: {
     dialogOpen: boolean
     syncing: boolean
@@ -39,7 +32,6 @@ export const notesInit: NotesState = {
   query: '',
   openNote: null,
   sort: {prop: 'created_at', desc: true},
-  importDialog: {open: false, file: null, error: null},
   sync: {dialogOpen: false, syncing: false, error: null, storing: false},
 }
 
@@ -270,19 +262,6 @@ export const deleteOpenNote = async () => {
     s.notes.openNote = null
   })
 }
-export const openImportDialog = () =>
-  setState((s) => {
-    s.notes.importDialog = {open: true, file: null, error: null}
-  })
-export const closeImportDialog = () =>
-  setState((s) => {
-    s.notes.importDialog = {open: false, file: null, error: null}
-  })
-export const importFileChanged = (file: File | null) =>
-  setState((s) => {
-    s.notes.importDialog.file = file
-    s.notes.importDialog.error = null
-  })
 export const openSyncDialogAndSync = () => {
   const state = getState()
   if (state.notes.sync.syncing || state.notes.sync.dialogOpen) return
@@ -297,77 +276,6 @@ export const closeSyncDialog = () =>
   })
 
 // effects
-export const exportNotes = async () => {
-  const notes = await db.notes.where('deleted_at').equals(0).toArray()
-  const notesToExport: ImportNote[] = notes.map((n) => ({
-    id: n.id,
-    txt: n.txt,
-    title: n.title,
-    created_at: n.created_at,
-    updated_at: n.updated_at,
-    todos: n.todos,
-  }))
-  downloadJson(notesToExport, 'notes.json')
-}
-export const importNotes = async (): Promise<void> => {
-  const state = getState()
-  const file = state.notes.importDialog.file
-  if (!file) {
-    return
-  }
-  try {
-    const importNotes = importNotesSchema.parse(JSON.parse(await file.text()))
-    const res: Note[] = []
-    for (const importNote of importNotes) {
-      const now = Date.now()
-      let {id} = importNote
-      if (id === undefined) {
-        id = crypto.randomUUID()
-      }
-      const {txt, updated_at = now, todos, title} = importNote
-      if (todos === undefined && txt === undefined) {
-        continue
-      }
-      const type = todos ? 'todo' : 'note'
-      const existingNote = await db.notes.get(id)
-      if (!existingNote || existingNote.deleted_at !== 0 || updated_at > existingNote.updated_at) {
-        const indeterminate = {
-          id,
-          created_at: existingNote?.created_at ?? now,
-          updated_at: Math.max(updated_at, existingNote?.updated_at ?? 0),
-          txt,
-          state: 'dirty',
-          type,
-          title: title ?? '',
-          version: !existingNote
-            ? 1
-            : existingNote.state === 'dirty'
-            ? existingNote.version
-            : existingNote.version + 1,
-          deleted_at: 0,
-          todos: todos?.map((t) => ({
-            ...t,
-            id: t.id ?? crypto.randomUUID(),
-            updated_at: t.updated_at ?? Date.now(),
-          })),
-        } as const
-        if (indeterminate.todos) {
-          res.push({...indeterminate, type: 'todo', todos: indeterminate.todos, txt: undefined})
-        } else if (indeterminate.txt) {
-          res.push({...indeterminate, type: 'note', txt: indeterminate.txt, todos: undefined})
-        }
-      }
-    }
-    await db.notes.bulkPut(res)
-    closeImportDialog()
-    showMessage({title: 'Success', text: 'Notes imported'})
-  } catch {
-    setState((s) => {
-      s.notes.importDialog.error = 'Invalid file format'
-    })
-  }
-}
-
 let modifiedWhileBetween: string[] = []
 let betweenLoadAndStore = false
 
