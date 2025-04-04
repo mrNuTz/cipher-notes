@@ -21,12 +21,13 @@ export type ImportState = {
     open: boolean
     file: File | null
     error: string | null
+    importArchived: boolean
   }
 }
 
 export const importInit: ImportState = {
   importDialog: {open: false, file: null, error: null},
-  keepImportDialog: {open: false, file: null, error: null},
+  keepImportDialog: {open: false, file: null, error: null, importArchived: false},
 }
 
 // actions
@@ -45,18 +46,23 @@ export const importFileChanged = (file: File | null) =>
   })
 export const openKeepImportDialog = () =>
   setState((s) => {
-    s.import.keepImportDialog = {open: true, file: null, error: null}
+    s.import.keepImportDialog = {open: true, file: null, error: null, importArchived: false}
   })
 export const closeKeepImportDialog = () =>
   setState((s) => {
-    s.import.keepImportDialog = {open: false, file: null, error: null}
+    s.import.keepImportDialog = {open: false, file: null, error: null, importArchived: false}
   })
 export const keepImportFileChanged = (file: File | null) =>
   setState((s) => {
     s.import.keepImportDialog.file = file
     s.import.keepImportDialog.error = null
   })
+export const keepImportArchivedChanged = (importArchived: boolean) =>
+  setState((s) => {
+    s.import.keepImportDialog.importArchived = importArchived
+  })
 
+// effects
 export const exportNotes = async () => {
   const notes = await db.notes.where('deleted_at').equals(0).toArray()
   const notesToExport: ImportNote[] = notes.map((n) => ({
@@ -130,7 +136,7 @@ export const importNotes = async (): Promise<void> => {
 
 export const keepImportNotes = async (): Promise<void> => {
   const state = getState()
-  const file = state.import.keepImportDialog.file
+  const {file, importArchived} = state.import.keepImportDialog
   if (!file) {
     return
   }
@@ -151,7 +157,7 @@ export const keepImportNotes = async (): Promise<void> => {
         console.error('Error parsing keep note', e)
         continue
       }
-      if (importNote.isTrashed) {
+      if (importNote.isTrashed || (importNote.isArchived && !importArchived)) {
         continue
       }
       const noteCommon: NoteCommon = {
