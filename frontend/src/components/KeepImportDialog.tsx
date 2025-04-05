@@ -8,7 +8,7 @@ import {
 } from '../state/import'
 
 export const KeepImportDialog = () => {
-  const {open, file, error, importArchived} = useSelector((s) => s.import.keepImportDialog)
+  const {open, file, error, importArchived} = useSelector((state) => state.import.keepImportDialog)
   return (
     <Modal opened={open} onClose={closeKeepImportDialog} title='Import notes from Keep'>
       <Text mb='sm'>

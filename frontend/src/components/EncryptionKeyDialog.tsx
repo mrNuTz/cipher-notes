@@ -12,7 +12,9 @@ import {QRCodeSVG} from 'qrcode.react'
 import {QRScanner} from './QRScanner'
 
 export const EncryptionKeyDialog = () => {
-  const {open, keyTokenPair, visible, qrMode} = useSelector((s) => s.user.encryptionKeyDialog)
+  const {open, keyTokenPair, visible, qrMode} = useSelector(
+    (state) => state.user.encryptionKeyDialog
+  )
   const valid = isValidKeyTokenPair(keyTokenPair)
   return (
     <Modal title='Encryption key' opened={open} onClose={closeEncryptionKeyDialog}>

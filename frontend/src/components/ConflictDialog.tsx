@@ -7,7 +7,7 @@ import {pickLocalNote, pickServerNote} from '../state/conflicts'
 import {TodoControl} from './TodoControl'
 
 export const ConflictDialog = () => {
-  const conflicts = useSelector((s) => s.conflicts.conflicts)
+  const conflicts = useSelector((state) => state.conflicts.conflicts)
   const serverNote = conflicts[0]
   const localNote = useLiveQuery(() => db.notes.get(serverNote?.id ?? ''), [serverNote?.id])
   if (!serverNote || !localNote) return null

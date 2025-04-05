@@ -8,8 +8,8 @@ import {IconSquare} from './icons/IconSquare'
 import {IconCheckbox} from './icons/IconCheckbox'
 
 export const NotesGrid = () => {
-  const query = useSelector((s) => s.notes.query)
-  const sort = useSelector((s) => s.notes.sort)
+  const query = useSelector((state) => state.notes.query)
+  const sort = useSelector((state) => state.notes.sort)
   const notes = useLiveQuery(async () => {
     const queryLower = query.toLocaleLowerCase()
     const allNotes = await db.notes.where('deleted_at').equals(0).toArray()

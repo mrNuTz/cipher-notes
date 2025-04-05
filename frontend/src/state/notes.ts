@@ -15,6 +15,7 @@ import {
 } from '../business/misc'
 import socket from '../socket'
 import {loadNotesSortOrder, storeNotesSortOrder} from '../services/localStorage'
+import {showMessage} from './messages'
 
 export type NotesState = {
   query: string
@@ -38,8 +39,8 @@ export const notesInit: NotesState = {
 // init
 loadNotesSortOrder().then((sort) => {
   if (sort) {
-    setState((s) => {
-      s.notes.sort = sort
+    setState((state) => {
+      state.notes.sort = sort
     })
   }
 })
@@ -65,15 +66,15 @@ document.addEventListener('visibilitychange', () => {
 
 // actions
 export const noteQueryChanged = (query: string) =>
-  setState((s) => {
-    s.notes.query = query
+  setState((state) => {
+    state.notes.query = query
   })
 export const openNote = async (id: string) => {
   const note = await db.notes.get(id)
   if (!note || note.deleted_at !== 0) return
-  setState((s) => {
+  setState((state) => {
     if (note.type === 'todo') {
-      s.notes.openNote = {
+      state.notes.openNote = {
         type: 'todo',
         id,
         todos: note.todos,
@@ -81,7 +82,7 @@ export const openNote = async (id: string) => {
         updatedAt: note.updated_at,
       }
     } else {
-      s.notes.openNote = {
+      state.notes.openNote = {
         type: 'note',
         id,
         txt: note.txt,
@@ -92,9 +93,9 @@ export const openNote = async (id: string) => {
   })
   // TODO: remove this; second set state triggers storeOpenNote which triggers a sync
   if (note.type === 'todo' && !todosHaveIdsAndUpdatedAt(note.todos)) {
-    setState((s) => {
-      if (!s.notes.openNote) return
-      s.notes.openNote.todos = note.todos.map(({id, updated_at, ...t}) => ({
+    setState((state) => {
+      if (!state.notes.openNote) return
+      state.notes.openNote.todos = note.todos.map(({id, updated_at, ...t}) => ({
         ...t,
         id: id ?? crypto.randomUUID(),
         updated_at: updated_at ?? Date.now(),
@@ -117,8 +118,8 @@ export const openNoteClosed = async () => {
     return await deleteOpenNote()
   }
 
-  setState((s) => {
-    s.notes.openNote = null
+  setState((state) => {
+    state.notes.openNote = null
   })
 }
 export const addNote = async () => {
@@ -138,110 +139,118 @@ export const addNote = async () => {
   }
   await db.notes.add(note)
 
-  setState((s) => {
-    s.notes.openNote = {type: 'note', id, txt: '', title: '', updatedAt: now}
+  setState((state) => {
+    state.notes.openNote = {type: 'note', id, txt: '', title: '', updatedAt: now}
   })
 }
 export const openNoteTitleChanged = (title: string) =>
-  setState((s) => {
-    if (!s.notes.openNote) return
-    s.notes.openNote.title = title
-    s.notes.openNote.updatedAt = Date.now()
+  setState((state) => {
+    if (!state.notes.openNote) return
+    state.notes.openNote.title = title
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const openNoteTxtChanged = (txt: string) =>
-  setState((s) => {
-    if (!s.notes.openNote) return
-    s.notes.openNote.txt = txt
-    s.notes.openNote.updatedAt = Date.now()
+  setState((state) => {
+    if (!state.notes.openNote) return
+    state.notes.openNote.txt = txt
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const openNoteTypeToggled = () =>
-  setState((s) => {
-    if (!s.notes.openNote) return
-    if (s.notes.openNote.type === 'note') {
-      s.notes.openNote = {
+  setState((state) => {
+    if (!state.notes.openNote) return
+    if (state.notes.openNote.type === 'note') {
+      state.notes.openNote = {
         type: 'todo',
-        id: s.notes.openNote.id,
-        todos: textToTodos(s.notes.openNote.txt),
-        title: s.notes.openNote.title,
+        id: state.notes.openNote.id,
+        todos: textToTodos(state.notes.openNote.txt),
+        title: state.notes.openNote.title,
         updatedAt: Date.now(),
       }
     } else {
-      s.notes.openNote = {
+      state.notes.openNote = {
         type: 'note',
-        id: s.notes.openNote.id,
-        txt: todosToText(s.notes.openNote.todos),
-        title: s.notes.openNote.title,
+        id: state.notes.openNote.id,
+        txt: todosToText(state.notes.openNote.todos),
+        title: state.notes.openNote.title,
         updatedAt: Date.now(),
       }
     }
   })
 
 export const todoChecked = (index: number, checked: boolean) =>
-  setState((s) => {
-    if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
+  setState((state) => {
+    if (
+      !state.notes.openNote ||
+      state.notes.openNote.type !== 'todo' ||
+      !state.notes.openNote.todos[index]
+    )
       return
-    s.notes.openNote.todos[index].done = checked
-    s.notes.openNote.todos[index].updated_at = Date.now()
-    s.notes.openNote.updatedAt = Date.now()
+    state.notes.openNote.todos[index].done = checked
+    state.notes.openNote.todos[index].updated_at = Date.now()
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const todoChanged = (index: number, txt: string) =>
-  setState((s) => {
-    if (!s.notes.openNote || s.notes.openNote.type !== 'todo' || !s.notes.openNote.todos[index])
+  setState((state) => {
+    if (
+      !state.notes.openNote ||
+      state.notes.openNote.type !== 'todo' ||
+      !state.notes.openNote.todos[index]
+    )
       return
-    s.notes.openNote.todos[index].txt = txt
-    s.notes.openNote.todos[index].updated_at = Date.now()
-    s.notes.openNote.updatedAt = Date.now()
+    state.notes.openNote.todos[index].txt = txt
+    state.notes.openNote.todos[index].updated_at = Date.now()
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const insertTodo = (bellow: number) =>
-  setState((s) => {
-    if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
-    s.notes.openNote.todos.splice(bellow + 1, 0, {
+  setState((state) => {
+    if (!state.notes.openNote || state.notes.openNote.type !== 'todo') return
+    state.notes.openNote.todos.splice(bellow + 1, 0, {
       txt: '',
       done: false,
       id: crypto.randomUUID(),
       updated_at: Date.now(),
     })
-    s.notes.openNote.updatedAt = Date.now()
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const deleteTodo = (index: number) =>
-  setState((s) => {
-    if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
-    s.notes.openNote.todos.splice(index, 1)
-    s.notes.openNote.updatedAt = Date.now()
+  setState((state) => {
+    if (!state.notes.openNote || state.notes.openNote.type !== 'todo') return
+    state.notes.openNote.todos.splice(index, 1)
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const moveTodo = (source: number, target: number) =>
-  setState((s) => {
-    if (!s.notes.openNote || s.notes.openNote.type !== 'todo') return
-    const todos = s.notes.openNote.todos
+  setState((state) => {
+    if (!state.notes.openNote || state.notes.openNote.type !== 'todo') return
+    const todos = state.notes.openNote.todos
     const [todo] = todos.splice(source, 1)
     if (todo) {
       todos.splice(target, 0, todo)
     }
-    s.notes.openNote.updatedAt = Date.now()
+    state.notes.openNote.updatedAt = Date.now()
   })
 export const openNoteHistoryHandler = (historyItem: NoteHistoryItem | null) => {
   if (!historyItem) {
     return
   }
-  setState((s) => {
-    if (!s.notes.openNote) return
+  setState((state) => {
+    if (!state.notes.openNote) return
     if (historyItem.type === 'note') {
-      s.notes.openNote.type = 'note'
-      s.notes.openNote.txt = historyItem.txt
+      state.notes.openNote.type = 'note'
+      state.notes.openNote.txt = historyItem.txt
     } else {
-      s.notes.openNote.type = 'todo'
-      s.notes.openNote.todos = historyItem.todos
+      state.notes.openNote.type = 'todo'
+      state.notes.openNote.todos = historyItem.todos
     }
-    s.notes.openNote.updatedAt = Date.now()
+    state.notes.openNote.updatedAt = Date.now()
   })
 }
 export const sortChanged = (prop: NoteSortProp) =>
-  setState((s) => {
-    s.notes.sort.prop = prop
+  setState((state) => {
+    state.notes.sort.prop = prop
   })
 export const sortDirectionChanged = () =>
-  setState((s) => {
-    s.notes.sort.desc = !s.notes.sort.desc
+  setState((state) => {
+    state.notes.sort.desc = !state.notes.sort.desc
   })
 export const deleteOpenNote = async () => {
   const state = getState()
@@ -258,8 +267,8 @@ export const deleteOpenNote = async () => {
       version: note.state === 'dirty' ? note.version : note.version + 1,
     })
   }
-  setState((s) => {
-    s.notes.openNote = null
+  setState((state) => {
+    state.notes.openNote = null
   })
 }
 export const openSyncDialogAndSync = () => {
@@ -287,8 +296,8 @@ export const syncNotes = nonConcurrent(async () => {
   if (!keyTokenPair || !loggedIn || state.notes.sync.syncing) {
     return
   }
-  setState((s) => {
-    s.notes.sync.syncing = true
+  setState((state) => {
+    state.notes.sync.syncing = true
   })
   try {
     betweenLoadAndStore = true
@@ -302,13 +311,13 @@ export const syncNotes = nonConcurrent(async () => {
 
     const res = await reqSyncNotes(lastSyncedTo, encClientSyncData, keyTokenPair.syncToken)
     if (!res.success) {
-      setState((s) => {
-        s.notes.sync.error = res.error
+      setState((state) => {
+        state.notes.sync.error = res.error
         if (res.statusCode === 401) {
-          s.user.user.loggedIn = false
+          state.user.user.loggedIn = false
         }
-        if (s.notes.sync.dialogOpen) {
-          s.messages.messages.push({title: 'Failed to sync notes', text: res.error})
+        if (state.notes.sync.dialogOpen) {
+          showMessage(state, {title: 'Failed to sync notes', text: res.error})
         }
       })
       return
@@ -355,31 +364,31 @@ export const syncNotes = nonConcurrent(async () => {
     await db.notes.bulkDelete(syncedDeleteIds)
     await db.note_base_versions.bulkDelete(syncedDeleteIds)
 
-    setState((s) => {
-      s.conflicts.conflicts = conflicts
-      s.user.user.lastSyncedTo = res.data.synced_to
-      s.notes.sync.error = null
-      if (s.notes.sync.dialogOpen) {
-        s.messages.messages.push({
+    setState((state) => {
+      state.conflicts.conflicts = conflicts
+      state.user.user.lastSyncedTo = res.data.synced_to
+      state.notes.sync.error = null
+      if (state.notes.sync.dialogOpen) {
+        showMessage(state, {
           title: 'Success',
           text: `Notes synced with ${serverConflicts.length} conflicts`,
         })
       }
     })
   } catch (e) {
-    setState((s) => {
+    setState((state) => {
       const message = e instanceof Error ? e.message : 'Unknown error'
-      s.notes.sync.error = message
-      if (s.notes.sync.dialogOpen) {
-        s.messages.messages.push({
+      state.notes.sync.error = message
+      if (state.notes.sync.dialogOpen) {
+        showMessage(state, {
           title: 'Failed to sync notes',
           text: message,
         })
       }
     })
   } finally {
-    setState((s) => {
-      s.notes.sync.syncing = false
+    setState((state) => {
+      state.notes.sync.syncing = false
     })
     betweenLoadAndStore = false
     modifiedWhileBetween = []
@@ -396,14 +405,14 @@ const setOpenNote = (syncedNotes: Note[]) => {
     return
   }
   if (note.deleted_at !== 0) {
-    return setState((s) => {
-      s.notes.openNote = null
+    return setState((state) => {
+      state.notes.openNote = null
     })
   }
   // TODO: handle clock differences between clients
   if (note.updated_at > openNote.updatedAt) {
-    setState((s) => {
-      s.notes.openNote =
+    setState((state) => {
+      state.notes.openNote =
         note.type === 'note'
           ? {
               type: note.type,
@@ -454,13 +463,13 @@ const storeOpenNote = nonConcurrent(async () => {
 export const registerNotesSubscriptions = () => {
   const storeOpenNoteDebounced = debounce(storeOpenNote, 1000)
 
-  subscribe((s) => s.notes.sort, storeNotesSortOrder)
+  subscribe((state) => state.notes.sort, storeNotesSortOrder)
   subscribe(
-    (s) => s.notes.openNote,
+    (state) => state.notes.openNote,
     (curr, prev) => curr && prev && storeOpenNoteDebounced()
   )
   subscribe(
-    (s) => s.conflicts.conflicts.length !== 0,
+    (state) => state.conflicts.conflicts.length !== 0,
     (hasConflicts) => {
       if (hasConflicts) {
         openNoteClosed()

@@ -20,7 +20,7 @@ import {exportNotes, openImportDialog, openKeepImportDialog} from '../state/impo
 
 export const CommandCenter = () => {
   const {toggleColorScheme} = useMantineColorScheme()
-  const loggedIn = useSelector((s) => s.user.user.loggedIn)
+  const loggedIn = useSelector((state) => state.user.user.loggedIn)
   const anyDialogOpen = useSelector(selectAnyDialogOpen)
   const notes: Note[] = useLiveQuery(() => db.notes.toArray(), [], [])
 

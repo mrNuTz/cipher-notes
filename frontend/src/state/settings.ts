@@ -46,7 +46,7 @@ const storeSettingsDebounced = debounce(storeSettings, 250)
 
 export const registerSettingsSubscriptions = () => {
   subscribe(
-    (s) => s.settings.settings,
+    (state) => state.settings.settings,
     (settings) => storeSettingsDebounced(settings)
   )
 }

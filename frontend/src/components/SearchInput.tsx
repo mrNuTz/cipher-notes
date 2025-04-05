@@ -4,7 +4,7 @@ import {noteQueryChanged} from '../state/notes'
 import {IconSearch} from './icons/IconSearch'
 
 export const SearchInput = () => {
-  const query = useSelector((s) => s.notes.query)
+  const query = useSelector((state) => state.notes.query)
   return (
     <TextInput
       flex='0 1 auto'

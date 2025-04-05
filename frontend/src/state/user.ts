@@ -58,8 +58,8 @@ export const userInit: UserState = {
 // init
 loadUser().then(async (user) => {
   if (user) {
-    setState((s) => {
-      s.user.user = user
+    setState((state) => {
+      state.user.user = user
     })
   }
   if (user?.loggedIn && !socket.connected) {
@@ -67,8 +67,8 @@ loadUser().then(async (user) => {
   }
 })
 window.addEventListener('focus', () => {
-  setState((s) => {
-    s.user.connected = socket.connected
+  setState((state) => {
+    state.user.connected = socket.connected
   })
 })
 
@@ -119,6 +119,11 @@ export const switchLoginStatus = () => {
     state.user.loginDialog.status = state.user.loginDialog.status === 'email' ? 'code' : 'email'
   })
 }
+export const socketConnectionChanged = (connected: boolean) => {
+  setState((state) => {
+    state.user.connected = connected
+  })
+}
 
 export const openEncryptionKeyDialog = async () => {
   const state = getState()
@@ -165,16 +170,17 @@ export const saveEncryptionKey = async (keyTokenPair: string) => {
   const isNewKey =
     oldKeyTokenPair?.cryptoKey !== cryptoKey || oldKeyTokenPair?.syncToken !== syncToken
   if (isNewKey) {
-    const deletedNotes = await db.notes.where('deleted_at').notEqual(0).toArray()
-    await db.notes.bulkDelete(deletedNotes.map((note) => note.id))
+    const deletedNoteIds = await db.notes.where('deleted_at').notEqual(0).primaryKeys()
+    await db.notes.bulkDelete(deletedNoteIds)
 
     const keys = await db.notes.toCollection().primaryKeys()
     await db.notes.bulkUpdate(keys.map((key) => ({key, changes: {state: 'dirty'}})))
   }
-
   setState((state) => {
-    state.user.user.lastSyncedTo = 0
-    state.user.user.keyTokenPair = {cryptoKey, syncToken}
+    if (isNewKey) {
+      state.user.user.lastSyncedTo = 0
+      state.user.user.keyTokenPair = {cryptoKey, syncToken}
+    }
     state.user.encryptionKeyDialog.open = false
   })
 }
@@ -184,42 +190,49 @@ export const openDeleteServerNotesDialog = async () => {
   const loggedIn = state.user.user.loggedIn
   if (!loggedIn) return
 
-  setState((s) => {
-    s.user.deleteServerNotesDialog = {open: true, code: '', codeLoading: true, deleteLoading: false}
+  setState((state) => {
+    state.user.deleteServerNotesDialog = {
+      open: true,
+      code: '',
+      codeLoading: true,
+      deleteLoading: false,
+    }
   })
 
   const res = await reqSendConfirmCode()
 
-  setState((s) => {
-    s.user.deleteServerNotesDialog.codeLoading = false
+  setState((state) => {
+    state.user.deleteServerNotesDialog.codeLoading = false
     if (!res.success && res.statusCode === 401) {
-      s.user.user.loggedIn = false
+      state.user.user.loggedIn = false
+    }
+    if (!res.success) {
+      showMessage(state, {
+        title: 'Failed to send confirmation code',
+        text: res.error,
+      })
+    } else {
+      showMessage(state, {
+        title: 'Confirmation code sent',
+        text: 'Check your email for the confirmation code',
+      })
     }
   })
-
-  if (!res.success) {
-    showMessage({
-      title: 'Failed to send confirmation code',
-      text: res.error,
-    })
-  } else {
-    showMessage({
-      title: 'Confirmation code sent',
-      text: 'Check your email for the confirmation code',
-    })
-  }
 }
 
 export const closeDeleteServerNotesDialog = () =>
-  setState((s) => {
-    if (s.user.deleteServerNotesDialog.deleteLoading || s.user.deleteServerNotesDialog.codeLoading)
+  setState((state) => {
+    if (
+      state.user.deleteServerNotesDialog.deleteLoading ||
+      state.user.deleteServerNotesDialog.codeLoading
+    )
       return
-    s.user.deleteServerNotesDialog.open = false
+    state.user.deleteServerNotesDialog.open = false
   })
 
 export const deleteServerNotesCodeChanged = (code: string) =>
-  setState((s) => {
-    s.user.deleteServerNotesDialog.code = code
+  setState((state) => {
+    state.user.deleteServerNotesDialog.code = code
   })
 
 export const deleteServerNotesAndGenerateNewKey = async () => {
@@ -228,19 +241,19 @@ export const deleteServerNotesAndGenerateNewKey = async () => {
   const loggedIn = state.user.user.loggedIn
   if (!code || deleteLoading || !loggedIn) return
 
-  setState((s) => {
-    s.user.deleteServerNotesDialog.deleteLoading = true
+  setState((state) => {
+    state.user.deleteServerNotesDialog.deleteLoading = true
   })
 
   const res = await reqDeleteNotes(code)
 
   if (!res.success) {
-    return setState((s) => {
-      s.user.deleteServerNotesDialog.deleteLoading = false
+    return setState((state) => {
+      state.user.deleteServerNotesDialog.deleteLoading = false
       if (res.statusCode === 401) {
-        s.user.user.loggedIn = false
+        state.user.user.loggedIn = false
       }
-      s.messages.messages.push({
+      showMessage(state, {
         title: 'Failed to delete notes',
         text: res.error,
       })
@@ -254,12 +267,12 @@ export const deleteServerNotesAndGenerateNewKey = async () => {
   await db.notes.bulkUpdate(keys.map((key) => ({key, changes: {state: 'dirty'}})))
 
   const cryptoKey = await generateKey()
-  setState((s) => {
-    s.user.deleteServerNotesDialog.deleteLoading = false
-    s.user.deleteServerNotesDialog.open = false
-    s.user.user.lastSyncedTo = 0
-    s.user.user.keyTokenPair = {cryptoKey, syncToken: generateSalt(16)}
-    s.messages.messages.push({
+  setState((state) => {
+    state.user.deleteServerNotesDialog.deleteLoading = false
+    state.user.deleteServerNotesDialog.open = false
+    state.user.user.lastSyncedTo = 0
+    state.user.user.keyTokenPair = {cryptoKey, syncToken: generateSalt(16)}
+    showMessage(state, {
       title: 'Success',
       text: 'Server notes deleted and new crypto key generated',
     })
@@ -277,23 +290,27 @@ export const registerEmail = async (captchaToken: string) => {
   const res = await reqRegisterEmail(email, captchaToken)
   setState((state) => {
     state.user.registerDialog.loading = false
+    if (!res.success) {
+      showMessage(state, {
+        title: 'Register Email Failed',
+        text: res.error,
+      })
+    } else {
+      showMessage(state, {
+        title: 'Register Email',
+        text: 'Email registered, proceed to login',
+      })
+      state.user.user.email = email
+      state.user.registerDialog.open = false
+      state.user.loginDialog = {
+        open: true,
+        email: state.user.user.email,
+        code: '',
+        loading: false,
+        status: 'email',
+      }
+    }
   })
-  if (!res.success) {
-    showMessage({
-      title: 'Register Email Failed',
-      text: res.error,
-    })
-    return
-  }
-  showMessage({
-    title: 'Register Email',
-    text: 'Email registered, proceed to login',
-  })
-  setState((state) => {
-    state.user.user.email = email
-    state.user.registerDialog.open = false
-  })
-  openLoginDialog()
 }
 export const sendLoginCode = async () => {
   const state = getState()
@@ -305,19 +322,19 @@ export const sendLoginCode = async () => {
   const res = await reqSendLoginCode(email)
   setState((state) => {
     state.user.loginDialog.loading = false
+    if (!res.success) {
+      showMessage(state, {
+        title: 'Login Email Failed',
+        text: res.error,
+      })
+    } else {
+      showMessage(state, {
+        title: 'Login Email',
+        text: 'Email sent, proceed to enter code',
+      })
+      state.user.loginDialog.status = 'code'
+    }
   })
-  if (!res.success) {
-    showMessage({
-      title: 'Login Email Failed',
-      text: res.error,
-    })
-    return
-  }
-  showMessage({
-    title: 'Login Email',
-    text: 'Email sent, proceed to enter code',
-  })
-  switchLoginStatus()
 }
 export const loginCode = async () => {
   const state = getState()
@@ -329,23 +346,21 @@ export const loginCode = async () => {
   const res = await reqLoginCode(email, code)
   setState((state) => {
     state.user.loginDialog.loading = false
+    if (!res.success) {
+      showMessage(state, {
+        title: 'Login with code failed',
+        text: res.error,
+      })
+    } else {
+      state.user.user.loggedIn = true
+      state.user.user.email = email
+      showMessage(state, {
+        title: 'Success',
+        text: 'You are logged in',
+      })
+      state.user.loginDialog.open = false
+    }
   })
-  if (!res.success) {
-    showMessage({
-      title: 'Login Code Failed',
-      text: res.error,
-    })
-    return
-  }
-  setState((state) => {
-    state.user.user.loggedIn = true
-    state.user.user.email = email
-  })
-  showMessage({
-    title: 'Login Code',
-    text: 'Login successful',
-  })
-  closeLoginDialog()
 }
 
 export const toggleImpressum = () => {
@@ -359,23 +374,26 @@ export const logout = async () => {
   const loggedIn = state.user.user.loggedIn
   if (!loggedIn) return
   const res = await reqLogout()
-  if (!res.success) {
-    showMessage({title: 'Logout Failed', text: res.error})
-  }
   setState((state) => {
-    state.user.user.loggedIn = false
+    if (!res.success) {
+      showMessage(state, {title: 'Logout Failed', text: res.error})
+    } else {
+      state.user.user.loggedIn = false
+    }
   })
 }
 
 // subscriptions
 export const registerUserSubscriptions = () => {
   subscribe(
-    (s) => s.user.user,
+    (state) => state.user.user,
     (user) =>
-      storeUser(user).catch((e) => showMessage({title: 'Store User Failed', text: e.message}))
+      storeUser(user).catch((e) =>
+        setState((state) => showMessage(state, {title: 'Store User Failed', text: e.message}))
+      )
   )
   subscribe(
-    (s) => s.user.user.loggedIn,
+    (state) => state.user.user.loggedIn,
     (loggedIn) => {
       if (loggedIn && !socket.connected) {
         socket.connect()

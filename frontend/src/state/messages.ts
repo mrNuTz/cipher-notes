@@ -1,3 +1,4 @@
+import {WritableDraft} from 'immer'
 import {last} from '../util/misc'
 import {RootState, setState} from './store'
 
@@ -13,10 +14,9 @@ export const messagesInit: MessagesState = {
 }
 
 // actions
-export const showMessage = (message: Message) =>
-  setState((state) => {
-    state.messages.messages.push(message)
-  })
+export const showMessage = (state: WritableDraft<RootState>, message: Message) => {
+  state.messages.messages.push(message)
+}
 export const closeMessage = () =>
   setState((state) => {
     state.messages.messages.pop()

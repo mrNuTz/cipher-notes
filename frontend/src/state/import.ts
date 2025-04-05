@@ -1,3 +1,4 @@
+import {WritableDraft} from 'immer'
 import {
   ImportNote,
   importNotesSchema,
@@ -8,7 +9,7 @@ import {Note, NoteCommon} from '../business/models'
 import {db} from '../db'
 import {downloadJson} from '../util/misc'
 import {showMessage} from './messages'
-import {getState, setState} from './store'
+import {getState, RootState, setState} from './store'
 import JSZip from 'jszip'
 
 export type ImportState = {
@@ -32,34 +33,44 @@ export const importInit: ImportState = {
 
 // actions
 export const openImportDialog = () =>
-  setState((s) => {
-    s.import.importDialog = {open: true, file: null, error: null}
+  setState((state) => {
+    state.import.importDialog = {open: true, file: null, error: null}
   })
-export const closeImportDialog = () =>
-  setState((s) => {
-    s.import.importDialog = {open: false, file: null, error: null}
-  })
+export const closeImportDialog = (state?: WritableDraft<RootState>) => {
+  if (state) {
+    state.import.importDialog = importInit.importDialog
+  } else {
+    setState((state) => {
+      state.import.importDialog = importInit.importDialog
+    })
+  }
+}
 export const importFileChanged = (file: File | null) =>
-  setState((s) => {
-    s.import.importDialog.file = file
-    s.import.importDialog.error = null
+  setState((state) => {
+    state.import.importDialog.file = file
+    state.import.importDialog.error = null
   })
 export const openKeepImportDialog = () =>
-  setState((s) => {
-    s.import.keepImportDialog = {open: true, file: null, error: null, importArchived: false}
+  setState((state) => {
+    state.import.keepImportDialog = {open: true, file: null, error: null, importArchived: false}
   })
-export const closeKeepImportDialog = () =>
-  setState((s) => {
-    s.import.keepImportDialog = {open: false, file: null, error: null, importArchived: false}
-  })
+export const closeKeepImportDialog = (state?: WritableDraft<RootState>) => {
+  if (state) {
+    state.import.keepImportDialog = importInit.keepImportDialog
+  } else {
+    setState((state) => {
+      state.import.keepImportDialog = importInit.keepImportDialog
+    })
+  }
+}
 export const keepImportFileChanged = (file: File | null) =>
-  setState((s) => {
-    s.import.keepImportDialog.file = file
-    s.import.keepImportDialog.error = null
+  setState((state) => {
+    state.import.keepImportDialog.file = file
+    state.import.keepImportDialog.error = null
   })
 export const keepImportArchivedChanged = (importArchived: boolean) =>
-  setState((s) => {
-    s.import.keepImportDialog.importArchived = importArchived
+  setState((state) => {
+    state.import.keepImportDialog.importArchived = importArchived
   })
 
 // effects
@@ -126,11 +137,13 @@ export const importNotes = async (): Promise<void> => {
       }
     }
     await db.notes.bulkPut(res)
-    closeImportDialog()
-    showMessage({title: 'Success', text: 'Notes imported'})
+    setState((state) => {
+      closeImportDialog(state)
+      showMessage(state, {title: 'Success', text: 'Notes imported'})
+    })
   } catch {
-    setState((s) => {
-      s.import.importDialog.error = 'Invalid file format'
+    setState((state) => {
+      state.import.importDialog.error = 'Invalid file format'
     })
   }
 }
@@ -192,16 +205,20 @@ export const keepImportNotes = async (): Promise<void> => {
       }
     }
     if (res.length === 0) {
-      showMessage({title: 'No notes imported', text: 'No valid notes found'})
+      setState((state) =>
+        showMessage(state, {title: 'No notes imported', text: 'No valid notes found'})
+      )
       return
     }
     await db.notes.bulkPut(res)
-    closeKeepImportDialog()
-    showMessage({title: 'Success', text: 'Keep notes imported'})
+    setState((state) => {
+      closeKeepImportDialog(state)
+      showMessage(state, {title: 'Success', text: 'Keep notes imported'})
+    })
   } catch (e) {
     console.error(e)
-    setState((s) => {
-      s.import.keepImportDialog.error = e instanceof Error ? e.message : 'Unknown error'
+    setState((state) => {
+      state.import.keepImportDialog.error = e instanceof Error ? e.message : 'Unknown error'
     })
   }
 }

@@ -3,7 +3,7 @@ import {useSelector} from '../state/store'
 import {toggleImpressum} from '../state/user'
 
 export const ImpressumDialog = () => {
-  const open = useSelector((s) => s.user.impressumOpen)
+  const open = useSelector((state) => state.user.impressumOpen)
   return (
     <Modal opened={open} onClose={toggleImpressum} title='Impressum'>
       <Text>

@@ -3,8 +3,8 @@ import {useSelector} from '../state/store'
 import {closeSyncDialog, syncNotes} from '../state/notes'
 
 export const SyncDialog = () => {
-  const {syncing, dialogOpen} = useSelector((s) => s.notes.sync)
-  const noKey = useSelector((s) => s.user.user.keyTokenPair === null)
+  const {syncing, dialogOpen} = useSelector((state) => state.notes.sync)
+  const noKey = useSelector((state) => state.user.user.keyTokenPair === null)
   return (
     <Modal title='Synchronize notes with the server' opened={dialogOpen} onClose={closeSyncDialog}>
       <Text c='dimmed' pb='md'>

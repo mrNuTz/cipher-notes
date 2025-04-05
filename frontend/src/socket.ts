@@ -1,5 +1,5 @@
 import {io} from 'socket.io-client'
-import {setState} from './state/store'
+import {socketConnectionChanged} from './state/user'
 
 const socket = io({
   withCredentials: true,
@@ -9,15 +9,7 @@ const socket = io({
 socket.on('connect_error', (err) => {
   console.error('socket connect_error', err)
 })
-socket.on('connect', () => {
-  setState((s) => {
-    s.user.connected = true
-  })
-})
-socket.on('disconnect', () => {
-  setState((s) => {
-    s.user.connected = false
-  })
-})
+socket.on('connect', () => socketConnectionChanged(true))
+socket.on('disconnect', () => socketConnectionChanged(false))
 
 export default socket

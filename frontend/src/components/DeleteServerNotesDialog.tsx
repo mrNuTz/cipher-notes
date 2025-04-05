@@ -9,7 +9,7 @@ import {
 
 export const DeleteServerNotesDialog = () => {
   const {open, code, codeLoading, deleteLoading} = useSelector(
-    (s) => s.user.deleteServerNotesDialog
+    (state) => state.user.deleteServerNotesDialog
   )
   return (
     <Modal opened={open} onClose={closeDeleteServerNotesDialog} title='Delete Server Notes'>

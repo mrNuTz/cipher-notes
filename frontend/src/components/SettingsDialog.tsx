@@ -4,7 +4,7 @@ import {closeSettingsDialog, toggleNewNoteOnLaunch} from '../state/settings'
 import {Modal} from '@mantine/core'
 
 export const SettingsDialog = () => {
-  const {open, settings} = useSelector((s) => s.settings)
+  const {open, settings} = useSelector((state) => state.settings)
   return (
     <Modal title='Settings' opened={open} onClose={closeSettingsDialog}>
       <Checkbox

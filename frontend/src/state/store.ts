@@ -33,15 +33,15 @@ registerUserSubscriptions()
 registerNotesSubscriptions()
 registerSettingsSubscriptions()
 
-export const selectAnyDialogOpen = (s: RootState): boolean =>
-  s.conflicts.conflicts.length > 0 ||
-  s.messages.messages.length > 0 ||
-  s.notes.openNote !== null ||
-  s.import.importDialog.open ||
-  s.import.keepImportDialog.open ||
-  s.notes.sync.dialogOpen ||
-  s.user.registerDialog.open ||
-  s.user.loginDialog.open ||
-  s.user.encryptionKeyDialog.open ||
-  s.user.impressumOpen ||
-  s.settings.open
+export const selectAnyDialogOpen = (state: RootState): boolean =>
+  state.conflicts.conflicts.length > 0 ||
+  state.messages.messages.length > 0 ||
+  state.notes.openNote !== null ||
+  state.import.importDialog.open ||
+  state.import.keepImportDialog.open ||
+  state.notes.sync.dialogOpen ||
+  state.user.registerDialog.open ||
+  state.user.loginDialog.open ||
+  state.user.encryptionKeyDialog.open ||
+  state.user.impressumOpen ||
+  state.settings.open

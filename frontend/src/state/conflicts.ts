@@ -23,8 +23,8 @@ export const pickLocalNote = async () => {
     state: 'dirty',
   }
   await db.notes.put(updatedNote)
-  setState((s) => {
-    s.conflicts.conflicts = s.conflicts.conflicts.slice(1)
+  setState((state) => {
+    state.conflicts.conflicts = state.conflicts.conflicts.slice(1)
   })
 }
 
@@ -36,7 +36,7 @@ export const pickServerNote = async () => {
 
   await db.notes.put(serveNote)
 
-  setState((s) => {
-    s.conflicts.conflicts = s.conflicts.conflicts.slice(1)
+  setState((state) => {
+    state.conflicts.conflicts = state.conflicts.conflicts.slice(1)
   })
 }
