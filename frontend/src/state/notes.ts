@@ -1,7 +1,7 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {debounce, deepEquals, nonConcurrent} from '../util/misc'
-import {reqSyncNotes} from '../services/backend'
+import {isUnauthorizedRes, reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
 import {
@@ -316,7 +316,7 @@ export const syncNotes = nonConcurrent(async () => {
     if (!res.success) {
       setState((state) => {
         state.notes.sync.error = res.error
-        if (res.statusCode === 401) {
+        if (isUnauthorizedRes(res)) {
           state.user.user.loggedIn = false
         }
         if (state.notes.sync.dialogOpen) {

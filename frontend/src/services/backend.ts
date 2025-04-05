@@ -100,3 +100,5 @@ export const reqSendConfirmCode = () =>
   })
 
 export const reqLogout = () => request<void>('/logout', {method: 'POST'})
+
+export const isUnauthorizedRes = (res: Res<unknown>) => !res.success && res.statusCode === 401

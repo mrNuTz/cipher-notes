@@ -41,13 +41,16 @@ DONE:
   todo delete button
   todo add button
   auto merge
+  keep import
 FIRST:
 TODO:
 LATER:
-  keep import
-  debounce notes search
-  notes grid paging
+  labels
+  colors
+  quicker delete
   change email
   delete account
 MAYBE:
+  notes grid paging
+  debounce notes search
   password protected notes

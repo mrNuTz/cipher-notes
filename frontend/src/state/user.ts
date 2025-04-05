@@ -5,6 +5,7 @@ import {
   reqDeleteNotes,
   reqSendConfirmCode,
   reqLogout,
+  isUnauthorizedRes,
 } from '../services/backend'
 import {loadUser, storeUser} from '../services/localStorage'
 import {showMessage} from './messages'
@@ -203,7 +204,7 @@ export const openDeleteServerNotesDialog = async () => {
 
   setState((state) => {
     state.user.deleteServerNotesDialog.codeLoading = false
-    if (!res.success && res.statusCode === 401) {
+    if (isUnauthorizedRes(res)) {
       state.user.user.loggedIn = false
     }
     if (!res.success) {
@@ -250,7 +251,7 @@ export const deleteServerNotesAndGenerateNewKey = async () => {
   if (!res.success) {
     return setState((state) => {
       state.user.deleteServerNotesDialog.deleteLoading = false
-      if (res.statusCode === 401) {
+      if (isUnauthorizedRes(res)) {
         state.user.user.loggedIn = false
       }
       showMessage(state, {
@@ -375,10 +376,10 @@ export const logout = async () => {
   if (!loggedIn) return
   const res = await reqLogout()
   setState((state) => {
-    if (!res.success) {
-      showMessage(state, {title: 'Logout Failed', text: res.error})
-    } else {
+    if (res.success || isUnauthorizedRes(res)) {
       state.user.user.loggedIn = false
+    } else {
+      showMessage(state, {title: 'Logout Failed', text: res.error})
     }
   })
 }
