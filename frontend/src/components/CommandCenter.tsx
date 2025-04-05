@@ -1,5 +1,5 @@
 import {spotlight, Spotlight, SpotlightActionData} from '@mantine/spotlight'
-import {addNote, openNote, openSyncDialogAndSync} from '../state/notes'
+import {addNote, noteOpened, openSyncDialogAndSync} from '../state/notes'
 import {
   logout,
   openEncryptionKeyDialog,
@@ -134,7 +134,7 @@ export const CommandCenter = () => {
       notes.map((n) => ({
         id: n.id,
         label: n.title,
-        onClick: () => openNote(n.id),
+        onClick: () => noteOpened(n.id),
       })),
     [notes]
   )

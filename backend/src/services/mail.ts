@@ -9,6 +9,10 @@ Address: Sohlstraße 3, 6845 Hohenems, Austria
 Email: raphaeln@outlook.com`
 
 export const sendMail = async (to: string, subject: string, text: string, html?: string) => {
+  if (env.SENDGRID_API_KEY === 'DEV') {
+    console.info('EMAIL:', {to, subject, text, html})
+    return
+  }
   const [res] = await sg.send({to, subject, text, html, from: 'raphaeln@outlook.com'})
   if (res.statusCode < 200 || res.statusCode >= 300) {
     throw createHttpError(500, 'Failed to send email')

@@ -1,6 +1,6 @@
 import {Box, Flex, Paper} from '@mantine/core'
 import {useSelector} from '../state/store'
-import {openNote} from '../state/notes'
+import {noteOpened} from '../state/notes'
 import {useLiveQuery} from 'dexie-react-hooks'
 import {db} from '../db'
 import {byProp, compare, truncateWithEllipsis} from '../util/misc'
@@ -56,7 +56,7 @@ export const NotesGrid = () => {
             flexDirection: 'column',
           }}
           shadow='sm'
-          onClick={() => openNote(note.id)}
+          onClick={() => noteOpened(note.id)}
           role='button'
         >
           <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{note.title}</div>

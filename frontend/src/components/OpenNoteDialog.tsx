@@ -1,7 +1,7 @@
 import {Button, Drawer, Flex} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
-  openNoteClosed,
+  noteClosed,
   openNoteTxtChanged,
   deleteOpenNote,
   openNoteHistoryHandler,
@@ -45,10 +45,10 @@ export const OpenNoteDialog = () => {
   useEffect(() => {
     if (open) {
       window.history.pushState({dialogOpen: true}, '', location.href)
-      window.addEventListener('popstate', openNoteClosed)
+      window.addEventListener('popstate', noteClosed)
     }
     return () => {
-      window.removeEventListener('popstate', openNoteClosed)
+      window.removeEventListener('popstate', noteClosed)
     }
   }, [open])
   return (

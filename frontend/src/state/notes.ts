@@ -70,7 +70,7 @@ export const noteQueryChanged = (query: string) =>
   setState((state) => {
     state.notes.query = query
   })
-export const openNote = async (id: string) => {
+export const noteOpened = async (id: string) => {
   const note = await db.notes.get(id)
   if (!note || note.deleted_at !== 0) return
   setState((state) => {
@@ -104,7 +104,7 @@ export const openNote = async (id: string) => {
     })
   }
 }
-export const openNoteClosed = async () => {
+export const noteClosed = async () => {
   const state = getState()
   const openNote = state.notes.openNote
   if (!openNote) return
@@ -475,7 +475,7 @@ export const registerNotesSubscriptions = () => {
     (state) => state.conflicts.conflicts.length !== 0,
     (hasConflicts) => {
       if (hasConflicts) {
-        openNoteClosed()
+        noteClosed()
       }
     }
   )
