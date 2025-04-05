@@ -58,9 +58,10 @@ const onFocus = debounce(() => {
   syncNotes()
 }, 10)
 
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'hidden') {
-    syncNotes()
+    await storeOpenNote()
+    await syncNotes()
   }
 })
 
@@ -117,6 +118,8 @@ export const openNoteClosed = async () => {
   ) {
     return await deleteOpenNote()
   }
+
+  await storeOpenNote()
 
   setState((state) => {
     state.notes.openNote = null
@@ -473,6 +476,14 @@ export const registerNotesSubscriptions = () => {
     (hasConflicts) => {
       if (hasConflicts) {
         openNoteClosed()
+      }
+    }
+  )
+  subscribe(
+    (state) => state.user.user.loggedIn,
+    (curr, prev) => {
+      if (!prev && curr) {
+        syncNotes()
       }
     }
   )
