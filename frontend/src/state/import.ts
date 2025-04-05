@@ -86,21 +86,22 @@ export const importNotes = async (): Promise<void> => {
     const res: Note[] = []
     const now = Date.now()
     for (const importNote of importNotes) {
-      let {id} = importNote
+      let {id, updated_at = now} = importNote
       if (id === undefined) {
         id = crypto.randomUUID()
       }
-      const {txt, updated_at = now, todos, title} = importNote
+      const {txt, todos, title} = importNote
       if (todos === undefined && txt === undefined) {
         continue
       }
       const type = todos ? 'todo' : 'note'
       const existingNote = await db.notes.get(id)
       if (!existingNote || existingNote.deleted_at !== 0 || updated_at > existingNote.updated_at) {
+        updated_at = Math.max(updated_at, existingNote?.updated_at ?? 0)
         const indeterminate = {
           id,
           created_at: existingNote?.created_at ?? now,
-          updated_at: Math.max(updated_at, existingNote?.updated_at ?? 0),
+          updated_at,
           txt,
           state: 'dirty',
           type,
@@ -114,7 +115,7 @@ export const importNotes = async (): Promise<void> => {
           todos: todos?.map((t) => ({
             ...t,
             id: t.id ?? crypto.randomUUID(),
-            updated_at: t.updated_at ?? Date.now(),
+            updated_at: t.updated_at ?? updated_at,
           })),
         } as const
         if (indeterminate.todos) {
@@ -144,7 +145,7 @@ export const keepImportNotes = async (): Promise<void> => {
     const zip = new JSZip()
     const zipFile = await zip.loadAsync(file)
     const res: Note[] = []
-    const re = /Keep\/([^/]+)\.json$/
+    const re = /Keep\/[^/]+\.json$/
     for (const [path, file] of Object.entries(zipFile.files)) {
       if (!re.test(path)) {
         continue

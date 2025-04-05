@@ -3,6 +3,7 @@ import {deepEquals} from '../util/misc'
 import {zodParseString} from '../util/zod'
 import {
   Note,
+  NoteCommon,
   TextPutTxt,
   textPutTxtSchema,
   Todo,
@@ -27,58 +28,47 @@ export const todosToText = (todos: Todos): string => todos.map((t) => t.txt).joi
 
 export const putToNote = (put: Put): Note => {
   const {id, created_at, updated_at, version, deleted_at, type, txt} = put
+  const common: NoteCommon = {
+    id,
+    created_at,
+    updated_at,
+    version,
+    deleted_at: deleted_at ?? 0,
+    state: 'synced',
+    title: '',
+  }
   if (txt === null && type === 'note') {
     return {
+      ...common,
       type: 'note',
-      id,
-      created_at,
-      updated_at,
-      version,
-      deleted_at,
-      state: 'synced',
-      title: '',
       txt: '',
     }
   } else if (txt === null && type === 'todo') {
     return {
+      ...common,
       type: 'todo',
-      id,
-      created_at,
-      updated_at,
-      version,
-      deleted_at,
-      state: 'synced',
-      title: '',
       todos: [],
     }
   } else if (typeof txt === 'string' && type === 'note') {
     const {title, txt} = zodParseString(textPutTxtSchema, put.txt) ?? {title: '', txt: put.txt}
     return {
+      ...common,
       type: 'note',
-      id: put.id,
-      created_at: put.created_at,
-      updated_at: put.updated_at,
       txt,
       title,
-      version: put.version,
-      state: 'synced',
-      deleted_at: put.deleted_at ?? 0,
     }
   } else if (typeof txt === 'string' && type === 'todo') {
     const {title, todos} = zodParseString(todoPutTxtSchema, put.txt) ?? {
       title: '',
-      todos: put.txt ? [{done: false, txt: put.txt}] : [],
+      todos: put.txt
+        ? [{done: false, txt: put.txt, id: crypto.randomUUID(), updated_at: Date.now()}]
+        : [],
     }
     return {
+      ...common,
       type: 'todo',
-      id: put.id,
-      created_at: put.created_at,
-      updated_at: put.updated_at,
       todos,
       title,
-      version: put.version,
-      state: 'synced',
-      deleted_at: put.deleted_at ?? 0,
     }
   } else {
     throw new Error('Invalid put')
