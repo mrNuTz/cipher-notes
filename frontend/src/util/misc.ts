@@ -103,7 +103,7 @@ const uniqueByReducer = <T>(getKey: (el: T) => string) => {
 }
 
 export function log<T>(x: T): T {
-  console.debug(x)
+  console.info(x)
   return x
 }
 

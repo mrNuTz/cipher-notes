@@ -444,6 +444,7 @@ const storeOpenNote = nonConcurrent(async () => {
   if (
     note &&
     (note.title !== openNote.title ||
+      note.type !== openNote.type ||
       (note.type === 'note' && note.txt !== openNote.txt) ||
       (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
   ) {
