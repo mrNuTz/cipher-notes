@@ -6,6 +6,7 @@ import {db} from '../db'
 import {byProp, compare, truncateWithEllipsis} from '../util/misc'
 import {IconSquare} from './icons/IconSquare'
 import {IconCheckbox} from './icons/IconCheckbox'
+import {Note} from '../business/models'
 
 export const NotesGrid = () => {
   const query = useSelector((state) => state.notes.query)
@@ -32,6 +33,7 @@ export const NotesGrid = () => {
         gap: '1rem',
         padding: '1rem',
         overflowY: 'auto',
+        flex: 1,
       }}
     >
       <style
@@ -41,48 +43,51 @@ export const NotesGrid = () => {
         scoped
       />
       {notes?.map((note) => (
-        <Paper
-          component='button'
-          key={note.id}
-          style={{
-            padding: '1rem',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            cursor: 'pointer',
-            border: 'none',
-            textAlign: 'left',
-            color: 'var(--mantine-color-text)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          shadow='sm'
-          onClick={() => noteOpened(note.id)}
-          role='button'
-        >
-          <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{note.title}</div>
-          {note.type === 'note'
-            ? truncateWithEllipsis(note.txt)
-            : note.todos
-                .map((t, i) => [t.done, i, t] as const)
-                .sort(compare)
-                .slice(0, 5)
-                .map(([, i, todo]) => (
-                  <Flex
-                    align='center'
-                    gap='xs'
-                    style={{textDecoration: todo.done ? 'line-through' : 'none'}}
-                    key={i}
-                  >
-                    {todo.done ? (
-                      <IconCheckbox style={{flex: '0 0 auto'}} />
-                    ) : (
-                      <IconSquare style={{flex: '0 0 auto'}} />
-                    )}
-                    {truncateWithEllipsis(todo.txt, 1, 50)}
-                  </Flex>
-                ))}
-        </Paper>
+        <NotePreview key={note.id} note={note} />
       ))}
     </Box>
   )
 }
+
+const NotePreview = ({note}: {note: Note}) => (
+  <Paper
+    component='button'
+    style={{
+      padding: '1rem',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      cursor: 'pointer',
+      border: 'none',
+      textAlign: 'left',
+      color: 'var(--mantine-color-text)',
+      display: 'flex',
+      flexDirection: 'column',
+    }}
+    shadow='sm'
+    onClick={() => noteOpened(note.id)}
+    role='button'
+  >
+    <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{note.title}</div>
+    {note.type === 'note'
+      ? truncateWithEllipsis(note.txt)
+      : note.todos
+          .map((t, i) => [t.done, i, t] as const)
+          .sort(compare)
+          .slice(0, 5)
+          .map(([, i, todo]) => (
+            <Flex
+              align='center'
+              gap='xs'
+              style={{textDecoration: todo.done ? 'line-through' : 'none'}}
+              key={i}
+            >
+              {todo.done ? (
+                <IconCheckbox style={{flex: '0 0 auto'}} />
+              ) : (
+                <IconSquare style={{flex: '0 0 auto'}} />
+              )}
+              {truncateWithEllipsis(todo.txt, 1, 50)}
+            </Flex>
+          ))}
+  </Paper>
+)

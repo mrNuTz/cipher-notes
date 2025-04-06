@@ -1,4 +1,4 @@
-import {Button, Select} from '@mantine/core'
+import {ActionIcon, Select} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {sortChanged, sortDirectionChanged} from '../state/notes'
 import {noteSortOptions, NoteSortProp} from '../business/models'
@@ -16,9 +16,9 @@ export const NotesSortSelect = () => {
         value={prop}
         onChange={(value) => value && sortChanged(value as NoteSortProp)}
       />
-      <Button flex='0 0 auto' p='xs' onClick={sortDirectionChanged}>
+      <ActionIcon size='lg' onClick={sortDirectionChanged}>
         {!desc ? <IconSortDescending /> : <IconSortAscending />}
-      </Button>
+      </ActionIcon>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import {Button, Drawer, Flex} from '@mantine/core'
+import {Drawer, Flex, ActionIcon} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
   noteClosed,
@@ -24,6 +24,7 @@ import {NoteHistoryItem, OpenNote} from '../business/models'
 import {XTextarea} from './XTextarea'
 import {TodoControl} from './TodoControl'
 import {IconCheckbox} from './icons/IconCheckbox'
+import {IconLabel} from './icons/IconLabel'
 
 const selectHistoryItem = (openNote: OpenNote | null): NoteHistoryItem | null => {
   if (openNote === null) return null
@@ -120,7 +121,8 @@ export const OpenNoteDialog = () => {
         />
       ) : null}
       <Flex gap='xs'>
-        <Button
+        <ActionIcon
+          size='lg'
           onClick={() =>
             modals.openConfirmModal({
               title: 'Delete note?',
@@ -132,20 +134,25 @@ export const OpenNoteDialog = () => {
           }
         >
           <IconTrash />
-        </Button>
+        </ActionIcon>
         <div style={{flex: '1 1 0'}} />
-        <Button onClick={openNoteTypeToggled}>
+        {false && (
+          <ActionIcon size='lg'>
+            <IconLabel />
+          </ActionIcon>
+        )}
+        <ActionIcon size='lg' onClick={openNoteTypeToggled}>
           <IconCheckbox />
-        </Button>
-        <Button onClick={undo} disabled={!canUndo}>
+        </ActionIcon>
+        <ActionIcon size='lg' onClick={undo} disabled={!canUndo}>
           <IconArrowBackUp />
-        </Button>
-        <Button onClick={redo} disabled={!canRedo}>
+        </ActionIcon>
+        <ActionIcon size='lg' onClick={redo} disabled={!canRedo}>
           <IconArrowForwardUp />
-        </Button>
-        <Button onClick={() => window.history.back()}>
+        </ActionIcon>
+        <ActionIcon size='lg' onClick={() => window.history.back()}>
           <IconX />
-        </Button>
+        </ActionIcon>
       </Flex>
     </Drawer>
   )

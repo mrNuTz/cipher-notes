@@ -34,9 +34,11 @@ export default [
       ...js.configs.recommended.rules,
       ...typescriptEslint.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': ['warn', {allowConstantExport: true}],
       eqeqeq: 2,
       'react-compiler/react-compiler': 'error',
+      'no-constant-binary-expression': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-];
+]

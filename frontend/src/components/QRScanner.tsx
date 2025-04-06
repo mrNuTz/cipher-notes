@@ -11,7 +11,6 @@ export const QRScanner = ({onScan, ...props}: QRScannerProps) => {
     if (videoRef.current) {
       qrScanner = new QrScanner(videoRef.current, (res) => onScan(res.data), {})
       qrScanner.start()
-      console.log('QRScanner', qrScanner)
     }
     return () => {
       if (qrScanner) {

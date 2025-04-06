@@ -1,6 +1,5 @@
 import {JsonRoot} from './type'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const compare = (a: any, b: any) => {
   if (Array.isArray(a) && Array.isArray(b)) {
     const len = Math.min(a.length, b.length)
