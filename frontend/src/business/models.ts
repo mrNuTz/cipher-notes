@@ -9,6 +9,7 @@ export type NoteCommon = {
   version: number
   state: 'dirty' | 'synced'
   deleted_at: number
+  labels?: string[]
 }
 export type TextNote = NoteCommon & {type: 'note'; txt: string}
 export type TodoNote = NoteCommon & {type: 'todo'; todos: Todos}
@@ -55,11 +56,24 @@ export type NoteHistoryItem = {type: 'note'; txt: string} | {type: 'todo'; todos
 export const textPutTxtSchema = z.object({
   title: z.string(),
   txt: z.string(),
+  labels: z.array(z.string().uuid()).optional(),
 })
 export type TextPutTxt = z.infer<typeof textPutTxtSchema>
 
 export const todoPutTxtSchema = z.object({
   title: z.string(),
   todos: todosSchema,
+  labels: z.array(z.string().uuid()).optional(),
 })
 export type TodoPutTxt = z.infer<typeof todoPutTxtSchema>
+
+export type Label = {
+  id: string
+  name: string
+  color: string
+  version: number
+  created_at: number
+  updated_at: number
+  deleted_at: number
+  state: 'dirty' | 'synced'
+}

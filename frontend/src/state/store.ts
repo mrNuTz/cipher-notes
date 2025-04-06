@@ -7,6 +7,7 @@ import {registerUserSubscriptions, userInit, UserState} from './user'
 import {conflictsInit, ConflictsState} from './conflicts'
 import {registerSettingsSubscriptions, settingsInit, SettingsState} from './settings'
 import {importInit, ImportState} from './import'
+import {labelsInit, LabelsState} from './labels'
 
 export type RootState = {
   notes: NotesState
@@ -15,6 +16,7 @@ export type RootState = {
   conflicts: ConflictsState
   settings: SettingsState
   import: ImportState
+  labels: LabelsState
 }
 const init: RootState = {
   notes: notesInit,
@@ -23,6 +25,7 @@ const init: RootState = {
   conflicts: conflictsInit,
   settings: settingsInit,
   import: importInit,
+  labels: labelsInit,
 }
 export const useSelector = create<RootState>()(immer(subscribeWithSelector(() => init)))
 export const getState = useSelector.getState
