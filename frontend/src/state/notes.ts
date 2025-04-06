@@ -25,7 +25,8 @@ export type NotesState = {
     dialogOpen: boolean
     syncing: boolean
     error: string | null
-    storing: boolean
+    betweenLoadAndStore: boolean
+    modifiedWhileBetween: string[]
   }
 }
 
@@ -33,7 +34,13 @@ export const notesInit: NotesState = {
   query: '',
   openNote: null,
   sort: {prop: 'created_at', desc: true},
-  sync: {dialogOpen: false, syncing: false, error: null, storing: false},
+  sync: {
+    dialogOpen: false,
+    syncing: false,
+    error: null,
+    betweenLoadAndStore: false,
+    modifiedWhileBetween: [],
+  },
 }
 
 // init
@@ -288,9 +295,6 @@ export const closeSyncDialog = () =>
   })
 
 // effects
-let modifiedWhileBetween: string[] = []
-let betweenLoadAndStore = false
-
 export const syncNotes = nonConcurrent(async () => {
   const state = getState()
   const lastSyncedTo = state.user.user.lastSyncedTo
@@ -301,9 +305,9 @@ export const syncNotes = nonConcurrent(async () => {
   }
   setState((state) => {
     state.notes.sync.syncing = true
+    state.notes.sync.betweenLoadAndStore = true
   })
   try {
-    betweenLoadAndStore = true
     const dirtyNotes = await db.notes
       .where('state')
       .equals('dirty')
@@ -338,13 +342,16 @@ export const syncNotes = nonConcurrent(async () => {
       serverConflicts.map(putToNote)
     )
 
+    const modifiedWhileBetween = getState().notes.sync.modifiedWhileBetween
     const toStore = pulls
       .map(putToNote)
       .concat(merged)
       .filter((p) => !modifiedWhileBetween.includes(p.id))
     const modifiedTwice = modifiedWhileBetween.filter((id) => dirtyNotes.some((n) => n.id === id))
-    betweenLoadAndStore = false
-    modifiedWhileBetween = []
+    setState((state) => {
+      state.notes.sync.betweenLoadAndStore = false
+      state.notes.sync.modifiedWhileBetween = []
+    })
     await db.transaction('rw', db.notes, db.note_base_versions, async () => {
       await db.notes.bulkPut(toStore)
       await db.note_base_versions.bulkPut(toStore.filter((n) => n.state === 'synced'))
@@ -392,9 +399,9 @@ export const syncNotes = nonConcurrent(async () => {
   } finally {
     setState((state) => {
       state.notes.sync.syncing = false
+      state.notes.sync.betweenLoadAndStore = false
+      state.notes.sync.modifiedWhileBetween = []
     })
-    betweenLoadAndStore = false
-    modifiedWhileBetween = []
   }
 })
 
@@ -448,9 +455,11 @@ const storeOpenNote = nonConcurrent(async () => {
       (note.type === 'note' && note.txt !== openNote.txt) ||
       (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
   ) {
-    if (betweenLoadAndStore) {
-      modifiedWhileBetween.push(openNote.id)
-    }
+    setState((state) => {
+      if (state.notes.sync.betweenLoadAndStore) {
+        state.notes.sync.modifiedWhileBetween.push(openNote.id)
+      }
+    })
     await db.notes.update(openNote.id, {
       type: openNote.type,
       title: openNote.title,
