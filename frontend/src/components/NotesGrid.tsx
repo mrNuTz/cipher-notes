@@ -34,6 +34,7 @@ export const NotesGrid = () => {
         padding: '1rem',
         overflowY: 'auto',
         flex: 1,
+        alignContent: 'start',
       }}
     >
       <style
