@@ -67,10 +67,12 @@ export const todoPutTxtSchema = z.object({
 })
 export type TodoPutTxt = z.infer<typeof todoPutTxtSchema>
 
+export const hueOptions = [null, 0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330] as const
+export type Hue = (typeof hueOptions)[number]
 export type Label = {
   id: string
   name: string
-  color: string
+  hue: Hue
   version: number
   created_at: number
   updated_at: number
