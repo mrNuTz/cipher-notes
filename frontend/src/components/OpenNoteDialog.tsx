@@ -122,7 +122,7 @@ export const OpenNoteDialog = () => {
       ) : null}
       <Flex gap='xs'>
         <ActionIcon
-          size='lg'
+          size='xl'
           onClick={() =>
             modals.openConfirmModal({
               title: 'Delete note?',
@@ -137,20 +137,20 @@ export const OpenNoteDialog = () => {
         </ActionIcon>
         <div style={{flex: '1 1 0'}} />
         {false && (
-          <ActionIcon size='lg'>
+          <ActionIcon size='xl'>
             <IconLabel />
           </ActionIcon>
         )}
-        <ActionIcon size='lg' onClick={openNoteTypeToggled}>
+        <ActionIcon size='xl' onClick={openNoteTypeToggled}>
           <IconCheckbox />
         </ActionIcon>
-        <ActionIcon size='lg' onClick={undo} disabled={!canUndo}>
+        <ActionIcon size='xl' onClick={undo} disabled={!canUndo}>
           <IconArrowBackUp />
         </ActionIcon>
-        <ActionIcon size='lg' onClick={redo} disabled={!canRedo}>
+        <ActionIcon size='xl' onClick={redo} disabled={!canRedo}>
           <IconArrowForwardUp />
         </ActionIcon>
-        <ActionIcon size='lg' onClick={() => window.history.back()}>
+        <ActionIcon size='xl' onClick={() => window.history.back()}>
           <IconX />
         </ActionIcon>
       </Flex>
