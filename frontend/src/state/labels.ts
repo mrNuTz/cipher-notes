@@ -1,4 +1,4 @@
-import {Label} from '../business/models'
+import {Hue, Label} from '../business/models'
 import {db, labelsObservable} from '../db'
 import {setState} from './store'
 
@@ -23,7 +23,7 @@ export const createLabel = async (name: string) => {
   const label: Label = {
     id: crypto.randomUUID(),
     name,
-    color: 'default',
+    hue: null,
     version: 1,
     created_at: Date.now(),
     updated_at: Date.now(),
@@ -33,21 +33,21 @@ export const createLabel = async (name: string) => {
   await db.labels.add(label)
 }
 
-export const updateLabel = async (id: string, props: {name?: string; color?: string}) => {
-  const label = await db.labels.get(id)
-  if (!label || label.deleted_at > 0) {
-    return
-  }
-  if (props.name) {
-    label.name = props.name
-  }
-  if (props.color) {
-    label.color = props.color
-  }
-  label.updated_at = Date.now()
-  label.state = 'dirty'
-  await db.labels.put(label)
-}
+export const updateLabel = (id: string, props: {name?: string; hue?: Hue}) =>
+  db.labels
+    .where('id')
+    .equals(id)
+    .and((l) => l.deleted_at === 0)
+    .modify((label) => {
+      if (props.name !== undefined) {
+        label.name = props.name
+      }
+      if (props.hue !== undefined) {
+        label.hue = props.hue
+      }
+      label.updated_at = Date.now()
+      label.state = 'dirty'
+    })
 
 export const deleteLabel = async (id: string) => {
   const label = await db.labels.get(id)
