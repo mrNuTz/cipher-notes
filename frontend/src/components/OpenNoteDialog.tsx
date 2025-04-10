@@ -55,12 +55,16 @@ export const OpenNoteDialog = () => {
   return (
     <Drawer
       opened={open}
-      position='bottom'
+      position='top'
       size='100%'
       withCloseButton={false}
       onClose={() => window.history.back()}
       styles={{
-        content: {height: '100dvh', display: 'flex', flexDirection: 'column'},
+        content: {
+          height: 'var(--viewport-height, 100dvh)',
+          display: 'flex',
+          flexDirection: 'column',
+        },
         body: {
           flex: '0 0 100%',
           height: '100%',

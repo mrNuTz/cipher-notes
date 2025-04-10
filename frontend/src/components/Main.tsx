@@ -40,7 +40,11 @@ export const Main = () => {
       </AppShell.Header>
       <AppShell.Navbar>navbar</AppShell.Navbar>
       <AppShell.Main
-        style={{display: 'flex', flexDirection: 'column', height: 'calc(100vh - 95px)'}}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: 'calc(var(--viewport-height, 100dvh) - 95px)',
+        }}
       >
         <NotesGrid />
         <Box pos='relative' style={{overflow: 'visible', height: 0}}>

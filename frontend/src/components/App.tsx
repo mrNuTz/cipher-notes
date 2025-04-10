@@ -13,6 +13,26 @@ import {ImpressumDialog} from './ImpressumDialog.tsx'
 import {DeleteServerNotesDialog} from './DeleteServerNotesDialog'
 import {SettingsDialog} from './SettingsDialog.tsx'
 import {KeepImportDialog} from './KeepImportDialog.tsx'
+import {debounce} from '../util/misc.ts'
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener(
+    'resize',
+    debounce(() => {
+      document.documentElement.style.setProperty(
+        '--viewport-height',
+        `${window.visualViewport?.height}px`
+      )
+    }, 300)
+  )
+} else {
+  window.addEventListener(
+    'resize',
+    debounce(() => {
+      document.documentElement.style.setProperty('--viewport-height', `${window.innerHeight}px`)
+    }, 300)
+  )
+}
 
 export const App = () => (
   <>
