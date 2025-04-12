@@ -13,7 +13,12 @@ import {ImpressumDialog} from './ImpressumDialog.tsx'
 import {DeleteServerNotesDialog} from './DeleteServerNotesDialog'
 import {SettingsDialog} from './SettingsDialog.tsx'
 import {KeepImportDialog} from './KeepImportDialog.tsx'
-import {debounce} from '../util/misc.ts'
+import {debounce, delay} from '../util/misc.ts'
+
+window.addEventListener(
+  'scroll',
+  debounce(() => scrollTo(0, 0), 0)
+)
 
 if (window.visualViewport) {
   window.visualViewport.addEventListener(
@@ -23,16 +28,29 @@ if (window.visualViewport) {
         '--viewport-height',
         `${window.visualViewport?.height}px`
       )
-    }, 300)
+    }, 0)
   )
 } else {
   window.addEventListener(
     'resize',
     debounce(() => {
       document.documentElement.style.setProperty('--viewport-height', `${window.innerHeight}px`)
-    }, 300)
+    }, 0)
   )
 }
+
+document.addEventListener(
+  'focus',
+  async (e) => {
+    const target = e.target as HTMLElement
+    if (!(target instanceof HTMLTextAreaElement)) {
+      return
+    }
+    await delay(300)
+    target.scrollIntoView({behavior: 'smooth', block: 'nearest'})
+  },
+  true
+)
 
 export const App = () => (
   <>

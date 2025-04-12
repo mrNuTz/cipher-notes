@@ -33,7 +33,6 @@ export const NotesGrid = () => {
         gap: '1rem',
         padding: '1rem',
         overflowY: 'auto',
-        flex: 1,
         alignContent: 'start',
       }}
     >
