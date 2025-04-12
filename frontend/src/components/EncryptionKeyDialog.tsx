@@ -46,7 +46,10 @@ export const EncryptionKeyDialog = () => {
         </Button>
       </Group>
       {qrMode === 'show' && (
-        <QRCodeSVG style={{width: '100%', height: 'auto'}} value={keyTokenPair} />
+        <QRCodeSVG
+          style={{width: '100%', height: 'auto', padding: '1rem', background: 'white'}}
+          value={keyTokenPair}
+        />
       )}
       {qrMode === 'scan' && (
         <QRScanner
