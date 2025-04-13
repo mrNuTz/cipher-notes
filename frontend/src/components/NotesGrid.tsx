@@ -1,4 +1,4 @@
-import {Box, Flex, Paper} from '@mantine/core'
+import {Flex, Paper} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {noteOpened} from '../state/notes'
 import {useLiveQuery} from 'dexie-react-hooks'
@@ -26,7 +26,7 @@ export const NotesGrid = () => {
       .sort(byProp(sort.prop, sort.desc))
   }, [query, sort])
   return (
-    <Box
+    <div
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
@@ -34,6 +34,7 @@ export const NotesGrid = () => {
         padding: '1rem',
         overflowY: 'auto',
         alignContent: 'start',
+        height: '100%',
       }}
     >
       <style
@@ -45,7 +46,7 @@ export const NotesGrid = () => {
       {notes?.map((note) => (
         <NotePreview key={note.id} note={note} />
       ))}
-    </Box>
+    </div>
   )
 }
 

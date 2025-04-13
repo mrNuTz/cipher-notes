@@ -14,6 +14,8 @@ import {DeleteServerNotesDialog} from './DeleteServerNotesDialog'
 import {SettingsDialog} from './SettingsDialog.tsx'
 import {KeepImportDialog} from './KeepImportDialog.tsx'
 import {debounce, delay} from '../util/misc.ts'
+import {LabelSelector} from './LabelSelector.tsx'
+import {LabelDialog} from './LabelDialog.tsx'
 
 window.addEventListener(
   'scroll',
@@ -55,6 +57,8 @@ document.addEventListener(
 export const App = () => (
   <>
     <Main />
+    <LabelSelector />
+    <LabelDialog />
     <OpenNoteDialog />
     <CommandCenter />
     <ImportNotesDialog />

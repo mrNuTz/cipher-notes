@@ -13,3 +13,7 @@ html[data-mantine-color-scheme='dark'] body {
 .x-textarea textarea:focus {
   outline: none;
 }
+#root {
+  display: flex;
+  flex-direction: column;
+}

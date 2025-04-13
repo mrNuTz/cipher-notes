@@ -3,11 +3,26 @@ import {db, labelsObservable} from '../db'
 import {setState} from './store'
 
 export type LabelsState = {
+  labelSelectorOpen: boolean
+  activeLabel: string | null
   labelsCache: Record<string, Label>
+  dialog: {
+    open: boolean
+    id: string | null
+    hue: Hue
+    name: string
+  }
 }
-
 export const labelsInit: LabelsState = {
+  labelSelectorOpen: false,
+  activeLabel: null,
   labelsCache: {},
+  dialog: {
+    open: false,
+    id: null,
+    hue: null,
+    name: '',
+  },
 }
 
 labelsObservable.subscribe((labels) => {
@@ -16,14 +31,63 @@ labelsObservable.subscribe((labels) => {
       acc[label.id] = label
       return acc
     }, {} as Record<string, Label>)
+    if (
+      state.labels.activeLabel &&
+      (!(state.labels.activeLabel in state.labels.labelsCache) ||
+        state.labels.labelsCache[state.labels.activeLabel]!.deleted_at > 0)
+    ) {
+      state.labels.activeLabel = null
+    }
   })
 })
 
-export const createLabel = async (name: string) => {
+export const toggleLabelSelector = () => {
+  setState((state) => {
+    state.labels.labelSelectorOpen = !state.labels.labelSelectorOpen
+  })
+}
+export const toggleActiveLabel = (id: string) => {
+  setState((state) => {
+    state.labels.activeLabel = state.labels.activeLabel === id ? null : id
+  })
+}
+export const openCreateLabelDialog = () => {
+  setState((state) => {
+    state.labels.dialog.open = true
+    state.labels.dialog.id = null
+    state.labels.dialog.hue = null
+    state.labels.dialog.name = ''
+  })
+}
+export const openEditLabelDialog = (id: string) => {
+  setState((state) => {
+    state.labels.dialog.open = true
+    state.labels.dialog.id = id
+    state.labels.dialog.hue = state.labels.labelsCache[id]?.hue ?? null
+    state.labels.dialog.name = state.labels.labelsCache[id]?.name ?? ''
+  })
+}
+export const closeLabelDialog = () => {
+  setState((state) => {
+    state.labels.dialog.open = false
+  })
+}
+export const labelDialogNameChanged = (name: string) => {
+  setState((state) => {
+    state.labels.dialog.name = name
+  })
+}
+export const labelDialogHueChanged = (hue: Hue) => {
+  setState((state) => {
+    state.labels.dialog.hue = hue
+  })
+}
+
+export const createLabel = async (name: string, hue: Hue = null) => {
   const label: Label = {
     id: crypto.randomUUID(),
     name,
-    hue: null,
+    hue,
     version: 1,
     created_at: Date.now(),
     updated_at: Date.now(),
@@ -31,9 +95,12 @@ export const createLabel = async (name: string) => {
     state: 'dirty',
   }
   await db.labels.add(label)
+  setState((state) => {
+    state.labels.dialog.open = false
+  })
 }
 
-export const updateLabel = (id: string, props: {name?: string; hue?: Hue}) =>
+export const updateLabel = (id: string, props: {name?: string; hue?: Hue}) => {
   db.labels
     .where('id')
     .equals(id)
@@ -48,6 +115,10 @@ export const updateLabel = (id: string, props: {name?: string; hue?: Hue}) =>
       label.updated_at = Date.now()
       label.state = 'dirty'
     })
+  setState((state) => {
+    state.labels.dialog.open = false
+  })
+}
 
 export const deleteLabel = async (id: string) => {
   const label = await db.labels.get(id)
