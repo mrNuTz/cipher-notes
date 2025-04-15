@@ -1,8 +1,10 @@
 import {
   ActionIcon,
+  Box,
   Drawer,
   Flex,
   Group,
+  Paper,
   Stack,
   UnstyledButton,
   useMantineColorScheme,
@@ -12,23 +14,22 @@ import {
   deleteLabel,
   openCreateLabelDialog,
   openEditLabelDialog,
-  toggleActiveLabel,
+  labelSelected,
   toggleLabelSelector,
+  allLabelsSelected,
+  unlabeledSelected,
 } from '../state/labels'
 import {byProp} from '../util/misc'
-import {darkModeSaturation, lightModeLightness, lightModeSaturation} from '../config'
-import {darkModeLightness} from '../config'
 import {IconPencil} from './icons/IconPencil'
 import {IconTrash} from './icons/IconTrash'
 import {modals} from '@mantine/modals'
 import {IconPlus} from './icons/IconPlus'
+import {labelColor} from '../business/misc'
 
 export const LabelSelector = () => {
   const {activeLabel, labelSelectorOpen, labelsCache} = useSelector((state) => state.labels)
   const labels = Object.values(labelsCache).sort(byProp('created_at'))
   const {colorScheme} = useMantineColorScheme()
-  const saturation = colorScheme === 'dark' ? darkModeSaturation : lightModeSaturation
-  const lightness = colorScheme === 'dark' ? darkModeLightness : lightModeLightness
 
   return (
     <Drawer
@@ -38,6 +39,35 @@ export const LabelSelector = () => {
       styles={{content: {position: 'relative'}}}
     >
       <Stack gap='xs' my='md'>
+        <Box
+          ta='left'
+          bd={activeLabel === null ? '2px solid var(--mantine-color-bright)' : 'none'}
+          p='xs'
+          style={{borderRadius: 'var(--mantine-radius-md)', outlineOffset: '2px'}}
+          bg='var(--mantine-color-dimmed)'
+          onClick={() => {
+            allLabelsSelected()
+            toggleLabelSelector()
+          }}
+          component='button'
+        >
+          All notes
+        </Box>
+        <Paper
+          shadow='md'
+          ta='left'
+          bd={activeLabel === false ? '2px solid var(--mantine-color-bright)' : 'none'}
+          p='xs'
+          style={{borderRadius: 'var(--mantine-radius-md)', outlineOffset: '2px'}}
+          onClick={() => {
+            unlabeledSelected()
+            toggleLabelSelector()
+          }}
+          bg='var(--mantine-color-body)'
+          component='button'
+        >
+          Unlabeled
+        </Paper>
         {labels.map((label) => (
           <Flex
             key={label.id}
@@ -45,13 +75,15 @@ export const LabelSelector = () => {
             bd={activeLabel === label.id ? '2px solid var(--mantine-color-bright)' : 'none'}
             p='xs'
             style={{borderRadius: 'var(--mantine-radius-md)', outlineOffset: '2px'}}
-            bg={
-              label.hue === null
-                ? 'var(--mantine-color-body)'
-                : `hsl(${label.hue},${saturation}%,${lightness}%)`
-            }
+            bg={labelColor(label.hue, colorScheme === 'dark')}
           >
-            <UnstyledButton flex={1} onClick={() => toggleActiveLabel(label.id)}>
+            <UnstyledButton
+              flex={1}
+              onClick={() => {
+                labelSelected(label.id)
+                toggleLabelSelector()
+              }}
+            >
               {label.name}
             </UnstyledButton>
             <Group>

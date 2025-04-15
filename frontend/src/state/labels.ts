@@ -4,7 +4,7 @@ import {setState} from './store'
 
 export type LabelsState = {
   labelSelectorOpen: boolean
-  activeLabel: string | null
+  activeLabel: string | null | false
   labelsCache: Record<string, Label>
   dialog: {
     open: boolean
@@ -46,9 +46,19 @@ export const toggleLabelSelector = () => {
     state.labels.labelSelectorOpen = !state.labels.labelSelectorOpen
   })
 }
-export const toggleActiveLabel = (id: string) => {
+export const allLabelsSelected = () => {
   setState((state) => {
-    state.labels.activeLabel = state.labels.activeLabel === id ? null : id
+    state.labels.activeLabel = null
+  })
+}
+export const unlabeledSelected = () => {
+  setState((state) => {
+    state.labels.activeLabel = false
+  })
+}
+export const labelSelected = (id: string) => {
+  setState((state) => {
+    state.labels.activeLabel = id
   })
 }
 export const openCreateLabelDialog = () => {

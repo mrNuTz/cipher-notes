@@ -1,13 +1,16 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
-import {debounce, deepEquals, nonConcurrent} from '../util/misc'
+import {bisectBy, debounce, deepEquals, nonConcurrent} from '../util/misc'
 import {isUnauthorizedRes, reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
 import {db, dirtyNotesObservable} from '../db'
 import {
+  labelToPut,
   mergeConflicts,
+  mergeLabelConflicts,
   notesIsEmpty,
   noteToPut,
+  putToLabel,
   putToNote,
   textToTodos,
   todosHaveIdsAndUpdatedAt,
@@ -313,7 +316,8 @@ export const syncNotes = nonConcurrent(async () => {
       .equals('dirty')
       .and((n) => !notesIsEmpty(n))
       .toArray()
-    const clientPuts: Put[] = dirtyNotes.map(noteToPut)
+    const dirtyLabels = await db.labels.where('state').equals('dirty').toArray()
+    const clientPuts: Put[] = dirtyNotes.map(noteToPut).concat(dirtyLabels.map(labelToPut))
     const encClientSyncData = await encryptSyncData(keyTokenPair.cryptoKey, clientPuts)
 
     const res = await reqSyncNotes(lastSyncedTo, encClientSyncData, keyTokenPair.syncToken)
@@ -330,7 +334,12 @@ export const syncNotes = nonConcurrent(async () => {
       return
     }
     const pulls = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
+    const [pullLabels, pullNotes] = bisectBy(pulls, (p) => p.type === 'label')
     const serverConflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
+    const [serverConflictsLabels, serverConflictsNotes] = bisectBy(
+      serverConflicts,
+      (p) => p.type === 'label'
+    )
 
     const baseVersions = await db.note_base_versions
       .where('id')
@@ -339,11 +348,13 @@ export const syncNotes = nonConcurrent(async () => {
     const {merged, conflicts} = mergeConflicts(
       baseVersions,
       dirtyNotes,
-      serverConflicts.map(putToNote)
+      serverConflictsNotes.map(putToNote)
     )
+    const mergedLabels = mergeLabelConflicts(dirtyLabels, serverConflictsLabels.map(putToLabel))
+    const labelsToStore = pullLabels.map(putToLabel).concat(mergedLabels)
 
     const modifiedWhileBetween = getState().notes.sync.modifiedWhileBetween
-    const toStore = pulls
+    const toStore = pullNotes
       .map(putToNote)
       .concat(merged)
       .filter((p) => !modifiedWhileBetween.includes(p.id))
@@ -352,7 +363,8 @@ export const syncNotes = nonConcurrent(async () => {
       state.notes.sync.betweenLoadAndStore = false
       state.notes.sync.modifiedWhileBetween = []
     })
-    await db.transaction('rw', db.notes, db.note_base_versions, async () => {
+    await db.transaction('rw', db.notes, db.note_base_versions, db.labels, async () => {
+      await db.labels.bulkPut(labelsToStore)
       await db.notes.bulkPut(toStore)
       await db.note_base_versions.bulkPut(toStore.filter((n) => n.state === 'synced'))
       await db.notes

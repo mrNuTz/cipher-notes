@@ -8,18 +8,11 @@ import {
   updateLabel,
 } from '../state/labels'
 import {hueOptions} from '../business/models'
-import {
-  darkModeLightness,
-  darkModeSaturation,
-  lightModeLightness,
-  lightModeSaturation,
-} from '../config'
+import {labelColor} from '../business/misc'
 
 export const LabelDialog = () => {
   const {hue, name, open, id} = useSelector((state) => state.labels.dialog)
   const {colorScheme} = useMantineColorScheme()
-  const saturation = colorScheme === 'dark' ? darkModeSaturation : lightModeSaturation
-  const lightness = colorScheme === 'dark' ? darkModeLightness : lightModeLightness
   return (
     <Modal opened={open} onClose={closeLabelDialog} title={id ? 'Edit Label' : 'Create Label'}>
       <TextInput
@@ -37,7 +30,7 @@ export const LabelDialog = () => {
             id={String(h)}
             onClick={() => labelDialogHueChanged(h)}
             c='var(--mantine-color-text)'
-            bg={h === null ? 'var(--mantine-color-body)' : `hsl(${h},${saturation}%,${lightness}%)`}
+            bg={labelColor(h, colorScheme === 'dark')}
           >
             {h === null ? '-' : h}
           </ActionIcon>

@@ -47,7 +47,7 @@ db.version(4)
   })
 
 db.version(5).stores({
-  labels: 'id, deleted_at',
+  labels: 'id, deleted_at, state',
 })
 
 export const dirtyNotesObservable = liveQuery(() =>

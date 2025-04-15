@@ -12,8 +12,10 @@ import {toggleLabelSelector} from '../state/labels'
 export const Main = () => (
   <>
     <Flex gap='xs' p='md' bg='rgba(0,0,0,.1)' justify='space-between'>
-      <Burger p={0} onClick={toggleLabelSelector} />
-      <SearchInput />
+      <Flex gap='xs' flex='0 1 auto'>
+        <Burger p={0} flex='0 0 0' onClick={toggleLabelSelector} />
+        <SearchInput />
+      </Flex>
       <Flex gap='xs' flex='0 1 auto'>
         <NotesSortSelect />
         <ActionIcon size='lg' onClick={spotlight.open}>

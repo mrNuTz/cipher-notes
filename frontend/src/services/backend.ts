@@ -61,7 +61,7 @@ export const reqLoginCode = (email: string, code: string) =>
 export type EncPut =
   | {
       id: string
-      type: 'note' | 'todo'
+      type: 'note' | 'todo' | 'label'
       created_at: number
       updated_at: number
       cipher_text: string
@@ -71,7 +71,7 @@ export type EncPut =
     }
   | {
       id: string
-      type: 'note' | 'todo'
+      type: 'note' | 'todo' | 'label'
       created_at: number
       updated_at: number
       cipher_text: null
