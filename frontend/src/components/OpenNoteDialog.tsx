@@ -1,4 +1,4 @@
-import {Drawer, Flex, ActionIcon} from '@mantine/core'
+import {Drawer, Flex, ActionIcon, Popover} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
   noteClosed,
@@ -25,6 +25,7 @@ import {XTextarea} from './XTextarea'
 import {TodoControl} from './TodoControl'
 import {IconCheckbox} from './icons/IconCheckbox'
 import {IconLabel} from './icons/IconLabel'
+import {LabelDropdownContent} from './LabelDropdownContent'
 
 const selectHistoryItem = (openNote: OpenNote | null): NoteHistoryItem | null => {
   if (openNote === null) return null
@@ -140,11 +141,16 @@ export const OpenNoteDialog = () => {
           <IconTrash />
         </ActionIcon>
         <div style={{flex: '1 1 0'}} />
-        {false && (
-          <ActionIcon size='xl'>
-            <IconLabel />
-          </ActionIcon>
-        )}
+        <Popover width='300px' position='top' withArrow shadow='md'>
+          <Popover.Target>
+            <ActionIcon size='xl'>
+              <IconLabel />
+            </ActionIcon>
+          </Popover.Target>
+          <Popover.Dropdown>
+            {openNote && <LabelDropdownContent noteId={openNote.id} />}
+          </Popover.Dropdown>
+        </Popover>
         <ActionIcon size='xl' onClick={openNoteTypeToggled}>
           <IconCheckbox />
         </ActionIcon>

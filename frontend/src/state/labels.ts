@@ -147,3 +147,18 @@ export const deleteLabel = async (id: string) => {
       note.updated_at = Date.now()
     })
 }
+
+export const toggleNoteLabel = (noteId: string, labelId: string) =>
+  db.notes
+    .where('id')
+    .equals(noteId)
+    .modify((note) => {
+      note.labels = (note.labels ?? []).includes(labelId)
+        ? note.labels?.filter((l) => l !== labelId)
+        : (note.labels ?? []).concat(labelId)
+      if (note.state === 'synced') {
+        note.state = 'dirty'
+        note.version = note.version + 1
+      }
+      note.updated_at = Date.now()
+    })
