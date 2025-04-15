@@ -9,10 +9,10 @@ import {Overwrite} from '../util/type'
 import {env} from '../env'
 import {userToSessionToSocket} from '../socket'
 
-const noteTypeSchema = z.enum(['note', 'todo'])
+const putTypeSchema = z.enum(['note', 'todo', 'label'])
 const upsertSchema = z.object({
   id: z.string().uuid(),
-  type: noteTypeSchema,
+  type: putTypeSchema,
   created_at: z.number().int().positive(),
   updated_at: z.number().int().positive(),
   cipher_text: z.string(),
@@ -22,7 +22,7 @@ const upsertSchema = z.object({
 })
 const deleteSchema = z.object({
   id: z.string().uuid(),
-  type: noteTypeSchema,
+  type: putTypeSchema,
   created_at: z.number().int().positive(),
   updated_at: z.number().int().positive(),
   cipher_text: z.null(),
