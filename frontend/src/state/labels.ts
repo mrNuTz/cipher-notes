@@ -1,6 +1,8 @@
+import {createSelector} from 'reselect'
 import {Hue, Label} from '../business/models'
 import {db, labelsObservable} from '../db'
-import {setState} from './store'
+import {RootState, setState} from './store'
+import {byProp} from '../util/misc'
 
 export type LabelsState = {
   labelSelectorOpen: boolean
@@ -93,7 +95,7 @@ export const labelDialogHueChanged = (hue: Hue) => {
   })
 }
 
-export const createLabel = async (name: string, hue: Hue = null) => {
+export const createLabel = async (name: string, hue: Hue = null): Promise<Label> => {
   const label: Label = {
     id: crypto.randomUUID(),
     name,
@@ -108,6 +110,7 @@ export const createLabel = async (name: string, hue: Hue = null) => {
   setState((state) => {
     state.labels.dialog.open = false
   })
+  return label
 }
 
 export const updateLabel = (id: string, props: {name?: string; hue?: Hue}) => {
@@ -172,3 +175,8 @@ export const toggleNoteLabel = (noteId: string, labelId: string) =>
       }
       note.updated_at = Date.now()
     })
+
+export const selectCachedLabels = createSelector(
+  (state: RootState) => state.labels.labelsCache,
+  (labelsCache) => Object.values(labelsCache).sort(byProp('created_at'))
+)

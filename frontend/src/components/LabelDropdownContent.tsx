@@ -5,15 +5,14 @@ import {useSelector} from '../state/store'
 import {db} from '../db'
 import {IconSearch} from './icons/IconSearch'
 import {IconX} from './icons/IconX'
-import {toggleNoteLabel} from '../state/labels'
+import {toggleNoteLabel, selectCachedLabels} from '../state/labels'
 
 export type LabelDropdownContentProps = {
   noteId: string
 }
 export const LabelDropdownContent = ({noteId}: LabelDropdownContentProps) => {
   const [search, setSearch] = useState('')
-  const labelsCache = useSelector((state) => state.labels.labelsCache)
-  const labels = Object.values(labelsCache)
+  const labels = useSelector(selectCachedLabels)
   const checkedLabels: string[] =
     useLiveQuery(() => db.notes.get(noteId).then((note) => note?.labels ?? []), [noteId]) ?? []
   return (

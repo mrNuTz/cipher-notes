@@ -271,3 +271,32 @@ export const bisectBy = <T>(arr: T[], pred: (x: T) => boolean): readonly [T[], T
   }
   return [ts, fs]
 }
+
+export const repeatable: <T>(genFn: () => Generator<T>) => Iterable<T> = (genFn) => ({
+  [Symbol.iterator]() {
+    return genFn()[Symbol.iterator]()
+  },
+})
+
+export function mapItr<A>(itr: Iterable<A>): Iterable<A>
+export function mapItr<A, B>(itr: Iterable<A>, fnb: (a: A) => B): Iterable<B>
+export function mapItr<A, B, C>(itr: Iterable<A>, fnB: (a: A) => B, fnC: (b: B) => C): Iterable<C>
+export function mapItr<A, B, C, D>(
+  itr: Iterable<A>,
+  fnB: (a: A) => B,
+  fnC: (b: B) => C,
+  fnD: (c: C) => D
+): Iterable<D>
+export function mapItr(itr: Iterable<any>, ...fns: ((a: any) => any)[]) {
+  return repeatable(function* () {
+    for (let item of itr) {
+      for (const fn of fns) item = fn(item)
+      yield item
+    }
+  })
+}
+
+export const filterItr = <Item>(itr: Iterable<Item>, pred: (item: Item) => any) =>
+  repeatable(function* () {
+    for (const item of itr) if (pred(item)) yield item
+  })

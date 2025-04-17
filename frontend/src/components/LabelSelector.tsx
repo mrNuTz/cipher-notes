@@ -18,8 +18,8 @@ import {
   toggleLabelSelector,
   allLabelsSelected,
   unlabeledSelected,
+  selectCachedLabels,
 } from '../state/labels'
-import {byProp} from '../util/misc'
 import {IconPencil} from './icons/IconPencil'
 import {IconTrash} from './icons/IconTrash'
 import {modals} from '@mantine/modals'
@@ -27,8 +27,8 @@ import {IconPlus} from './icons/IconPlus'
 import {labelColor} from '../business/misc'
 
 export const LabelSelector = () => {
-  const {activeLabel, labelSelectorOpen, labelsCache} = useSelector((state) => state.labels)
-  const labels = Object.values(labelsCache).sort(byProp('created_at'))
+  const {activeLabel, labelSelectorOpen} = useSelector((state) => state.labels)
+  const labels = useSelector(selectCachedLabels)
   const {colorScheme} = useMantineColorScheme()
 
   return (
