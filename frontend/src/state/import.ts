@@ -170,6 +170,9 @@ export const importNotes = async (): Promise<void> => {
 export const keepImportNotes = async (): Promise<void> => {
   const state = getState()
   const {file, importArchived} = state.import.keepImportDialog
+  const {labelsCache} = state.labels
+  const cachedLabels = Object.values(labelsCache)
+  const existingLabels = XSet.fromItr(cachedLabels, (l) => l.name)
   if (!file) {
     return
   }
@@ -178,21 +181,37 @@ export const keepImportNotes = async (): Promise<void> => {
     const zipFile = await zip.loadAsync(file)
     const res: Note[] = []
     const re = /Keep\/[^/]+\.json$/
+
+    const importNotes: KeepNote[] = []
     for (const [path, file] of Object.entries(zipFile.files)) {
       if (!re.test(path)) {
         continue
       }
-      const str = await file.async('string')
-      let importNote: KeepNote
       try {
-        importNote = keepNoteSchema.parse(JSON.parse(str))
+        const importNote = keepNoteSchema.parse(JSON.parse(await file.async('string')))
+        if (!importNote.isTrashed && (!importNote.isArchived || importArchived)) {
+          importNotes.push(importNote)
+        }
       } catch (e) {
         console.error('Error parsing keep note', e)
         continue
       }
-      if (importNote.isTrashed || (importNote.isArchived && !importArchived)) {
-        continue
-      }
+    }
+
+    const importLabels = XSet.fromItr(
+      importNotes.flatMap((n) => n.labels ?? []),
+      (l) => l.name
+    )
+    const newLabels = importLabels.without(existingLabels).toArray()
+    const createdLabels: Label[] = []
+    for (const name of newLabels) {
+      createdLabels.push(await createLabel(name))
+    }
+    const nameToId = Object.fromEntries(
+      [...cachedLabels, ...createdLabels].map((l) => [l.name, l.id])
+    )
+
+    for (const importNote of importNotes) {
       const noteCommon: NoteCommon = {
         id: crypto.randomUUID(),
         created_at: importNote.createdTimestampUsec / 1000,
@@ -201,6 +220,7 @@ export const keepImportNotes = async (): Promise<void> => {
         deleted_at: 0,
         state: 'dirty',
         version: 1,
+        labels: importNote.labels?.map((l) => nameToId[l.name]!),
       }
       if ('textContent' in importNote) {
         const note: Note = {
