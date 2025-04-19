@@ -1,4 +1,4 @@
-import {Flex, Paper, useMantineColorScheme} from '@mantine/core'
+import {Flex, Paper, useComputedColorScheme} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {noteOpened} from '../state/notes'
 import {useLiveQuery} from 'dexie-react-hooks'
@@ -55,7 +55,7 @@ export const NotesGrid = () => {
 }
 
 const NotePreview = ({note}: {note: Note}) => {
-  const {colorScheme} = useMantineColorScheme()
+  const colorScheme = useComputedColorScheme()
   const labelsCache = useSelector((state) => state.labels.labelsCache)
   const label = note.labels?.[0] ? labelsCache[note.labels[0]] : null
   return (

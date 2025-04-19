@@ -1,4 +1,4 @@
-import {ActionIcon, Button, Group, Modal, TextInput, useMantineColorScheme} from '@mantine/core'
+import {ActionIcon, Button, Group, Modal, TextInput, useComputedColorScheme} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
   closeLabelDialog,
@@ -12,7 +12,7 @@ import {labelColor} from '../business/misc'
 
 export const LabelDialog = () => {
   const {hue, name, open, id} = useSelector((state) => state.labels.dialog)
-  const {colorScheme} = useMantineColorScheme()
+  const colorScheme = useComputedColorScheme()
   return (
     <Modal opened={open} onClose={closeLabelDialog} title={id ? 'Edit Label' : 'Create Label'}>
       <TextInput

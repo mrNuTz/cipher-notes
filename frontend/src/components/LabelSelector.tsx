@@ -7,7 +7,7 @@ import {
   Paper,
   Stack,
   UnstyledButton,
-  useMantineColorScheme,
+  useComputedColorScheme,
 } from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
@@ -29,7 +29,7 @@ import {labelColor} from '../business/misc'
 export const LabelSelector = () => {
   const {activeLabel, labelSelectorOpen} = useSelector((state) => state.labels)
   const labels = useSelector(selectCachedLabels)
-  const {colorScheme} = useMantineColorScheme()
+  const colorScheme = useComputedColorScheme()
 
   return (
     <Drawer

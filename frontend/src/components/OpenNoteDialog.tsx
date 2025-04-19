@@ -1,4 +1,4 @@
-import {Drawer, Flex, ActionIcon, Popover, useMantineColorScheme} from '@mantine/core'
+import {Drawer, Flex, ActionIcon, Popover, useComputedColorScheme} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
   noteClosed,
@@ -38,7 +38,7 @@ const selectHistoryItem = (openNote: OpenNote | null): NoteHistoryItem | null =>
 }
 
 export const OpenNoteDialog = () => {
-  const {colorScheme} = useMantineColorScheme()
+  const colorScheme = useComputedColorScheme()
   const openNote = useSelector((state) => state.notes.openNote)
   const labelsCache = useSelector((state) => state.labels.labelsCache)
   const openNoteLabel = useLiveQuery(
