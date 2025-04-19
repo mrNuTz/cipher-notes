@@ -134,8 +134,8 @@ export const noteClosed = async () => {
 }
 export const addNote = async () => {
   const now = Date.now()
-
   const id = crypto.randomUUID()
+  const {activeLabel} = getState().labels
   const note: Note = {
     id,
     txt: '',
@@ -146,6 +146,7 @@ export const addNote = async () => {
     deleted_at: 0,
     type: 'note',
     title: '',
+    labels: activeLabel ? [activeLabel] : undefined,
   }
   await db.notes.add(note)
 
