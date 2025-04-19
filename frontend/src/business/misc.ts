@@ -1,9 +1,3 @@
-import {
-  darkModeLightness,
-  darkModeSaturation,
-  lightModeLightness,
-  lightModeSaturation,
-} from '../config'
 import {threeWayMerge, threeWayMergeArrays} from '../util/merge'
 import {deepEquals} from '../util/misc'
 import {zodParseString} from '../util/zod'
@@ -334,9 +328,34 @@ export const mergeLabelConflicts = (dirtyLabels: Label[], serverConflicts: Label
     }
   })
 
+const lightColorByHue = {
+  0: 'hsl(0, 95%, 65%)',
+  30: 'hsl(30, 100%, 68%)',
+  60: 'hsl(60, 100%, 68%)',
+  90: 'hsl(90, 100%, 63%)',
+  120: 'hsl(120, 100%, 65%)',
+  150: 'hsl(150, 100%, 50%)',
+  180: 'hsl(180, 100%, 50%)',
+  210: 'hsl(210, 100%, 55%)',
+  240: 'hsl(240, 100%, 73%)',
+  270: 'hsl(270, 100%, 71%)',
+  300: 'hsl(300, 100%, 50%)',
+  330: 'hsl(330, 100%, 50%)',
+} as const
+const darkColorByHue = {
+  0: 'hsl(0, 100%, 25%)',
+  30: 'hsl(30, 100%, 32%)',
+  60: 'hsl(60, 100%, 23%)',
+  90: 'hsl(90, 100%, 32%)',
+  120: 'hsl(120, 100%, 28%)',
+  150: 'hsl(150, 100%, 27%)',
+  180: 'hsl(180, 100%, 29%)',
+  210: 'hsl(210, 100%, 34%)',
+  240: 'hsl(240, 60%, 34%)',
+  270: 'hsl(270, 100%, 29%)',
+  300: 'hsl(300, 100%, 20%)',
+  330: 'hsl(330, 100%, 31%)',
+} as const
+
 export const labelColor = (hue: Hue, darkMode: boolean): string =>
-  hue === null
-    ? `var(--mantine-color-body)`
-    : `hsl(${hue},${darkMode ? darkModeSaturation : lightModeSaturation}%,${
-        darkMode ? darkModeLightness : lightModeLightness
-      }%)`
+  hue === null ? `var(--mantine-color-body)` : darkMode ? darkColorByHue[hue] : lightColorByHue[hue]

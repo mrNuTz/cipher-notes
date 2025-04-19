@@ -21,3 +21,9 @@ html[data-mantine-color-scheme='dark'] .mantine-Drawer-content {
   display: flex;
   flex-direction: column;
 }
+:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-text: white;
+}
+button {
+  color: inherit;
+}

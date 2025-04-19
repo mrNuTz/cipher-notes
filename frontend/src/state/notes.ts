@@ -3,7 +3,7 @@ import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
 import {bisectBy, debounce, deepEquals, nonConcurrent} from '../util/misc'
 import {isUnauthorizedRes, reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
-import {db, dirtyNotesObservable} from '../db'
+import {db, hasDirtyLabelsObservable, hasDirtyNotesObservable} from '../db'
 import {
   labelToPut,
   mergeConflicts,
@@ -347,7 +347,12 @@ export const syncNotes = nonConcurrent(async () => {
       serverConflictsNotes.map(putToNote)
     )
     const mergedLabels = mergeLabelConflicts(dirtyLabels, serverConflictsLabels.map(putToLabel))
-    const labelsToStore = pullLabels.map(putToLabel).concat(mergedLabels)
+    const labelsToStore = Object.fromEntries(
+      pullLabels
+        .map(putToLabel)
+        .concat(mergedLabels)
+        .map((l) => [l.id, l])
+    )
 
     const toStoreById = Object.fromEntries(
       pullNotes
@@ -356,14 +361,36 @@ export const syncNotes = nonConcurrent(async () => {
         .map((n) => [n.id, n])
     )
     const idToUploaded = Object.fromEntries(dirtyNotes.map((n) => [n.id, n]))
+    const idToUploadedLabels = Object.fromEntries(dirtyLabels.map((l) => [l.id, l]))
 
     await db.transaction('rw', db.notes, db.note_base_versions, db.labels, async () => {
-      await db.labels.bulkPut(labelsToStore)
+      const existingLabelIds = new XSet<string>()
+      await db.labels
+        .where('id')
+        .anyOf(Object.keys(labelsToStore))
+        .modify((curr, ref) => {
+          existingLabelIds.add(curr.id)
+          const uploaded = idToUploadedLabels[curr.id]
+          const toStore = labelsToStore[curr.id]!
+          if (uploaded && curr.updated_at > uploaded.updated_at) {
+            curr.version = curr.version + 1
+            return
+          }
+          if (curr.version >= toStore.version && curr.updated_at !== toStore.updated_at) {
+            return
+          }
+          ref.value = toStore
+        })
+      const insertLabelIds = XSet.fromItr(Object.keys(labelsToStore)).without(existingLabelIds)
+      await db.labels.bulkPut(insertLabelIds.toArray().map((id) => labelsToStore[id]!))
+
       const baseVersions: Note[] = []
+      const existingIds = new XSet<string>()
       await db.notes
         .where('id')
         .anyOf(Object.keys(toStoreById))
-        .modify((curr) => {
+        .modify((curr, ref) => {
+          existingIds.add(curr.id)
           const uploaded = idToUploaded[curr.id]
           const toStore = toStoreById[curr.id]!
           if (uploaded && curr.updated_at > uploaded.updated_at) {
@@ -373,15 +400,11 @@ export const syncNotes = nonConcurrent(async () => {
           if (curr.version >= toStore.version && curr.updated_at !== toStore.updated_at) {
             return
           }
-
-          for (const key in toStore) (curr as any)[key] = (toStore as any)[key]
-          for (const key in curr) if (!(key in toStore)) delete (curr as any)[key]
-
+          ref.value = toStore
           if (toStore.state === 'synced') baseVersions.push(toStore)
         })
-      const existingIds = XSet.fromItr(await db.notes.toCollection().primaryKeys())
-      const toStoreIds = XSet.fromItr(Object.keys(toStoreById))
-      const insertIds = toStoreIds.without(existingIds)
+
+      const insertIds = XSet.fromItr(Object.keys(toStoreById)).without(existingIds)
       const insertNotes = insertIds.toArray().map((id) => toStoreById[id]!)
       await db.notes.bulkPut(insertNotes)
       await db.note_base_versions.bulkPut(baseVersions.concat(insertNotes))
@@ -516,9 +539,13 @@ export const registerNotesSubscriptions = () => {
   )
 
   const syncNotesDebounced = debounce(syncNotes, 1000)
-
-  dirtyNotesObservable.subscribe((dirty) => {
-    if (dirty.length > 0 && !dirty.every(notesIsEmpty)) {
+  hasDirtyNotesObservable.subscribe((hasDirtyNotes) => {
+    if (hasDirtyNotes) {
+      syncNotesDebounced()
+    }
+  })
+  hasDirtyLabelsObservable.subscribe((hasDirtyLabels) => {
+    if (hasDirtyLabels) {
       syncNotesDebounced()
     }
   })
