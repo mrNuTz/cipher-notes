@@ -329,18 +329,18 @@ export const mergeLabelConflicts = (dirtyLabels: Label[], serverConflicts: Label
   })
 
 const lightColorByHue = {
-  0: 'hsl(0, 95%, 65%)',
+  0: 'hsl(0, 92%, 65%)',
   30: 'hsl(30, 100%, 68%)',
   60: 'hsl(60, 100%, 68%)',
   90: 'hsl(90, 100%, 63%)',
   120: 'hsl(120, 100%, 65%)',
   150: 'hsl(150, 100%, 50%)',
   180: 'hsl(180, 100%, 50%)',
-  210: 'hsl(210, 100%, 55%)',
+  210: 'hsl(210, 100%, 60%)',
   240: 'hsl(240, 100%, 73%)',
   270: 'hsl(270, 100%, 71%)',
-  300: 'hsl(300, 100%, 50%)',
-  330: 'hsl(330, 100%, 50%)',
+  300: 'hsl(300, 80%, 65%)',
+  330: 'hsl(330, 100%, 65%)',
 } as const
 const darkColorByHue = {
   0: 'hsl(0, 100%, 25%)',
