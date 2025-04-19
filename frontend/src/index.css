@@ -1,15 +1,29 @@
-html, body, #root {
+html,
+body,
+#root {
   width: 100vw;
   height: var(--viewport-height, 100dvh);
   overflow: hidden;
-}
-body {
   margin: 0;
+}
+body,
+.mantine-Drawer-content {
   background-color: var(--mantine-color-gray-0);
 }
-html[data-mantine-color-scheme='dark'] body {
+html[data-mantine-color-scheme='dark'] body,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-content {
   background-color: var(--mantine-color-dark-8);
 }
 .x-textarea textarea:focus {
   outline: none;
+}
+#root {
+  display: flex;
+  flex-direction: column;
+}
+:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-text: white;
+}
+button {
+  color: inherit;
 }

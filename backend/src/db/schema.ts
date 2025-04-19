@@ -24,7 +24,7 @@ export const sessionsTbl = pgTable('sessions', {
   created_at: bigint({mode: 'number'}).$default(Date.now).notNull(),
 })
 
-export const noteTypeEnum = pgEnum('note_type', ['note', 'todo'])
+export const noteTypeEnum = pgEnum('note_type', ['note', 'todo', 'label'])
 
 export const notesTbl = pgTable(
   'notes',

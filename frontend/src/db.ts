@@ -1,9 +1,10 @@
 import Dexie, {EntityTable, liveQuery} from 'dexie'
-import {Note} from './business/models'
+import {Label, Note} from './business/models'
 
 export const db = new Dexie('DexieDB') as Dexie & {
   notes: EntityTable<Note, 'id'>
   note_base_versions: EntityTable<Note, 'id'>
+  labels: EntityTable<Label, 'id'>
 }
 
 db.version(1).stores({
@@ -45,6 +46,16 @@ db.version(4)
     await tx.table('note_base_versions').bulkAdd(notes)
   })
 
-export const dirtyNotesObservable = liveQuery(() =>
-  db.notes.where('state').equals('dirty').toArray()
+db.version(5).stores({
+  labels: 'id, deleted_at, state',
+})
+
+export const hasDirtyNotesObservable = liveQuery(
+  () => db.notes.where('state').equals('dirty').first() !== undefined
+)
+
+export const labelsObservable = liveQuery(() => db.labels.where('deleted_at').equals(0).toArray())
+
+export const hasDirtyLabelsObservable = liveQuery(
+  () => db.labels.where('state').equals('dirty').first() !== undefined
 )

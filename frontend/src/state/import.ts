@@ -5,12 +5,14 @@ import {
   KeepNote,
   keepNoteSchema,
 } from '../business/importNotesSchema'
-import {Note, NoteCommon} from '../business/models'
+import {Label, Note, NoteCommon} from '../business/models'
 import {db} from '../db'
 import {downloadJson} from '../util/misc'
 import {showMessage} from './messages'
 import {getState, RootState, setState} from './store'
 import JSZip from 'jszip'
+import XSet from '../util/XSet'
+import {createLabel} from './labels'
 
 export type ImportState = {
   importDialog: {
@@ -75,6 +77,7 @@ export const keepImportArchivedChanged = (importArchived: boolean) =>
 
 // effects
 export const exportNotes = async () => {
+  const {labelsCache} = getState().labels
   const notes = await db.notes.where('deleted_at').equals(0).toArray()
   const notesToExport: ImportNote[] = notes.map((n) => ({
     id: n.id,
@@ -83,11 +86,15 @@ export const exportNotes = async () => {
     created_at: n.created_at,
     updated_at: n.updated_at,
     todos: n.todos,
+    labels: n.labels?.map((l) => labelsCache[l]?.name).filter((l) => l !== undefined),
   }))
   downloadJson(notesToExport, 'notes.json')
 }
 export const importNotes = async (): Promise<void> => {
   const state = getState()
+  const {labelsCache} = state.labels
+  const cachedLabels = Object.values(labelsCache)
+  const existingLabels = XSet.fromItr(cachedLabels, (l) => l.name)
   const file = state.import.importDialog.file
   if (!file) {
     return
@@ -96,12 +103,21 @@ export const importNotes = async (): Promise<void> => {
     const importNotes = importNotesSchema.parse(JSON.parse(await file.text()))
     const res: Note[] = []
     const now = Date.now()
+    const importLabels = XSet.fromItr(importNotes.flatMap((n) => n.labels ?? []))
+    const newLabels = importLabels.without(existingLabels).toArray()
+    const createdLabels: Label[] = []
+    for (const name of newLabels) {
+      createdLabels.push(await createLabel(name))
+    }
+    const nameToId = Object.fromEntries(
+      [...cachedLabels, ...createdLabels].map((l) => [l.name, l.id])
+    )
     for (const importNote of importNotes) {
       let {id, updated_at = now} = importNote
       if (id === undefined) {
         id = crypto.randomUUID()
       }
-      const {txt, todos, title} = importNote
+      const {txt, todos, title, labels} = importNote
       if (todos === undefined && txt === undefined) {
         continue
       }
@@ -128,6 +144,9 @@ export const importNotes = async (): Promise<void> => {
             id: t.id ?? crypto.randomUUID(),
             updated_at: t.updated_at ?? updated_at,
           })),
+          labels: XSet.fromItr(existingNote?.labels ?? [])
+            .addItr(labels ?? [], (l) => nameToId[l]!)
+            .toArray(),
         } as const
         if (indeterminate.todos) {
           res.push({...indeterminate, type: 'todo', todos: indeterminate.todos, txt: undefined})
@@ -151,6 +170,9 @@ export const importNotes = async (): Promise<void> => {
 export const keepImportNotes = async (): Promise<void> => {
   const state = getState()
   const {file, importArchived} = state.import.keepImportDialog
+  const {labelsCache} = state.labels
+  const cachedLabels = Object.values(labelsCache)
+  const existingLabels = XSet.fromItr(cachedLabels, (l) => l.name)
   if (!file) {
     return
   }
@@ -159,21 +181,37 @@ export const keepImportNotes = async (): Promise<void> => {
     const zipFile = await zip.loadAsync(file)
     const res: Note[] = []
     const re = /Keep\/[^/]+\.json$/
+
+    const importNotes: KeepNote[] = []
     for (const [path, file] of Object.entries(zipFile.files)) {
       if (!re.test(path)) {
         continue
       }
-      const str = await file.async('string')
-      let importNote: KeepNote
       try {
-        importNote = keepNoteSchema.parse(JSON.parse(str))
+        const importNote = keepNoteSchema.parse(JSON.parse(await file.async('string')))
+        if (!importNote.isTrashed && (!importNote.isArchived || importArchived)) {
+          importNotes.push(importNote)
+        }
       } catch (e) {
         console.error('Error parsing keep note', e)
         continue
       }
-      if (importNote.isTrashed || (importNote.isArchived && !importArchived)) {
-        continue
-      }
+    }
+
+    const importLabels = XSet.fromItr(
+      importNotes.flatMap((n) => n.labels ?? []),
+      (l) => l.name
+    )
+    const newLabels = importLabels.without(existingLabels).toArray()
+    const createdLabels: Label[] = []
+    for (const name of newLabels) {
+      createdLabels.push(await createLabel(name))
+    }
+    const nameToId = Object.fromEntries(
+      [...cachedLabels, ...createdLabels].map((l) => [l.name, l.id])
+    )
+
+    for (const importNote of importNotes) {
       const noteCommon: NoteCommon = {
         id: crypto.randomUUID(),
         created_at: importNote.createdTimestampUsec / 1000,
@@ -182,6 +220,7 @@ export const keepImportNotes = async (): Promise<void> => {
         deleted_at: 0,
         state: 'dirty',
         version: 1,
+        labels: importNote.labels?.map((l) => nameToId[l.name]!),
       }
       if ('textContent' in importNote) {
         const note: Note = {

@@ -39,6 +39,8 @@ export default [
       'react-compiler/react-compiler': 'error',
       'no-constant-binary-expression': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-redeclare': 'off',
+      'no-dupe-class-members': 'off',
     },
   },
 ]

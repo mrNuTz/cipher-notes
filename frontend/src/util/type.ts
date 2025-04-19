@@ -15,8 +15,6 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
 export type AwaitedFn<Fn extends (...ags: unknown[]) => unknown> = Awaited<ReturnType<Fn>>
 
-export type EqOr<A, B, Fallback> = A extends B ? (B extends A ? A : Fallback) : Fallback
-
 export type FnArgs<T> = T extends (...args: infer U) => unknown ? U : never
 
 export type FnProps<T> = T extends (arg: infer U) => unknown ? U : never

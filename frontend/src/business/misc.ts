@@ -2,6 +2,9 @@ import {threeWayMerge, threeWayMergeArrays} from '../util/merge'
 import {deepEquals} from '../util/misc'
 import {zodParseString} from '../util/zod'
 import {
+  Hue,
+  Label,
+  labelPutTxtSchema,
   Note,
   NoteCommon,
   TextPutTxt,
@@ -25,6 +28,36 @@ export const textToTodos = (text: string): Todos => {
 }
 
 export const todosToText = (todos: Todos): string => todos.map((t) => t.txt).join('\n')
+
+export const putToLabel = (put: Put): Label => {
+  const {id, created_at, updated_at, version, deleted_at, type, txt} = put
+  if (type !== 'label') {
+    throw new Error('Put is not a label')
+  } else if (txt === null) {
+    return {
+      id,
+      created_at,
+      updated_at,
+      version,
+      deleted_at: deleted_at ?? 0,
+      state: 'synced',
+      name: '',
+      hue: null,
+    }
+  } else {
+    const {name, hue} = zodParseString(labelPutTxtSchema, put.txt) ?? {name: put.txt, hue: null}
+    return {
+      id,
+      created_at,
+      updated_at,
+      version,
+      deleted_at: deleted_at ?? 0,
+      state: 'synced',
+      name,
+      hue,
+    }
+  }
+}
 
 export const putToNote = (put: Put): Note => {
   const {id, created_at, updated_at, version, deleted_at, type, txt} = put
@@ -50,15 +83,19 @@ export const putToNote = (put: Put): Note => {
       todos: [],
     }
   } else if (typeof txt === 'string' && type === 'note') {
-    const {title, txt} = zodParseString(textPutTxtSchema, put.txt) ?? {title: '', txt: put.txt}
+    const {title, txt, labels} = zodParseString(textPutTxtSchema, put.txt) ?? {
+      title: '',
+      txt: put.txt,
+    }
     return {
       ...common,
       type: 'note',
       txt,
       title,
+      labels,
     }
   } else if (typeof txt === 'string' && type === 'todo') {
-    const {title, todos} = zodParseString(todoPutTxtSchema, put.txt) ?? {
+    const {title, todos, labels} = zodParseString(todoPutTxtSchema, put.txt) ?? {
       title: '',
       todos: put.txt
         ? [{done: false, txt: put.txt, id: crypto.randomUUID(), updated_at: Date.now()}]
@@ -69,9 +106,10 @@ export const putToNote = (put: Put): Note => {
       type: 'todo',
       todos,
       title,
+      labels,
     }
   } else {
-    throw new Error('Invalid put')
+    throw new Error('put is not a note')
   }
 }
 
@@ -87,7 +125,7 @@ export const noteToPut = (n: Note): Put => {
       type: n.type,
     }
   } else if (n.type === 'todo') {
-    const txtObj: TodoPutTxt = {title: n.title, todos: n.todos}
+    const txtObj: TodoPutTxt = {title: n.title, todos: n.todos, labels: n.labels}
     return {
       id: n.id,
       created_at: n.created_at,
@@ -98,7 +136,7 @@ export const noteToPut = (n: Note): Put => {
       type: n.type,
     }
   } else if (n.type === 'note') {
-    const txtObj: TextPutTxt = {title: n.title, txt: n.txt}
+    const txtObj: TextPutTxt = {title: n.title, txt: n.txt, labels: n.labels}
     return {
       id: n.id,
       created_at: n.created_at,
@@ -110,6 +148,30 @@ export const noteToPut = (n: Note): Put => {
     }
   } else {
     throw new Error('Invalid note')
+  }
+}
+
+export const labelToPut = (l: Label): Put => {
+  if (l.deleted_at !== 0) {
+    return {
+      id: l.id,
+      created_at: l.created_at,
+      txt: null,
+      updated_at: l.updated_at,
+      version: l.version,
+      deleted_at: l.deleted_at,
+      type: 'label',
+    }
+  } else {
+    return {
+      id: l.id,
+      created_at: l.created_at,
+      txt: JSON.stringify({name: l.name, hue: l.hue}),
+      updated_at: l.updated_at,
+      version: l.version,
+      deleted_at: null,
+      type: 'label',
+    }
   }
 }
 
@@ -249,3 +311,51 @@ export const mergeNoteConflict = (
     deleted_at: 0,
   }
 }
+
+export const mergeLabelConflicts = (dirtyLabels: Label[], serverConflicts: Label[]): Label[] =>
+  serverConflicts.map((sl) => {
+    const cl = dirtyLabels.find((c) => c.id === sl.id)
+    if (!cl) {
+      throw new Error('Label not found')
+    } else {
+      const l = cl.updated_at > sl.updated_at ? cl : sl
+      return {
+        ...l,
+        version: Math.max(cl.version, sl.version) + 1,
+        state: 'dirty',
+        updated_at: Math.max(cl.updated_at, sl.updated_at),
+      }
+    }
+  })
+
+const lightColorByHue = {
+  0: 'hsl(0, 95%, 65%)',
+  30: 'hsl(30, 100%, 68%)',
+  60: 'hsl(60, 100%, 68%)',
+  90: 'hsl(90, 100%, 63%)',
+  120: 'hsl(120, 100%, 65%)',
+  150: 'hsl(150, 100%, 50%)',
+  180: 'hsl(180, 100%, 50%)',
+  210: 'hsl(210, 100%, 55%)',
+  240: 'hsl(240, 100%, 73%)',
+  270: 'hsl(270, 100%, 71%)',
+  300: 'hsl(300, 100%, 50%)',
+  330: 'hsl(330, 100%, 50%)',
+} as const
+const darkColorByHue = {
+  0: 'hsl(0, 100%, 25%)',
+  30: 'hsl(30, 100%, 32%)',
+  60: 'hsl(60, 100%, 23%)',
+  90: 'hsl(90, 100%, 32%)',
+  120: 'hsl(120, 100%, 28%)',
+  150: 'hsl(150, 100%, 27%)',
+  180: 'hsl(180, 100%, 29%)',
+  210: 'hsl(210, 100%, 34%)',
+  240: 'hsl(240, 60%, 34%)',
+  270: 'hsl(270, 100%, 29%)',
+  300: 'hsl(300, 100%, 20%)',
+  330: 'hsl(330, 100%, 31%)',
+} as const
+
+export const labelColor = (hue: Hue, darkMode: boolean): string =>
+  hue === null ? `var(--mantine-color-body)` : darkMode ? darkColorByHue[hue] : lightColorByHue[hue]

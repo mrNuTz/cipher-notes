@@ -9,6 +9,7 @@ export type NoteCommon = {
   version: number
   state: 'dirty' | 'synced'
   deleted_at: number
+  labels?: string[]
 }
 export type TextNote = NoteCommon & {type: 'note'; txt: string}
 export type TodoNote = NoteCommon & {type: 'todo'; todos: Todos}
@@ -52,14 +53,38 @@ export type OpenNote = XOR<TextOpenNote, TodoOpenNote>
 
 export type NoteHistoryItem = {type: 'note'; txt: string} | {type: 'todo'; todos: Todos}
 
+export const hueOptions = [null, 0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330] as const
+export type Hue = (typeof hueOptions)[number]
+export type Label = {
+  id: string
+  name: string
+  hue: Hue
+  version: number
+  created_at: number
+  updated_at: number
+  deleted_at: number
+  state: 'dirty' | 'synced'
+}
+
 export const textPutTxtSchema = z.object({
   title: z.string(),
   txt: z.string(),
+  labels: z.array(z.string().uuid()).optional(),
 })
 export type TextPutTxt = z.infer<typeof textPutTxtSchema>
 
 export const todoPutTxtSchema = z.object({
   title: z.string(),
   todos: todosSchema,
+  labels: z.array(z.string().uuid()).optional(),
 })
 export type TodoPutTxt = z.infer<typeof todoPutTxtSchema>
+
+export const labelPutTxtSchema = z.object({
+  name: z.string(),
+  hue: z
+    .number()
+    .nullable()
+    .refine((hue): hue is Hue => hueOptions.includes(hue as Hue)),
+})
+export type LabelPutTxt = z.infer<typeof labelPutTxtSchema>

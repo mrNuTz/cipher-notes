@@ -1,13 +1,16 @@
 import {Note, NoteHistoryItem, OpenNote, NoteSortProp} from '../business/models'
 import {getState, selectAnyDialogOpen, setState, subscribe} from './store'
-import {debounce, deepEquals, nonConcurrent} from '../util/misc'
+import {bisectBy, debounce, deepEquals, nonConcurrent} from '../util/misc'
 import {isUnauthorizedRes, reqSyncNotes} from '../services/backend'
 import {Put, decryptSyncData, encryptSyncData} from '../business/notesEncryption'
-import {db, dirtyNotesObservable} from '../db'
+import {db, hasDirtyLabelsObservable, hasDirtyNotesObservable} from '../db'
 import {
+  labelToPut,
   mergeConflicts,
+  mergeLabelConflicts,
   notesIsEmpty,
   noteToPut,
+  putToLabel,
   putToNote,
   textToTodos,
   todosHaveIdsAndUpdatedAt,
@@ -16,6 +19,7 @@ import {
 import socket from '../socket'
 import {loadNotesSortOrder, storeNotesSortOrder} from '../services/localStorage'
 import {showMessage} from './messages'
+import XSet from '../util/XSet'
 
 export type NotesState = {
   query: string
@@ -25,7 +29,6 @@ export type NotesState = {
     dialogOpen: boolean
     syncing: boolean
     error: string | null
-    storing: boolean
   }
 }
 
@@ -33,7 +36,11 @@ export const notesInit: NotesState = {
   query: '',
   openNote: null,
   sort: {prop: 'created_at', desc: true},
-  sync: {dialogOpen: false, syncing: false, error: null, storing: false},
+  sync: {
+    dialogOpen: false,
+    syncing: false,
+    error: null,
+  },
 }
 
 // init
@@ -288,9 +295,6 @@ export const closeSyncDialog = () =>
   })
 
 // effects
-let modifiedWhileBetween: string[] = []
-let betweenLoadAndStore = false
-
 export const syncNotes = nonConcurrent(async () => {
   const state = getState()
   const lastSyncedTo = state.user.user.lastSyncedTo
@@ -303,13 +307,13 @@ export const syncNotes = nonConcurrent(async () => {
     state.notes.sync.syncing = true
   })
   try {
-    betweenLoadAndStore = true
     const dirtyNotes = await db.notes
       .where('state')
       .equals('dirty')
       .and((n) => !notesIsEmpty(n))
       .toArray()
-    const clientPuts: Put[] = dirtyNotes.map(noteToPut)
+    const dirtyLabels = await db.labels.where('state').equals('dirty').toArray()
+    const clientPuts: Put[] = dirtyNotes.map(noteToPut).concat(dirtyLabels.map(labelToPut))
     const encClientSyncData = await encryptSyncData(keyTokenPair.cryptoKey, clientPuts)
 
     const res = await reqSyncNotes(lastSyncedTo, encClientSyncData, keyTokenPair.syncToken)
@@ -326,7 +330,12 @@ export const syncNotes = nonConcurrent(async () => {
       return
     }
     const pulls = await decryptSyncData(keyTokenPair.cryptoKey, res.data.puts)
+    const [pullLabels, pullNotes] = bisectBy(pulls, (p) => p.type === 'label')
     const serverConflicts = await decryptSyncData(keyTokenPair.cryptoKey, res.data.conflicts)
+    const [serverConflictsLabels, serverConflictsNotes] = bisectBy(
+      serverConflicts,
+      (p) => p.type === 'label'
+    )
 
     const baseVersions = await db.note_base_versions
       .where('id')
@@ -335,28 +344,73 @@ export const syncNotes = nonConcurrent(async () => {
     const {merged, conflicts} = mergeConflicts(
       baseVersions,
       dirtyNotes,
-      serverConflicts.map(putToNote)
+      serverConflictsNotes.map(putToNote)
+    )
+    const mergedLabels = mergeLabelConflicts(dirtyLabels, serverConflictsLabels.map(putToLabel))
+    const labelsToStore = Object.fromEntries(
+      pullLabels
+        .map(putToLabel)
+        .concat(mergedLabels)
+        .map((l) => [l.id, l])
     )
 
-    const toStore = pulls
-      .map(putToNote)
-      .concat(merged)
-      .filter((p) => !modifiedWhileBetween.includes(p.id))
-    const modifiedTwice = modifiedWhileBetween.filter((id) => dirtyNotes.some((n) => n.id === id))
-    betweenLoadAndStore = false
-    modifiedWhileBetween = []
-    await db.transaction('rw', db.notes, db.note_base_versions, async () => {
-      await db.notes.bulkPut(toStore)
-      await db.note_base_versions.bulkPut(toStore.filter((n) => n.state === 'synced'))
+    const toStoreById = Object.fromEntries(
+      pullNotes
+        .map(putToNote)
+        .concat(merged)
+        .map((n) => [n.id, n])
+    )
+    const idToUploaded = Object.fromEntries(dirtyNotes.map((n) => [n.id, n]))
+    const idToUploadedLabels = Object.fromEntries(dirtyLabels.map((l) => [l.id, l]))
+
+    await db.transaction('rw', db.notes, db.note_base_versions, db.labels, async () => {
+      const existingLabelIds = new XSet<string>()
+      await db.labels
+        .where('id')
+        .anyOf(Object.keys(labelsToStore))
+        .modify((curr, ref) => {
+          existingLabelIds.add(curr.id)
+          const uploaded = idToUploadedLabels[curr.id]
+          const toStore = labelsToStore[curr.id]!
+          if (uploaded && curr.updated_at > uploaded.updated_at) {
+            curr.version = curr.version + 1
+            return
+          }
+          if (curr.version >= toStore.version && curr.updated_at !== toStore.updated_at) {
+            return
+          }
+          ref.value = toStore
+        })
+      const insertLabelIds = XSet.fromItr(Object.keys(labelsToStore)).without(existingLabelIds)
+      await db.labels.bulkPut(insertLabelIds.toArray().map((id) => labelsToStore[id]!))
+
+      const baseVersions: Note[] = []
+      const existingIds = new XSet<string>()
       await db.notes
         .where('id')
-        .anyOf(modifiedTwice)
-        .modify((n) => {
-          n.version = n.version + 1
+        .anyOf(Object.keys(toStoreById))
+        .modify((curr, ref) => {
+          existingIds.add(curr.id)
+          const uploaded = idToUploaded[curr.id]
+          const toStore = toStoreById[curr.id]!
+          if (uploaded && curr.updated_at > uploaded.updated_at) {
+            curr.version = curr.version + 1
+            return
+          }
+          if (curr.version >= toStore.version && curr.updated_at !== toStore.updated_at) {
+            return
+          }
+          ref.value = toStore
+          if (toStore.state === 'synced') baseVersions.push(toStore)
         })
+
+      const insertIds = XSet.fromItr(Object.keys(toStoreById)).without(existingIds)
+      const insertNotes = insertIds.toArray().map((id) => toStoreById[id]!)
+      await db.notes.bulkPut(insertNotes)
+      await db.note_base_versions.bulkPut(baseVersions.concat(insertNotes))
     })
 
-    setOpenNote(toStore)
+    setOpenNote(toStoreById)
 
     const syncedDeletes = await db.notes
       .where('deleted_at')
@@ -393,17 +447,15 @@ export const syncNotes = nonConcurrent(async () => {
     setState((state) => {
       state.notes.sync.syncing = false
     })
-    betweenLoadAndStore = false
-    modifiedWhileBetween = []
   }
 })
 
-const setOpenNote = (syncedNotes: Note[]) => {
+const setOpenNote = (syncedNotes: Record<string, Note>) => {
   const openNote = getState().notes.openNote
   if (!openNote) {
     return
   }
-  const note = syncedNotes.find((n) => n.id === openNote.id)
+  const note = syncedNotes[openNote.id]
   if (!note) {
     return
   }
@@ -448,9 +500,6 @@ const storeOpenNote = nonConcurrent(async () => {
       (note.type === 'note' && note.txt !== openNote.txt) ||
       (note.type === 'todo' && !deepEquals(note.todos, openNote.todos)))
   ) {
-    if (betweenLoadAndStore) {
-      modifiedWhileBetween.push(openNote.id)
-    }
     await db.notes.update(openNote.id, {
       type: openNote.type,
       title: openNote.title,
@@ -490,9 +539,13 @@ export const registerNotesSubscriptions = () => {
   )
 
   const syncNotesDebounced = debounce(syncNotes, 1000)
-
-  dirtyNotesObservable.subscribe((dirty) => {
-    if (dirty.length > 0 && !dirty.every(notesIsEmpty)) {
+  hasDirtyNotesObservable.subscribe((hasDirtyNotes) => {
+    if (hasDirtyNotes) {
+      syncNotesDebounced()
+    }
+  })
+  hasDirtyLabelsObservable.subscribe((hasDirtyLabels) => {
+    if (hasDirtyLabels) {
       syncNotesDebounced()
     }
   })

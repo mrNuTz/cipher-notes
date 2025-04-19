@@ -1,4 +1,4 @@
-import {Drawer, Flex, ActionIcon} from '@mantine/core'
+import {Drawer, Flex, ActionIcon, Popover, useMantineColorScheme} from '@mantine/core'
 import {useSelector} from '../state/store'
 import {
   noteClosed,
@@ -20,11 +20,15 @@ import {useUndoRedo} from '../util/undoHook'
 import {IconTrash} from './icons/IconTrash'
 import {IconX} from './icons/IconX'
 import {useEffect} from 'react'
-import {NoteHistoryItem, OpenNote} from '../business/models'
+import {Hue, NoteHistoryItem, OpenNote} from '../business/models'
 import {XTextarea} from './XTextarea'
 import {TodoControl} from './TodoControl'
 import {IconCheckbox} from './icons/IconCheckbox'
 import {IconLabel} from './icons/IconLabel'
+import {LabelDropdownContent} from './LabelDropdownContent'
+import {useLiveQuery} from 'dexie-react-hooks'
+import {db} from '../db'
+import {labelColor} from '../business/misc'
 
 const selectHistoryItem = (openNote: OpenNote | null): NoteHistoryItem | null => {
   if (openNote === null) return null
@@ -34,7 +38,14 @@ const selectHistoryItem = (openNote: OpenNote | null): NoteHistoryItem | null =>
 }
 
 export const OpenNoteDialog = () => {
+  const {colorScheme} = useMantineColorScheme()
   const openNote = useSelector((state) => state.notes.openNote)
+  const labelsCache = useSelector((state) => state.labels.labelsCache)
+  const openNoteLabel = useLiveQuery(
+    () => db.notes.get(openNote?.id ?? '').then((n) => n?.labels?.[0]),
+    [openNote?.id]
+  )
+  const hue: Hue = openNoteLabel ? labelsCache[openNoteLabel]?.hue ?? null : null
   const historyItem = selectHistoryItem(openNote)
   const {undo, redo, canUndo, canRedo} = useUndoRedo<NoteHistoryItem | null>(
     historyItem,
@@ -64,6 +75,7 @@ export const OpenNoteDialog = () => {
           height: 'var(--viewport-height, 100dvh)',
           display: 'flex',
           flexDirection: 'column',
+          backgroundColor: labelColor(hue, colorScheme === 'dark'),
         },
         body: {
           flex: '0 0 100%',
@@ -126,6 +138,7 @@ export const OpenNoteDialog = () => {
       ) : null}
       <Flex gap='xs'>
         <ActionIcon
+          variant='default'
           size='xl'
           onClick={() =>
             modals.openConfirmModal({
@@ -140,21 +153,26 @@ export const OpenNoteDialog = () => {
           <IconTrash />
         </ActionIcon>
         <div style={{flex: '1 1 0'}} />
-        {false && (
-          <ActionIcon size='xl'>
-            <IconLabel />
-          </ActionIcon>
-        )}
-        <ActionIcon size='xl' onClick={openNoteTypeToggled}>
+        <Popover width='300px' position='top' withArrow shadow='md'>
+          <Popover.Target>
+            <ActionIcon size='xl' variant='default'>
+              <IconLabel />
+            </ActionIcon>
+          </Popover.Target>
+          <Popover.Dropdown>
+            {openNote && <LabelDropdownContent noteId={openNote.id} />}
+          </Popover.Dropdown>
+        </Popover>
+        <ActionIcon size='xl' onClick={openNoteTypeToggled} variant='default'>
           <IconCheckbox />
         </ActionIcon>
-        <ActionIcon size='xl' onClick={undo} disabled={!canUndo}>
+        <ActionIcon size='xl' onClick={undo} disabled={!canUndo} variant='default'>
           <IconArrowBackUp />
         </ActionIcon>
-        <ActionIcon size='xl' onClick={redo} disabled={!canRedo}>
+        <ActionIcon size='xl' onClick={redo} disabled={!canRedo} variant='default'>
           <IconArrowForwardUp />
         </ActionIcon>
-        <ActionIcon size='xl' onClick={() => window.history.back()}>
+        <ActionIcon size='xl' onClick={() => window.history.back()} variant='default'>
           <IconX />
         </ActionIcon>
       </Flex>
