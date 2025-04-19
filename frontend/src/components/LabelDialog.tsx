@@ -26,7 +26,10 @@ export const LabelDialog = () => {
             key={String(h)}
             size='lg'
             variant={'default'}
-            style={{border: h === hue ? '2px solid black' : 'none', outline: 'none'}}
+            style={{
+              border: h === hue ? '2px solid var(--mantine-color-bright)' : 'none',
+              outline: 'none',
+            }}
             id={String(h)}
             onClick={() => labelDialogHueChanged(h)}
             c='var(--mantine-color-text)'
